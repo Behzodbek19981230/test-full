@@ -9,6 +9,12 @@ def get_app(context):
     return context.application.bot_data['flask_app']
 
 
+def display_icon(icon):
+    if not icon or icon.startswith('<svg') or icon.startswith('<?xml') or icon.startswith('/api/') or icon.startswith('http'):
+        return '📚'
+    return icon
+
+
 def get_or_create_user(app, telegram_user):
     with app.app_context():
         from app import db
@@ -81,7 +87,7 @@ async def subjects_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for s in subjects:
             test_count = s.tests.filter_by(is_active=True).count()
             keyboard.append([InlineKeyboardButton(
-                f"{s.icon} {s.name} ({test_count} ta test)",
+                f"{display_icon(s.icon)} {s.name} ({test_count} ta test)",
                 callback_data=f'subject_{s.id}'
             )])
 

@@ -270,7 +270,6 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   margin-bottom: 16px;
-  overflow: hidden;
   transition: border-color 0.2s;
 }
 
@@ -299,7 +298,7 @@ body {
 /* ============================================================
    UI TABLE
    ============================================================ */
-.ui-table-wrap { overflow-x: auto; }
+.ui-table-wrap { overflow: visible; }
 
 .ui-table { width: 100%; border-collapse: collapse; }
 
@@ -443,20 +442,15 @@ body {
 .ui-dropdown { position: relative; display: inline-block; }
 
 .ui-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 4px);
   min-width: 180px;
   background: var(--bg-800);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 4px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-  z-index: 100;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  z-index: 9999;
   animation: uiSlideUp 0.12s;
 }
-
-.ui-dropdown-menu--left { left: 0; }
-.ui-dropdown-menu--right { right: 0; }
 
 .ui-dropdown-item {
   display: flex;

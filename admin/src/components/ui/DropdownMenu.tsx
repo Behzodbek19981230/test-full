@@ -1,4 +1,5 @@
-import { ReactNode, useState, useRef, useEffect } from 'react'
+import { ReactNode, useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 
 interface DropdownItem {
   label: string
@@ -16,21 +17,55 @@ interface DropdownMenuProps {
 
 export default function DropdownMenu({ trigger, items, align = 'right' }: DropdownMenuProps) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const triggerRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const updatePos = useCallback(() => {
+    if (!triggerRef.current) return
+    const rect = triggerRef.current.getBoundingClientRect()
+    setPos({
+      top: rect.bottom + 4,
+      left: align === 'right' ? rect.right : rect.left,
+    })
+  }, [align])
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    if (!open) return
+    updatePos()
+
+    const onClickOutside = (e: MouseEvent) => {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        triggerRef.current && !triggerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false)
+      }
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+
+    const onScroll = () => setOpen(false)
+
+    document.addEventListener('mousedown', onClickOutside)
+    window.addEventListener('scroll', onScroll, true)
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside)
+      window.removeEventListener('scroll', onScroll, true)
+    }
+  }, [open, updatePos])
 
   return (
-    <div className="ui-dropdown" ref={ref}>
+    <div className="ui-dropdown" ref={triggerRef}>
       <div onClick={() => setOpen(!open)}>{trigger}</div>
-      {open && (
-        <div className={`ui-dropdown-menu ui-dropdown-menu--${align}`}>
+      {open && createPortal(
+        <div
+          ref={menuRef}
+          className="ui-dropdown-menu"
+          style={{
+            position: 'fixed',
+            top: pos.top,
+            ...(align === 'right' ? { right: window.innerWidth - pos.left } : { left: pos.left }),
+          }}
+        >
           {items.map((item, i) => (
             <button
               key={i}
@@ -42,7 +77,8 @@ export default function DropdownMenu({ trigger, items, align = 'right' }: Dropdo
               {item.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

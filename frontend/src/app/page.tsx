@@ -11,13 +11,28 @@ import {
 const BOT_URL = 'https://t.me/test_market_uzbot'
 
 function SubjectIcon({ icon, size = 26 }: { icon: string; size?: number }) {
-  if (icon.startsWith('<svg')) {
-    return <span style={{ width: size, height: size, display: 'inline-flex' }} dangerouslySetInnerHTML={{ __html: icon }} />
+  if (!icon) return <span style={{ fontSize: size }}>📚</span>
+
+  if (icon.startsWith('<svg') || icon.startsWith('<?xml')) {
+    const cleaned = icon.replace(/<\?xml[^?]*\?>\s*/g, '')
+    const sized = cleaned
+      .replace(/width="[^"]*"/g, `width="${size}"`)
+      .replace(/height="[^"]*"/g, `height="${size}"`)
+    const hasSize = /width=/.test(sized)
+    const final = hasSize ? sized : sized.replace('<svg', `<svg width="${size}" height="${size}"`)
+    return (
+      <span
+        style={{ width: size, height: size, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+        dangerouslySetInnerHTML={{ __html: final }}
+      />
+    )
   }
-  if (icon.startsWith('/api/')) {
-    return <img src={icon} alt="" style={{ width: size, height: size, objectFit: 'contain' }} />
+
+  if (icon.startsWith('/api/') || icon.startsWith('http') || icon.startsWith('data:')) {
+    return <img src={icon} alt="" style={{ width: size, height: size, objectFit: 'contain', flexShrink: 0 }} />
   }
-  return <span style={{ fontSize: size }}>{icon}</span>
+
+  return <span style={{ fontSize: size, lineHeight: 1 }}>{icon}</span>
 }
 
 interface Subject {
@@ -210,14 +225,8 @@ export default function Home() {
           <div className="subjects-grid">
             {subjects.map(s => (
               <div key={s.id} className="subject-card" onClick={() => loadTests(s.id)}>
-                <div className="subject-card-top">
-                  <div className="subject-card-icon"><SubjectIcon icon={s.icon} size={28} /></div>
-                  <div className="subject-card-count">
-                    <IconClipboardCheck size={16} /> {s.test_count} test
-                  </div>
-                </div>
+                <div className="subject-card-icon"><SubjectIcon icon={s.icon} size={52} /></div>
                 <h3>{s.name}</h3>
-                {s.description && <p>{s.description}</p>}
 
                 {expanded === s.id && tests[s.id] && (
                   <div className="subject-tests-list">

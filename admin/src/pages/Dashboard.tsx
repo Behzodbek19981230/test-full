@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { IconUsers, IconCash, IconClock, IconTrophy, IconChartBar, IconUserPlus, IconTrendingUp } from '@tabler/icons-react'
 import api from '../api'
-import { PageHeader, StatCard, Card, CardHeader, CardBody } from '../components/ui'
+import { PageHeader, StatCard, Card, CardHeader, CardBody, SubjectIcon } from '../components/ui'
 import Table from '../components/ui/Table'
 
 interface DashboardData {
@@ -85,7 +85,7 @@ export default function Dashboard() {
             emptyIcon={<IconChartBar size={40} />}
             emptyText="Fanlar mavjud emas"
             columns={[
-              { key: 'name', header: 'Fan', render: s => <><span style={{ marginRight: 8 }}>{s.icon}</span>{s.name}</> },
+              { key: 'name', header: 'Fan', render: s => <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><SubjectIcon icon={s.icon} size={22} />{s.name}</span> },
               { key: 'tests', header: 'Testlar', render: s => s.test_count },
               { key: 'attempts', header: 'Ishlangan', render: s => s.attempt_count },
             ]}

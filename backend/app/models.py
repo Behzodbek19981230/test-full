@@ -10,7 +10,7 @@ class User(db.Model):
     username = db.Column(db.String(100), nullable=True)
     full_name = db.Column(db.String(200), nullable=False)
     phone = db.Column(db.String(20), nullable=True)
-    role = db.Column(db.String(20), default='student')  # student, teacher, admin
+    role = db.Column(db.String(20), default='student')
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -56,51 +56,50 @@ class Subject(db.Model):
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     icon = db.Column(db.Text, default='📚')
+    price_per_question = db.Column(db.Integer, default=500)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    tests = db.relationship('Test', backref='subject', lazy='dynamic')
+    topics = db.relationship('Topic', backref='subject', lazy='dynamic', order_by='Topic.order_num')
 
     def to_dict(self):
+        topic_list = self.topics.filter_by(is_active=True).all()
+        total_questions = sum(t.questions.count() for t in topic_list)
         return {
             'id': self.id,
             'name': self.name,
             'description': self.description,
             'icon': self.icon,
+            'price_per_question': self.price_per_question,
             'is_active': self.is_active,
-            'test_count': self.tests.filter_by(is_active=True).count(),
+            'topic_count': len(topic_list),
+            'question_count': total_questions,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
 
 
-class Test(db.Model):
-    __tablename__ = 'tests'
+class Topic(db.Model):
+    __tablename__ = 'topics'
 
     id = db.Column(db.Integer, primary_key=True)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
-    title = db.Column(db.String(300), nullable=False)
+    name = db.Column(db.String(300), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    price = db.Column(db.Integer, nullable=False, default=0)  # in UZS
-    question_count = db.Column(db.Integer, default=0)
-    duration_minutes = db.Column(db.Integer, default=60)
+    order_num = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    questions = db.relationship('Question', backref='test', lazy='dynamic', order_by='Question.order_num')
-    payments = db.relationship('Payment', backref='test', lazy='dynamic')
-    attempts = db.relationship('TestAttempt', backref='test', lazy='dynamic')
+    questions = db.relationship('Question', backref='topic', lazy='dynamic', order_by='Question.order_num')
 
     def to_dict(self, include_questions=False):
         data = {
             'id': self.id,
             'subject_id': self.subject_id,
-            'subject_name': self.subject.name if self.subject else None,
-            'title': self.title,
+            'name': self.name,
             'description': self.description,
-            'price': self.price,
-            'question_count': self.question_count,
-            'duration_minutes': self.duration_minutes,
+            'order_num': self.order_num,
             'is_active': self.is_active,
+            'question_count': self.questions.count(),
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
         if include_questions:
@@ -112,13 +111,13 @@ class Question(db.Model):
     __tablename__ = 'questions'
 
     id = db.Column(db.Integer, primary_key=True)
-    test_id = db.Column(db.Integer, db.ForeignKey('tests.id'), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=False)
     question_text = db.Column(db.Text, nullable=False)
     option_a = db.Column(db.Text, nullable=False)
     option_b = db.Column(db.Text, nullable=False)
     option_c = db.Column(db.Text, nullable=False)
     option_d = db.Column(db.Text, nullable=False)
-    correct_option = db.Column(db.String(1), nullable=False)  # A, B, C, D
+    correct_option = db.Column(db.String(1), nullable=False)
     order_num = db.Column(db.Integer, default=0)
 
     answers = db.relationship('AttemptAnswer', backref='question', lazy='dynamic')
@@ -126,7 +125,8 @@ class Question(db.Model):
     def to_dict(self, hide_answer=False):
         data = {
             'id': self.id,
-            'test_id': self.test_id,
+            'topic_id': self.topic_id,
+            'topic_name': self.topic.name if self.topic else None,
             'question_text': self.question_text,
             'option_a': self.option_a,
             'option_b': self.option_b,
@@ -144,15 +144,18 @@ class Payment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    test_id = db.Column(db.Integer, db.ForeignKey('tests.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
+    question_count = db.Column(db.Integer, nullable=False, default=30)
+    mode = db.Column(db.String(20), default='mixed')  # mixed, topics
     amount = db.Column(db.Integer, nullable=False)
     screenshot_file_id = db.Column(db.String(500), nullable=True)
-    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    status = db.Column(db.String(20), default='pending')
     admin_id = db.Column(db.Integer, db.ForeignKey('admins.id'), nullable=True)
     admin_note = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
+    subject = db.relationship('Subject', backref='payments')
     admin = db.relationship('Admin', backref='processed_payments')
 
     def to_dict(self):
@@ -160,8 +163,10 @@ class Payment(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'user': self.user.to_dict() if self.user else None,
-            'test_id': self.test_id,
-            'test': self.test.to_dict() if self.test else None,
+            'subject_id': self.subject_id,
+            'subject_name': self.subject.name if self.subject else None,
+            'question_count': self.question_count,
+            'mode': self.mode,
             'amount': self.amount,
             'screenshot_file_id': self.screenshot_file_id,
             'status': self.status,
@@ -177,14 +182,16 @@ class TestAttempt(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    test_id = db.Column(db.Integer, db.ForeignKey('tests.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     payment_id = db.Column(db.Integer, db.ForeignKey('payments.id'), nullable=True)
+    mode = db.Column(db.String(20), default='mixed')
     started_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     finished_at = db.Column(db.DateTime, nullable=True)
     score = db.Column(db.Float, default=0)
     total_questions = db.Column(db.Integer, default=0)
     correct_answers = db.Column(db.Integer, default=0)
 
+    subject = db.relationship('Subject', backref='attempts')
     payment = db.relationship('Payment', backref='attempt')
     answers = db.relationship('AttemptAnswer', backref='attempt', lazy='dynamic')
 
@@ -193,8 +200,9 @@ class TestAttempt(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'user': self.user.to_dict() if self.user else None,
-            'test_id': self.test_id,
-            'test_title': self.test.title if self.test else None,
+            'subject_id': self.subject_id,
+            'subject_name': self.subject.name if self.subject else None,
+            'mode': self.mode,
             'started_at': self.started_at.isoformat() if self.started_at else None,
             'finished_at': self.finished_at.isoformat() if self.finished_at else None,
             'score': self.score,
@@ -209,7 +217,7 @@ class AttemptAnswer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     attempt_id = db.Column(db.Integer, db.ForeignKey('test_attempts.id'), nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
-    selected_option = db.Column(db.String(1), nullable=True)  # A, B, C, D
+    selected_option = db.Column(db.String(1), nullable=True)
     is_correct = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
@@ -232,7 +240,7 @@ class Notification(db.Model):
     admin_id = db.Column(db.Integer, db.ForeignKey('admins.id'), nullable=True)
     title = db.Column(db.String(200), nullable=False)
     message = db.Column(db.Text, nullable=False)
-    type = db.Column(db.String(50), default='info')  # info, payment, test, system
+    type = db.Column(db.String(50), default='info')
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
