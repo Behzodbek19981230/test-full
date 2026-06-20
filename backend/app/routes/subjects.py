@@ -40,6 +40,7 @@ def create_subject():
         name=data['name'],
         description=data.get('description', ''),
         icon=data.get('icon', '📚'),
+        price_per_question=data.get('price_per_question', 500),
     )
     db.session.add(subject)
     db.session.commit()
@@ -61,6 +62,8 @@ def update_subject(subject_id):
     subject.description = data.get('description', subject.description)
     subject.icon = data.get('icon', subject.icon)
     subject.is_active = data.get('is_active', subject.is_active)
+    if 'price_per_question' in data:
+        subject.price_per_question = data['price_per_question']
     db.session.commit()
 
     AuditLog.log(admin_id, 'update', 'subject', subject.id,

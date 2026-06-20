@@ -8,8 +8,9 @@ from telegram.ext import (
 )
 from app.bot.handlers import (
     start, help_cmd,
-    subjects_menu, subject_tests, test_detail,
-    buy_test, handle_screenshot,
+    subjects_menu, subject_detail, select_mode,
+    handle_count_button, handle_count_text,
+    handle_screenshot,
     my_tests, start_test, handle_answer,
     my_results,
     cancel,
@@ -29,6 +30,7 @@ def run_bot(flask_app):
     application = Application.builder().token(token).build()
     application.bot_data['flask_app'] = flask_app
 
+    # Test ishlash conversation
     test_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(start_test, pattern=r'^start_test_\d+$')],
         states={
@@ -38,12 +40,16 @@ def run_bot(flask_app):
         per_message=False,
     )
 
-    payment_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(buy_test, pattern=r'^buy_\d+$')],
+    # Sotib olish conversation: rejim → son → to'lov → screenshot
+    buy_conv = ConversationHandler(
+        entry_points=[CallbackQueryHandler(select_mode, pattern=r'^mode_\d+_(mixed|topics)$')],
         states={
+            States.WAITING_COUNT: [
+                CallbackQueryHandler(handle_count_button, pattern=r'^count_\d+$'),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_count_text),
+            ],
             States.WAITING_SCREENSHOT: [
                 MessageHandler(filters.PHOTO, handle_screenshot),
-                CommandHandler('cancel', cancel),
             ],
         },
         fallbacks=[CommandHandler('cancel', cancel)],
@@ -56,12 +62,11 @@ def run_bot(flask_app):
     application.add_handler(CommandHandler('testlarim', my_tests))
     application.add_handler(CommandHandler('natijalar', my_results))
 
-    application.add_handler(payment_conv)
+    application.add_handler(buy_conv)
     application.add_handler(test_conv)
 
     application.add_handler(CallbackQueryHandler(subjects_menu, pattern='^subjects$'))
-    application.add_handler(CallbackQueryHandler(subject_tests, pattern=r'^subject_\d+$'))
-    application.add_handler(CallbackQueryHandler(test_detail, pattern=r'^test_\d+$'))
+    application.add_handler(CallbackQueryHandler(subject_detail, pattern=r'^subject_\d+$'))
     application.add_handler(CallbackQueryHandler(my_tests, pattern='^my_tests$'))
 
     application.run_polling(drop_pending_updates=True)

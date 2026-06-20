@@ -4,7 +4,7 @@ interface Column<T> {
   key: string
   header: string
   width?: number | string
-  render: (item: T) => ReactNode
+  render: (item: T, index: number) => ReactNode
 }
 
 interface TableProps<T> {
@@ -37,10 +37,10 @@ export default function Table<T>({ columns, data, keyField, emptyIcon, emptyText
               </td>
             </tr>
           ) : (
-            data.map(item => (
+            data.map((item, index) => (
               <tr key={String(item[keyField])}>
                 {columns.map(col => (
-                  <td key={col.key}>{col.render(item)}</td>
+                  <td key={col.key}>{col.render(item, index)}</td>
                 ))}
               </tr>
             ))

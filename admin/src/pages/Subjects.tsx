@@ -22,15 +22,17 @@ interface Subject {
 	name: string;
 	description: string;
 	icon: string;
+	price_per_question: number;
 	is_active: boolean;
-	test_count: number;
+	topic_count: number;
+	question_count: number;
 }
 
 export default function Subjects() {
 	const [subjects, setSubjects] = useState<Subject[]>([]);
 	const [showModal, setShowModal] = useState(false);
 	const [editing, setEditing] = useState<Subject | null>(null);
-	const [form, setForm] = useState({ name: '', description: '', icon: '📚' });
+	const [form, setForm] = useState({ name: '', description: '', icon: '📚', price_per_question: 500 });
 
 	const load = () => api.get('/subjects/all').then((r) => setSubjects(r.data));
 	useEffect(() => {
@@ -39,12 +41,12 @@ export default function Subjects() {
 
 	const openCreate = () => {
 		setEditing(null);
-		setForm({ name: '', description: '', icon: '📚' });
+		setForm({ name: '', description: '', icon: '📚', price_per_question: 500 });
 		setShowModal(true);
 	};
 	const openEdit = (s: Subject) => {
 		setEditing(s);
-		setForm({ name: s.name, description: s.description || '', icon: s.icon });
+		setForm({ name: s.name, description: s.description || '', icon: s.icon, price_per_question: s.price_per_question });
 		setShowModal(true);
 	};
 
@@ -110,9 +112,14 @@ export default function Subjects() {
 								render: (s) => <span style={{ color: 'var(--text-500)' }}>{s.description || '—'}</span>,
 							},
 							{
-								key: 'tests',
-								header: 'Testlar',
-								render: (s) => <Badge variant='purple'>{s.test_count}</Badge>,
+								key: 'stats',
+								header: 'Bazasi',
+								render: (s) => <><Badge variant='purple'>{s.topic_count} mavzu</Badge>{' '}<Badge variant='info'>{s.question_count} savol</Badge></>,
+							},
+							{
+								key: 'price',
+								header: 'Narxi',
+								render: (s) => <span style={{ fontWeight: 600, color: 'var(--warning)' }}>{s.price_per_question.toLocaleString()} so'm</span>,
 							},
 							{
 								key: 'status',
@@ -172,13 +179,22 @@ export default function Subjects() {
 				}
 			>
 				<form id='subject-form' onSubmit={handleSubmit}>
-					<Input
-						label='Fan nomi'
-						value={form.name}
-						onChange={(e) => setForm({ ...form, name: e.target.value })}
-						placeholder='Matematika'
-						required
-					/>
+					<div className='grid-2'>
+						<Input
+							label='Fan nomi'
+							value={form.name}
+							onChange={(e) => setForm({ ...form, name: e.target.value })}
+							placeholder='Matematika'
+							required
+						/>
+						<Input
+							label="1 ta test narxi (so'm)"
+							type='number'
+							value={form.price_per_question}
+							onChange={(e) => setForm({ ...form, price_per_question: +e.target.value })}
+							required
+						/>
+					</div>
 					<Textarea
 						label='Tavsif'
 						value={form.description}

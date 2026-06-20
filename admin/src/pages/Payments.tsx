@@ -8,7 +8,9 @@ import Table from '../components/ui/Table'
 interface Payment {
   id: number
   user: { full_name: string; username: string; telegram_id: number }
-  test: { title: string }
+  subject_name: string
+  question_count: number
+  mode: string
   amount: number; screenshot_file_id: string; status: string; admin_note: string; created_at: string
 }
 
@@ -76,7 +78,7 @@ export default function Payments() {
               { key: 'user', header: 'Foydalanuvchi', render: p => (
                 <><div className="td-main">{p.user?.full_name}</div><div className="td-sub">@{p.user?.username || 'noma\'lum'}</div></>
               )},
-              { key: 'test', header: 'Test', render: p => p.test?.title },
+              { key: 'test', header: 'Test', render: p => `${p.subject_name} (${p.question_count} ta, ${p.mode === 'mixed' ? 'aralash' : 'mavzuli'})` },
               { key: 'amount', header: 'Summa', render: p => <strong>{p.amount.toLocaleString()} so'm</strong> },
               { key: 'status', header: 'Holat', render: p => statusBadge(p.status) },
               { key: 'date', header: 'Sana', render: p => <span style={{ fontSize: 13, color: 'var(--text-500)' }}>{new Date(p.created_at).toLocaleString('uz-UZ')}</span> },
@@ -103,8 +105,9 @@ export default function Payments() {
               <div className="td-sub">@{selected.user?.username} | TG: {selected.user?.telegram_id}</div>
             </div>
             <div className="ui-detail-item">
-              <div className="ui-detail-label">Test</div>
-              <div className="ui-detail-value">{selected.test?.title}</div>
+              <div className="ui-detail-label">Fan / Test</div>
+              <div className="ui-detail-value">{selected.subject_name}</div>
+              <div className="td-sub">{selected.question_count} ta · {selected.mode === 'mixed' ? 'Aralash' : 'Mavzulashtirilgan'}</div>
             </div>
             <div className="ui-detail-item">
               <div className="ui-detail-label">Summa</div>

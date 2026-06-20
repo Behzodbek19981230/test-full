@@ -52,7 +52,7 @@ def approve_payment(payment_id):
         user_id=payment.user_id,
         admin_id=admin_id,
         title='To\'lov tasdiqlandi',
-        message=f'"{payment.test.title}" testi uchun to\'lovingiz tasdiqlandi. Endi testni boshlashingiz mumkin!',
+        message=f'"{payment.subject.name}" fani uchun {payment.question_count} ta test to\'lovingiz tasdiqlandi. Botda testni boshlashingiz mumkin!',
         type='payment',
     )
     db.session.add(notification)
@@ -84,7 +84,7 @@ def reject_payment(payment_id):
         user_id=payment.user_id,
         admin_id=admin_id,
         title='To\'lov rad etildi',
-        message=f'"{payment.test.title}" testi uchun to\'lovingiz rad etildi. Sabab: {payment.admin_note}',
+        message=f'"{payment.subject.name}" fani uchun to\'lovingiz rad etildi. Sabab: {payment.admin_note}',
         type='payment',
     )
     db.session.add(notification)

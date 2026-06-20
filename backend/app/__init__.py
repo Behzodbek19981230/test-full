@@ -22,10 +22,10 @@ def create_app(config_class=Config):
     CORS(app, origins=["http://localhost:3000", "http://localhost:5173"])
     socketio.init_app(app)
 
-    from app.routes import auth, subjects, tests, payments, stats, users, audit
+    from app.routes import auth, subjects, topics, payments, stats, users, audit
     app.register_blueprint(auth.bp)
     app.register_blueprint(subjects.bp)
-    app.register_blueprint(tests.bp)
+    app.register_blueprint(topics.bp)
     app.register_blueprint(payments.bp)
     app.register_blueprint(stats.bp)
     app.register_blueprint(users.bp)
