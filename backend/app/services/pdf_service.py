@@ -63,10 +63,10 @@ class TestPDF(FPDF):
         self.set_text_color(210, 210, 210)
         wm_text = "Test Market"
         tw = self.get_string_width(wm_text)
-        step_x = tw + 60
-        step_y = 60
-        for row in range(-2, 8):
-            for col in range(-2, 8):
+        step_x = tw + 30
+        step_y = 50
+        for row in range(-4, 10):
+            for col in range(-4, 10):
                 cx = col * step_x + (row % 2) * (step_x / 2)
                 cy = row * step_y + 30
                 with self.rotation(35, cx, cy):
@@ -95,7 +95,8 @@ class TestPDF(FPDF):
         self.set_y(-self.MARGIN + 5)
         self.set_font(self.fn, "", 8)
         self.set_text_color(140, 140, 140)
-        self.cell(0, 5, str(self.page_no()), align="C")
+        self.cell(0, 5, "https://test-market.uz", align="L")
+        self.cell(0, 5, str(self.page_no()), align="R")
         self.set_text_color(0, 0, 0)
 
     def questions_two_col(self, questions):
