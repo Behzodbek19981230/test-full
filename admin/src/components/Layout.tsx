@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import api from '../api'
 import {
   IconLayoutDashboard, IconCreditCard, IconBooks, IconClipboardCheck,
-  IconUsers, IconBell, IconFileText, IconLogout, IconSchool
+  IconUsers, IconBell, IconFileText, IconLogout, IconSchool, IconSend
 } from '@tabler/icons-react'
 
 export default function Layout() {
@@ -24,6 +24,7 @@ export default function Layout() {
     { section: 'Asosiy', items: [
       { to: '/', icon: IconLayoutDashboard, label: 'Dashboard', end: true },
       { to: '/payments', icon: IconCreditCard, label: 'To\'lovlar', badge: pendingCount || undefined },
+      { to: '/variants', icon: IconSend, label: 'Variantlar' },
     ]},
     { section: 'Kontent', items: [
       { to: '/subjects', icon: IconBooks, label: 'Fanlar' },

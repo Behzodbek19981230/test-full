@@ -1,4 +1,2 @@
 class States:
-    WAITING_COUNT = 1
-    WAITING_SCREENSHOT = 2
-    ANSWERING = 3
+    WAITING_SCREENSHOT = 1

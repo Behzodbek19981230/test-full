@@ -2,7 +2,8 @@ import threading
 from sqlalchemy.orm import Session
 from app.models.payment import Payment
 from app.models.notification import Notification
-from app.services.pdf_service import generate_test_pdf, send_pdf_to_telegram
+from app.models.variant import TestVariant
+from app.services.pdf_service import generate_and_send
 
 
 def _to_dict(p: Payment) -> dict:
@@ -59,18 +60,25 @@ def approve(db: Session, payment_id: int, admin_id: int, note: str = "") -> dict
     db.commit()
     db.refresh(p)
 
-    telegram_id = p.user.telegram_id if p.user else None
-    subject_name = p.subject.name if p.subject else "Test"
-    subject_id = p.subject_id
-    question_count = p.question_count
-    mode = p.mode
+    variant = TestVariant(
+        payment_id=p.id, user_id=p.user_id, subject_id=p.subject_id,
+        question_count=p.question_count, status="pending",
+    )
+    db.add(variant)
+    db.commit()
+    db.refresh(variant)
 
+    telegram_id = p.user.telegram_id if p.user else None
     if telegram_id:
-        def _send():
-            pdf_bytes = generate_test_pdf(subject_name, subject_id, question_count, mode)
-            if pdf_bytes:
-                send_pdf_to_telegram(telegram_id, pdf_bytes, subject_name, question_count)
-        threading.Thread(target=_send, daemon=True).start()
+        vid = variant.id
+        subject_name = p.subject.name if p.subject else "Test"
+        subject_id = p.subject_id
+        question_count = p.question_count
+        threading.Thread(
+            target=generate_and_send,
+            args=(vid, telegram_id, subject_name, subject_id, question_count),
+            daemon=True,
+        ).start()
 
     return _to_dict(p)
 

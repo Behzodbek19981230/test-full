@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import Subjects from './pages/Subjects'
 import { TestSubjects, TestTopics, TestQuestions, QuestionForm, ImportDocx } from './pages/tests'
 import Payments from './pages/Payments'
+import Variants from './pages/Variants'
 import Users from './pages/Users'
 import AuditLogs from './pages/AuditLogs'
 import Notifications from './pages/Notifications'
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="tests/:subjectId/:topicId/import" element={<ImportDocx />} />
         <Route path="tests/:subjectId/:topicId/:questionId/edit" element={<QuestionForm />} />
         <Route path="payments" element={<Payments />} />
+        <Route path="variants" element={<Variants />} />
         <Route path="users" element={<Users />} />
         <Route path="audit" element={<AuditLogs />} />
         <Route path="notifications" element={<Notifications />} />
