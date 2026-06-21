@@ -4,6 +4,7 @@ import math
 import os
 import random
 import re
+import sys
 import traceback
 import requests
 from datetime import datetime, timezone
@@ -24,60 +25,88 @@ def _strip_html(text: str) -> str:
 
 
 class TestPDF(FPDF):
+    MARGIN = 10
+    FONT_SIZE = 12
+    LINE_H = 4.5
+    GAP = 6
+
     def __init__(self, subject_name: str, variant_id: int):
         super().__init__()
         self.subject_name = subject_name
         self.variant_id = variant_id
+        self.set_margins(self.MARGIN, self.MARGIN, self.MARGIN)
 
         font_dir = os.path.join(os.path.dirname(__file__), "fonts")
-        font_path = os.path.join(font_dir, "DejaVuSans.ttf")
-        bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
 
-        if os.path.exists(font_path):
-            self.add_font("DJ", "", font_path, uni=True)
-            self.add_font("DJ", "B", bold_path, uni=True)
-        else:
-            self.add_font("DJ", "", uni=True)
-            self.add_font("DJ", "B", uni=True)
+        tnr = os.path.join(font_dir, "TimesNewRoman.ttf")
+        tnr_b = os.path.join(font_dir, "TimesNewRoman-Bold.ttf")
+        sans = os.path.join(font_dir, "DejaVuSans.ttf")
+        sans_b = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
+
+        if os.path.exists(tnr):
+            self.add_font("TNR", "", tnr, uni=True)
+            self.add_font("TNR", "B", tnr_b, uni=True)
+        if os.path.exists(sans):
+            self.add_font("Sans", "", sans, uni=True)
+            self.add_font("Sans", "B", sans_b, uni=True)
+
+        self.fn = "TNR" if os.path.exists(tnr) else "Sans"
+        self.fn_wm = "Sans" if os.path.exists(sans) else self.fn
 
     def _watermark(self):
-        self.set_font("DJ", "B", 54)
-        self.set_text_color(220, 220, 220)
-        cx = self.w / 2
-        cy = self.h / 2
-        with self.rotation(45, cx, cy):
-            tw = self.get_string_width("TEST MARKET")
-            self.set_xy(cx - tw / 2, cy - 10)
-            self.cell(tw, 20, "TEST MARKET")
+        save_x, save_y = self.get_x(), self.get_y()
+        save_font_family = self.font_family
+        save_font_size = self.font_size_pt
+        save_font_style = self.font_style
+
+        self.set_font(self.fn_wm, "", 13)
+        self.set_text_color(210, 210, 210)
+        wm_text = "Test Market"
+        tw = self.get_string_width(wm_text)
+        step_x = tw + 60
+        step_y = 60
+        for row in range(-2, 8):
+            for col in range(-2, 8):
+                cx = col * step_x + (row % 2) * (step_x / 2)
+                cy = row * step_y + 30
+                with self.rotation(35, cx, cy):
+                    self.set_xy(cx - tw / 2, cy - 5)
+                    self.cell(tw, 10, wm_text)
+
         self.set_text_color(0, 0, 0)
+        self.set_font(save_font_family or self.fn, save_font_style, save_font_size)
+        self.set_xy(save_x, save_y)
 
     def header(self):
         self._watermark()
-        self.set_font("DJ", "B", 9)
-        self.cell(0, 5, f"{self.subject_name}", align="L", new_x="LMARGIN")
-        self.set_font("DJ", "", 8)
-        self.cell(0, 5, f"Variant #{self.variant_id}", align="R", ln=True)
-        self.set_draw_color(180, 180, 180)
-        self.line(10, self.get_y(), self.w - 10, self.get_y())
-        self.ln(2)
+        m = self.MARGIN
+        self.set_xy(m, m)
+        self.set_font(self.fn, "B", 10)
         self.set_text_color(0, 0, 0)
+        self.cell(0, 5, self.subject_name, align="L", new_x="LMARGIN")
+        self.set_font(self.fn, "", 9)
+        self.cell(0, 5, f"Variant #{self.variant_id}", align="R", ln=True)
+        self.set_draw_color(160, 160, 160)
+        y = self.get_y() + 1
+        self.line(m, y, self.w - m, y)
+        self.set_y(y + 3)
 
     def footer(self):
-        self.set_y(-10)
-        self.set_font("DJ", "", 7)
-        self.set_text_color(150, 150, 150)
+        self.set_y(-self.MARGIN + 5)
+        self.set_font(self.fn, "", 8)
+        self.set_text_color(140, 140, 140)
         self.cell(0, 5, str(self.page_no()), align="C")
         self.set_text_color(0, 0, 0)
 
     def questions_two_col(self, questions):
         self.add_page()
-
-        col_w = (self.w - 20 - 6) / 2
-        col_x = [10, 10 + col_w + 6]
+        m = self.MARGIN
+        content_w = self.w - 2 * m
+        col_w = (content_w - self.GAP) / 2
+        col_x = [m, m + col_w + self.GAP]
         col = 0
         y_start = self.get_y()
-        max_y = self.h - 14
-        self.set_y(y_start)
+        max_y = self.h - m - 5
 
         for i, q in enumerate(questions, 1):
             q_text = _strip_html(q.question_text)
@@ -85,7 +114,7 @@ class TestPDF(FPDF):
             for letter, opt in [("A", q.option_a), ("B", q.option_b), ("C", q.option_c), ("D", q.option_d)]:
                 options.append(f"{letter}) {_strip_html(opt) or '-'}")
 
-            needed = self._estimate_height(i, q_text, options, col_w)
+            needed = self._estimate_height(q_text, options, col_w)
 
             if self.get_y() + needed > max_y:
                 if col == 0:
@@ -98,25 +127,23 @@ class TestPDF(FPDF):
 
             self._draw_question(i, q_text, options, col_x[col], col_w)
 
-        mid_x = 10 + col_w + 3
+        mid_x = m + col_w + self.GAP / 2
         for p in range(1, self.pages_count + 1):
             self.page = p
-            self.set_draw_color(200, 200, 200)
-            self.line(mid_x, 8, mid_x, self.h - 10)
+            self.set_draw_color(190, 190, 190)
+            self.line(mid_x, m, mid_x, self.h - m)
         self.page = self.pages_count
 
-    def _estimate_height(self, num, q_text, options, col_w):
+    def _estimate_height(self, q_text, options, col_w):
         h = 0
-        self.set_font("DJ", "B", 8.5)
-        text_w = col_w - 2
-        lines = self._count_lines(f"{num}. " + q_text, text_w)
-        h += lines * 4.2 + 1.5
+        self.set_font(self.fn, "", self.FONT_SIZE)
+        lines = self._count_lines(q_text, col_w)
+        h += lines * self.LINE_H + 1
 
-        self.set_font("DJ", "", 8)
+        self.set_font(self.fn, "", self.FONT_SIZE)
         for opt in options:
-            opt_lines = self._count_lines("  " + opt, text_w)
-            h += opt_lines * 3.8
-        h += 4
+            h += self._count_lines(opt, col_w - 5) * self.LINE_H
+        h += 3
         return h
 
     def _count_lines(self, text, width):
@@ -129,16 +156,16 @@ class TestPDF(FPDF):
 
     def _draw_question(self, num, q_text, options, x, col_w):
         self.set_x(x)
-        self.set_font("DJ", "B", 8.5)
-        self.multi_cell(col_w, 4.2, f"{num}. {q_text}")
+        self.set_font(self.fn, "", self.FONT_SIZE)
+        self.multi_cell(col_w, self.LINE_H, f"{num}. {q_text}")
         self.ln(0.5)
 
-        self.set_font("DJ", "", 8)
+        self.set_font(self.fn, "", self.FONT_SIZE)
         for opt in options:
-            self.set_x(x + 3)
-            self.multi_cell(col_w - 3, 3.8, opt)
+            self.set_x(x + 5)
+            self.multi_cell(col_w - 5, self.LINE_H, opt)
 
-        self.ln(3)
+        self.ln(2.5)
 
 
 def generate_and_send(variant_id: int, telegram_id: int, subject_name: str, subject_id: int, question_count: int):
@@ -146,36 +173,36 @@ def generate_and_send(variant_id: int, telegram_id: int, subject_name: str, subj
     try:
         variant = db.query(TestVariant).filter(TestVariant.id == variant_id).first()
         if not variant:
-            logger.error(f"Variant #{variant_id} topilmadi")
+            sys.stdout.write(f"Variant #{variant_id} topilmadi")
             return
 
-        logger.info(f"Variant #{variant_id}: PDF generatsiya boshlanmoqda ({subject_name}, {question_count} ta)")
+        sys.stdout.write(f"Variant #{variant_id}: PDF generatsiya boshlanmoqda ({subject_name}, {question_count} ta)")
 
         pdf_bytes, error = _generate_pdf(db, subject_name, subject_id, question_count, variant_id)
         if not pdf_bytes:
             err = error or "Savollar topilmadi"
-            logger.error(f"Variant #{variant_id}: {err}")
+            sys.stdout.write(f"Variant #{variant_id}: {err}")
             variant.status = "failed"
             variant.error_log = err
             db.commit()
             return
 
-        logger.info(f"Variant #{variant_id}: PDF tayyor ({len(pdf_bytes)} bytes), Telegramga yuborilmoqda...")
+        sys.stdout.write(f"Variant #{variant_id}: PDF tayyor ({len(pdf_bytes)} bytes), Telegramga yuborilmoqda...")
 
         success, err_msg = _send_to_telegram(telegram_id, pdf_bytes, subject_name, question_count, variant_id)
         variant.status = "sent" if success else "failed"
         if success:
             variant.sent_at = datetime.now(timezone.utc)
             variant.error_log = None
-            logger.info(f"Variant #{variant_id}: Muvaffaqiyatli yuborildi (telegram_id={telegram_id})")
+            sys.stdout.write(f"Variant #{variant_id}: Muvaffaqiyatli yuborildi (telegram_id={telegram_id})")
         else:
             variant.error_log = err_msg
-            logger.error(f"Variant #{variant_id}: Yuborishda xato — {err_msg}")
+            sys.stdout.write(f"Variant #{variant_id}: Yuborishda xato — {err_msg}")
         db.commit()
 
     except Exception as e:
         err = traceback.format_exc()
-        logger.error(f"Variant #{variant_id}: Kutilmagan xato — {err}")
+        sys.stdout.write(f"Variant #{variant_id}: Kutilmagan xato — {err}")
         try:
             variant = db.query(TestVariant).filter(TestVariant.id == variant_id).first()
             if variant:
