@@ -1,12 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+import os
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_admin
 from app.schemas.topic import TopicCreate, TopicUpdate, QuestionCreate, QuestionUpdate, BulkQuestionsCreate
 from app.services import topic_service, audit_service
 from app.models.admin import Admin
+from app.config import get_settings
 
 router = APIRouter(prefix="/topics", tags=["topics"])
+
+ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "svg"}
 
 
 @router.get("")
@@ -84,3 +90,63 @@ def delete_question(question_id: int, request: Request, db: Session = Depends(ge
         raise HTTPException(status_code=404, detail="Savol topilmadi")
     audit_service.log_action(db, admin.id, "delete", "question", question_id, f"Savol o'chirildi #{question_id}", request.client.host)
     return {"message": "Savol o'chirildi"}
+
+
+@router.get("/import-template")
+def download_template(admin: Admin = Depends(get_current_admin)):
+    template_path = os.path.join(get_settings().UPLOAD_DIR, "test_shablon.docx")
+    if not os.path.isfile(template_path):
+        raise HTTPException(status_code=404, detail="Shablon topilmadi")
+    return FileResponse(template_path, filename="test_shablon.docx", media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+
+@router.post("/{topic_id}/import-docx")
+async def import_from_docx(topic_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+    if not file.filename or not file.filename.endswith('.docx'):
+        raise HTTPException(status_code=400, detail="Faqat .docx formatdagi fayllar qabul qilinadi")
+
+    from app.services.docx_parser import parse_docx
+    content = await file.read()
+    upload_dir = get_settings().UPLOAD_DIR
+
+    try:
+        questions = parse_docx(content, upload_dir)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Faylni o'qishda xatolik: {str(e)}")
+
+    if not questions:
+        raise HTTPException(status_code=400, detail="Fayldan savollar topilmadi. Shablon formatini tekshiring.")
+
+    return {"questions": questions, "count": len(questions)}
+
+
+@router.post("/{topic_id}/import-docx/save")
+async def save_imported_questions(
+    topic_id: int,
+    body: BulkQuestionsCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    count = topic_service.add_questions_bulk(db, topic_id, [q.model_dump() for q in body.questions])
+    audit_service.log_action(db, admin.id, "import", "question", topic_id, f"Word'dan {count} ta savol import qilindi", request.client.host)
+    return {"added": count}
+
+
+@router.post("/upload-image")
+async def upload_question_image(image: UploadFile = File(...), admin: Admin = Depends(get_current_admin)):
+    ext = image.filename.rsplit(".", 1)[-1].lower() if image.filename and "." in image.filename else ""
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"Ruxsat etilmagan format. Faqat: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}")
+
+    images_dir = os.path.join(get_settings().UPLOAD_DIR, "questions")
+    os.makedirs(images_dir, exist_ok=True)
+
+    filename = f"{uuid.uuid4().hex[:12]}.{ext}"
+    filepath = os.path.join(images_dir, filename)
+
+    content = await image.read()
+    with open(filepath, "wb") as f:
+        f.write(content)
+
+    return {"url": f"/api/uploads/questions/{filename}"}

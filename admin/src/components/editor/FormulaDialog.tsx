@@ -1,0 +1,452 @@
+import { useState, useEffect, useRef } from 'react'
+import katex from 'katex'
+import { IconMath, IconAtom, IconFlask, IconX, IconNumbers, IconLetterA } from '@tabler/icons-react'
+import Button from '../ui/Button'
+
+interface FormulaDialogProps {
+  open: boolean
+  onClose: () => void
+  onInsert: (latex: string) => void
+  initialLatex?: string
+}
+
+type Tab = 'math' | 'physics' | 'chemistry' | 'symbols' | 'greek'
+
+const TEMPLATES: Record<Tab, string[]> = {
+  math: [
+    '\\frac{a}{b}',
+    '\\frac{x+1}{x-1}',
+    '\\frac{d}{dx}f(x)',
+    '\\frac{\\partial f}{\\partial x}',
+    '\\sqrt{x}',
+    '\\sqrt[n]{x}',
+    '\\sqrt[3]{27}',
+    'x^{n}',
+    'x^{2}',
+    'a^{m+n}',
+    'x_{i}',
+    'x_{n+1}',
+    'a_{ij}',
+    '\\sum_{i=1}^{n} x_i',
+    '\\sum_{k=0}^{\\infty} a_k',
+    '\\prod_{i=1}^{n} x_i',
+    '\\int_{a}^{b} f(x)\\,dx',
+    '\\int_{0}^{\\infty} e^{-x}\\,dx',
+    '\\iint_{D} f(x,y)\\,dA',
+    '\\oint_{C} \\vec{F} \\cdot d\\vec{r}',
+    '\\lim_{x \\to \\infty} f(x)',
+    '\\lim_{x \\to 0} \\frac{\\sin x}{x}',
+    '\\lim_{n \\to \\infty} a_n',
+    '\\log_{a} b',
+    '\\ln x',
+    '\\log_{10} x',
+    '\\sin(\\alpha)',
+    '\\cos(\\beta)',
+    '\\tan(\\theta)',
+    '\\cot(\\alpha)',
+    '\\arcsin(x)',
+    '\\arccos(x)',
+    '\\sin^{2}(x) + \\cos^{2}(x) = 1',
+    '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}',
+    '\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}',
+    '\\begin{pmatrix} 1 & 0 & 0 \\\\ 0 & 1 & 0 \\\\ 0 & 0 & 1 \\end{pmatrix}',
+    '\\begin{cases} x + y = 5 \\\\ x - y = 1 \\end{cases}',
+    '\\begin{cases} f(x) = x^2, & x \\geq 0 \\\\ f(x) = -x, & x < 0 \\end{cases}',
+    '|x|',
+    '\\|\\vec{a}\\|',
+    '\\vec{a}',
+    '\\vec{AB}',
+    '\\overrightarrow{AB}',
+    '\\overline{AB}',
+    '\\hat{x}',
+    '\\bar{x}',
+    '\\dot{x}',
+    '\\ddot{x}',
+    '\\binom{n}{k}',
+    'C_n^k',
+    'A_n^k',
+    'n!',
+    'a \\cdot b',
+    '\\vec{a} \\times \\vec{b}',
+    '\\angle ABC',
+    '\\triangle ABC',
+    '\\perp',
+    '\\parallel',
+    '\\sim',
+    '\\cong',
+    'f: A \\to B',
+    'f(x) = ax^2 + bx + c',
+    'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
+    '(a+b)^n = \\sum_{k=0}^{n} \\binom{n}{k} a^k b^{n-k}',
+    'e^{i\\pi} + 1 = 0',
+    'a^2 + b^2 = c^2',
+    '\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C}',
+    'S = \\frac{1}{2}ab\\sin C',
+    'S = \\pi r^2',
+    'V = \\frac{4}{3}\\pi r^3',
+    'V = \\pi r^2 h',
+  ],
+  physics: [
+    'v = \\frac{s}{t}',
+    's = v_0 t + \\frac{at^2}{2}',
+    'v = v_0 + at',
+    'v^2 = v_0^2 + 2as',
+    'a = \\frac{\\Delta v}{\\Delta t}',
+    'F = ma',
+    'F = -kx',
+    'F_{тр} = \\mu N',
+    'p = mv',
+    'E_k = \\frac{mv^2}{2}',
+    'E_p = mgh',
+    'A = Fs\\cos\\alpha',
+    'P = \\frac{A}{t}',
+    'P = Fv',
+    'I = \\frac{F}{S}',
+    'T = 2\\pi\\sqrt{\\frac{l}{g}}',
+    'T = 2\\pi\\sqrt{\\frac{m}{k}}',
+    '\\omega = 2\\pi\\nu',
+    'v = \\omega r',
+    'a_c = \\frac{v^2}{r}',
+    'F = G\\frac{m_1 m_2}{r^2}',
+    'g = G\\frac{M}{R^2}',
+    's = \\frac{gt^2}{2}',
+    'I = \\frac{U}{R}',
+    'U = IR',
+    'P = UI',
+    'P = I^2 R',
+    'P = \\frac{U^2}{R}',
+    'R = \\frac{\\rho l}{S}',
+    'R_{\\text{посл}} = R_1 + R_2',
+    '\\frac{1}{R_{\\text{пар}}} = \\frac{1}{R_1} + \\frac{1}{R_2}',
+    'I = \\frac{\\varepsilon}{R + r}',
+    'F = k\\frac{q_1 q_2}{r^2}',
+    'E = \\frac{F}{q}',
+    'C = \\frac{q}{U}',
+    'W = \\frac{CU^2}{2}',
+    'C = \\varepsilon\\varepsilon_0 \\frac{S}{d}',
+    '\\varepsilon = -\\frac{\\Delta\\Phi}{\\Delta t}',
+    '\\Phi = BS\\cos\\alpha',
+    '\\varepsilon = -L\\frac{\\Delta I}{\\Delta t}',
+    '\\lambda = \\frac{v}{\\nu}',
+    'E = h\\nu',
+    'E = mc^2',
+    'E = \\frac{p^2}{2m}',
+    'PV = \\nu RT',
+    'PV = NkT',
+    'E_k = \\frac{3}{2}kT',
+    'Q = mc\\Delta T',
+    'Q = Lm',
+    'Q = \\lambda m',
+    '\\eta = \\frac{A_{\\text{пол}}}{Q_{\\text{зат}}}',
+    '\\eta = 1 - \\frac{T_2}{T_1}',
+    'n = \\frac{\\sin\\alpha}{\\sin\\beta}',
+    '\\frac{1}{F} = \\frac{1}{d} + \\frac{1}{f}',
+    'D = \\frac{1}{F}',
+    'd\\sin\\theta = m\\lambda',
+  ],
+  chemistry: [
+    'H_2O',
+    'H_2SO_4',
+    'HCl',
+    'HNO_3',
+    'H_3PO_4',
+    'H_2CO_3',
+    'HF',
+    'HBr',
+    'NaOH',
+    'KOH',
+    'Ca(OH)_2',
+    'Ba(OH)_2',
+    'Al(OH)_3',
+    'Fe(OH)_3',
+    'NaCl',
+    'KNO_3',
+    'CaCO_3',
+    'Na_2SO_4',
+    'FeSO_4',
+    'CuSO_4',
+    'AgNO_3',
+    'BaCl_2',
+    'CO_2',
+    'SO_2',
+    'SO_3',
+    'NO_2',
+    'N_2O_5',
+    'P_2O_5',
+    'Fe_2O_3',
+    'Al_2O_3',
+    'CaO',
+    'Na_2O',
+    'CH_4',
+    'C_2H_6',
+    'C_2H_4',
+    'C_2H_2',
+    'C_6H_6',
+    'C_2H_5OH',
+    'CH_3OH',
+    'CH_3COOH',
+    'C_6H_{12}O_6',
+    'C_{12}H_{22}O_{11}',
+    'NH_3',
+    'NH_4Cl',
+    '(NH_4)_2SO_4',
+    'KMnO_4',
+    'K_2Cr_2O_7',
+    'Na_2CO_3',
+    '\\rightarrow',
+    '\\rightleftharpoons',
+    '\\xrightarrow{\\Delta}',
+    '\\xrightarrow{t^\\circ}',
+    '\\xrightarrow{\\text{kat}}',
+    '\\xrightarrow{H_2O}',
+    '\\xrightarrow{\\text{эл}}',
+    '\\downarrow',
+    '\\uparrow',
+    '2H_2 + O_2 \\rightarrow 2H_2O',
+    'CaCO_3 \\xrightarrow{\\Delta} CaO + CO_2\\uparrow',
+    'pH = -\\lg[H^+]',
+    'K_a = \\frac{[H^+][A^-]}{[HA]}',
+    'M = \\frac{m}{\\nu}',
+    '\\nu = \\frac{m}{M}',
+    '\\nu = \\frac{N}{N_A}',
+    'C_M = \\frac{\\nu}{V}',
+    'w = \\frac{m_{\\text{в-ва}}}{m_{\\text{р-ра}}}',
+  ],
+  symbols: [
+    '\\neq',
+    '\\approx',
+    '\\equiv',
+    '\\geq',
+    '\\leq',
+    '\\gg',
+    '\\ll',
+    '\\pm',
+    '\\mp',
+    '\\times',
+    '\\div',
+    '\\cdot',
+    '\\infty',
+    '\\propto',
+    '\\sim',
+    '\\simeq',
+    '\\subset',
+    '\\supset',
+    '\\subseteq',
+    '\\supseteq',
+    '\\in',
+    '\\notin',
+    '\\cup',
+    '\\cap',
+    '\\emptyset',
+    '\\forall',
+    '\\exists',
+    '\\nexists',
+    '\\neg',
+    '\\land',
+    '\\lor',
+    '\\Rightarrow',
+    '\\Leftrightarrow',
+    '\\rightarrow',
+    '\\leftarrow',
+    '\\leftrightarrow',
+    '\\uparrow',
+    '\\downarrow',
+    '\\nearrow',
+    '\\searrow',
+    '\\partial',
+    '\\nabla',
+    '\\hbar',
+    '\\ell',
+    '\\Re',
+    '\\Im',
+    '\\aleph',
+    '\\wp',
+    '\\mathbb{N}',
+    '\\mathbb{Z}',
+    '\\mathbb{Q}',
+    '\\mathbb{R}',
+    '\\mathbb{C}',
+    '\\ldots',
+    '\\cdots',
+    '\\vdots',
+    '\\ddots',
+    '\\circ',
+    '\\bullet',
+    '\\star',
+    '\\dagger',
+    '\\oplus',
+    '\\otimes',
+  ],
+  greek: [
+    '\\alpha',
+    '\\beta',
+    '\\gamma',
+    '\\delta',
+    '\\epsilon',
+    '\\varepsilon',
+    '\\zeta',
+    '\\eta',
+    '\\theta',
+    '\\vartheta',
+    '\\iota',
+    '\\kappa',
+    '\\lambda',
+    '\\mu',
+    '\\nu',
+    '\\xi',
+    '\\pi',
+    '\\rho',
+    '\\sigma',
+    '\\tau',
+    '\\upsilon',
+    '\\phi',
+    '\\varphi',
+    '\\chi',
+    '\\psi',
+    '\\omega',
+    '\\Gamma',
+    '\\Delta',
+    '\\Theta',
+    '\\Lambda',
+    '\\Xi',
+    '\\Pi',
+    '\\Sigma',
+    '\\Upsilon',
+    '\\Phi',
+    '\\Psi',
+    '\\Omega',
+  ],
+}
+
+const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
+  { key: 'math', label: 'Matematika', icon: <IconMath size={15} /> },
+  { key: 'physics', label: 'Fizika', icon: <IconAtom size={15} /> },
+  { key: 'chemistry', label: 'Kimyo', icon: <IconFlask size={15} /> },
+  { key: 'symbols', label: 'Belgilar', icon: <IconNumbers size={15} /> },
+  { key: 'greek', label: 'Grek', icon: <IconLetterA size={15} /> },
+]
+
+export default function FormulaDialog({ open, onClose, onInsert, initialLatex = '' }: FormulaDialogProps) {
+  const [latex, setLatex] = useState(initialLatex)
+  const [tab, setTab] = useState<Tab>('math')
+  const previewRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (open) {
+      setLatex(initialLatex)
+      setTimeout(() => inputRef.current?.focus(), 300)
+    }
+  }, [open, initialLatex])
+
+  useEffect(() => {
+    if (previewRef.current && latex.trim()) {
+      try {
+        katex.render(latex, previewRef.current, { throwOnError: false, displayMode: true })
+      } catch {
+        if (previewRef.current) previewRef.current.textContent = latex
+      }
+    } else if (previewRef.current) {
+      previewRef.current.innerHTML = '<span class="fd-preview-placeholder">Formula bu yerda ko\'rinadi</span>'
+    }
+  }, [latex])
+
+  const handleInsert = () => {
+    if (latex.trim()) {
+      onInsert(latex.trim())
+      setLatex('')
+      onClose()
+    }
+  }
+
+  const insertTemplate = (tmpl: string) => {
+    setLatex(prev => {
+      const textarea = inputRef.current
+      if (textarea) {
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+        const newVal = prev.slice(0, start) + tmpl + prev.slice(end)
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + tmpl.length
+          textarea.focus()
+        }, 0)
+        return newVal
+      }
+      return prev ? prev + ' ' + tmpl : tmpl
+    })
+  }
+
+  return (
+    <>
+      <div className={`fd-overlay ${open ? 'fd-overlay--open' : ''}`} onClick={onClose} />
+      <div className={`fd-drawer ${open ? 'fd-drawer--open' : ''}`}>
+        <div className="fd-header">
+          <div className="fd-header__title">
+            <IconMath size={20} />
+            <span>Formula qo'shish</span>
+          </div>
+          <button className="fd-header__close" onClick={onClose}>
+            <IconX size={18} />
+          </button>
+        </div>
+
+        <div className="fd-tabs">
+          {TABS.map(t => (
+            <button
+              key={t.key}
+              className={`fd-tab ${tab === t.key ? 'fd-tab--active' : ''}`}
+              onClick={() => setTab(t.key)}
+            >
+              {t.icon}
+              <span>{t.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="fd-body">
+          <div className="fd-templates">
+            {TEMPLATES[tab].map((tmpl, i) => {
+              const ref = (el: HTMLButtonElement | null) => {
+                if (el && !el.dataset.rendered) {
+                  try {
+                    katex.render(tmpl, el, { throwOnError: false })
+                    el.dataset.rendered = '1'
+                  } catch { /* skip */ }
+                }
+              }
+              return (
+                <button
+                  key={i}
+                  ref={ref}
+                  className="fd-tmpl"
+                  onClick={() => insertTemplate(tmpl)}
+                />
+              )
+            })}
+          </div>
+
+          <div className="fd-section-label">LaTeX kod</div>
+          <textarea
+            ref={inputRef}
+            className="fd-input"
+            value={latex}
+            onChange={e => setLatex(e.target.value)}
+            placeholder="Masalan: \frac{a}{b} yoki H_2O"
+            rows={3}
+            onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) handleInsert() }}
+          />
+
+          <div className="fd-section-label">Ko'rinishi</div>
+          <div className="fd-preview" ref={previewRef} />
+        </div>
+
+        <div className="fd-footer">
+          <Button variant="ghost" onClick={onClose}>Bekor qilish</Button>
+          <Button onClick={handleInsert} disabled={!latex.trim()}>
+            Qo'shish
+          </Button>
+        </div>
+      </div>
+    </>
+  )
+}

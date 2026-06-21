@@ -4,7 +4,7 @@ import Layout from './components/Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Subjects from './pages/Subjects'
-import Tests from './pages/Tests'
+import { TestSubjects, TestTopics, TestQuestions, QuestionForm, ImportDocx } from './pages/tests'
 import Payments from './pages/Payments'
 import Users from './pages/Users'
 import AuditLogs from './pages/AuditLogs'
@@ -24,7 +24,12 @@ export default function App() {
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="subjects" element={<Subjects />} />
-        <Route path="tests" element={<Tests />} />
+        <Route path="tests" element={<TestSubjects />} />
+        <Route path="tests/:subjectId" element={<TestTopics />} />
+        <Route path="tests/:subjectId/:topicId" element={<TestQuestions />} />
+        <Route path="tests/:subjectId/:topicId/new" element={<QuestionForm />} />
+        <Route path="tests/:subjectId/:topicId/import" element={<ImportDocx />} />
+        <Route path="tests/:subjectId/:topicId/:questionId/edit" element={<QuestionForm />} />
         <Route path="payments" element={<Payments />} />
         <Route path="users" element={<Users />} />
         <Route path="audit" element={<AuditLogs />} />
