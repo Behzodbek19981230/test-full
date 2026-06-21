@@ -39,9 +39,6 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
               <h3 className="relative text-base font-bold text-slate-50 mb-2 leading-snug">{s.name}</h3>
               <div className="relative flex flex-col items-center gap-1 text-[13px] text-slate-500">
                 <span>{s.question_count} savol</span>
-                <span className="font-semibold text-accent">
-                  {s.price_per_question.toLocaleString()} so&apos;m/test
-                </span>
               </div>
             </button>
           ))}
