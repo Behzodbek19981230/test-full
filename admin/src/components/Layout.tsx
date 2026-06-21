@@ -42,7 +42,7 @@ export default function Layout() {
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <div className="sidebar-logo-icon"><IconSchool size={18} /></div>
-            TestFull
+            Test Market
           </div>
         </div>
 

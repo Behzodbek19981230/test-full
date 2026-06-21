@@ -16,7 +16,7 @@ export default function Features() {
       <Container>
         <SectionHeader
           label={<><IconTarget size={16} /> Imkoniyatlar</>}
-          title="Nima Uchun TestFull?"
+          title="Nima Uchun Test Market?"
           desc="Eng qulay va samarali tayyorlanish muhitini taqdim etamiz"
         />
 

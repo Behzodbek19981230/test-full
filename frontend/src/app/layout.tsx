@@ -3,7 +3,7 @@ import Providers from '@/components/Providers'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'TestFull — DTM va Attestatsiyaga Tayyorlanish Platformasi',
+  title: 'Test Market — DTM va Attestatsiyaga Tayyorlanish Platformasi',
   description: 'Abituriyent, o\'qituvchi va o\'quvchilar uchun DTM va attestatsiyaga tayyorlanish uchun sinov va blok testlar platformasi',
 }
 

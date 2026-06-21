@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     TELEGRAM_PAYMENT_CARD: str = "8600-XXXX-XXXX-XXXX"
     TELEGRAM_CARD_HOLDER: str = "ISM FAMILIYA"
 
+    GOOGLE_CLIENT_ID: str = ""
+
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "admin123"
 

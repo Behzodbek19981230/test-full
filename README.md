@@ -1,4 +1,4 @@
-# TestFull — DTM va Attestatsiyaga Tayyorlanish Platformasi
+# Test Market — DTM va Attestatsiyaga Tayyorlanish Platformasi
 
 Abituriyent, o'qituvchi va o'quvchilar uchun DTM va attestatsiyaga tayyorlanish uchun sinov va blok testlar platformasi.
 
@@ -26,7 +26,7 @@ copy .env.example .env
 # .env ichida TELEGRAM_BOT_TOKEN va boshqa sozlamalarni kiriting
 
 # PostgreSQL bazani yarating
-createdb testfull
+createdb test_market
 
 # Ishga tushiring
 python run.py

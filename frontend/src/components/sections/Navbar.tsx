@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { IconSchool, IconBrandTelegram, IconMenu2, IconX } from '@tabler/icons-react'
-import { LinkButton, Container } from '../ui'
-
-const BOT_URL = 'https://t.me/test_market_uzbot'
+import Link from 'next/link'
+import { IconSchool, IconMenu2, IconX, IconLogin, IconLogout } from '@tabler/icons-react'
+import { Container } from '../ui'
+import { useAuth } from '@/context/AuthContext'
 
 const links = [
   { href: '#fanlar', label: 'Fanlar' },
@@ -15,6 +15,7 @@ const links = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const { user, loading, logout } = useAuth()
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20)
@@ -30,7 +31,7 @@ export default function Navbar() {
             <div className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white">
               <IconSchool size={20} />
             </div>
-            <span className="bg-gradient-to-br from-slate-50 to-slate-300 bg-clip-text text-transparent">TestFull</span>
+            <span className="bg-gradient-to-br from-slate-50 to-slate-300 bg-clip-text text-transparent">Test Market</span>
           </a>
 
           <ul className="hidden md:flex items-center gap-2">
@@ -44,9 +45,38 @@ export default function Navbar() {
           </ul>
 
           <div className="flex items-center gap-3">
-            <LinkButton href={BOT_URL} target="_blank" rel="noopener noreferrer">
-              <IconBrandTelegram size={18} /> Boshlash
-            </LinkButton>
+            {!loading && (
+              user ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-sm font-bold">
+                        {user.full_name.charAt(0)}
+                      </div>
+                    )}
+                    <span className="hidden sm:block text-sm font-medium text-slate-200 max-w-[120px] truncate">
+                      {user.full_name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={logout}
+                    className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                    title="Chiqish"
+                  >
+                    <IconLogout size={18} />
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all"
+                >
+                  <IconLogin size={16} /> Kirish
+                </Link>
+              )
+            )}
             <button className="md:hidden text-slate-200 p-2" onClick={() => setOpen(!open)}>
               {open ? <IconX size={24} /> : <IconMenu2 size={24} />}
             </button>

@@ -10,7 +10,7 @@ from app.services.auth_service import ensure_default_admin
 def create_app() -> FastAPI:
     settings = get_settings()
 
-    application = FastAPI(title="TestFull API", docs_url="/api/docs", redoc_url=None)
+    application = FastAPI(title="Test Market API", docs_url="/api/docs", redoc_url=None)
 
     application.add_middleware(
         CORSMiddleware,

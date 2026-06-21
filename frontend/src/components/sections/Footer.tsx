@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className="py-10 border-t border-white/[0.04]">
       <Container>
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <span className="text-sm text-slate-600">&copy; 2024 TestFull. Barcha huquqlar himoyalangan.</span>
+          <span className="text-sm text-slate-600">&copy; 2024 Test Market. Barcha huquqlar himoyalangan.</span>
           <div className="flex gap-6">
             <a href={BOT_URL} target="_blank" rel="noopener noreferrer" className="text-sm text-slate-500 hover:text-slate-200 transition-colors">Telegram Bot</a>
             <a href="#fanlar" className="text-sm text-slate-500 hover:text-slate-200 transition-colors">Fanlar</a>

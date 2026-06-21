@@ -14,7 +14,7 @@ export default function CTA() {
               Hoziroq Tayyorlanishni Boshlang!
             </h2>
             <p className="text-[17px] text-slate-400 max-w-[480px] mx-auto mb-9 leading-relaxed">
-              Minglab abituriyentlar TestFull platformasidan foydalanib, DTMga muvaffaqiyatli tayyorlanmoqda
+              Minglab abituriyentlar Test Market platformasidan foydalanib, DTMga muvaffaqiyatli tayyorlanmoqda
             </p>
             <div className="flex justify-center gap-3 max-sm:flex-col max-sm:items-center">
               <LinkButton href={BOT_URL} target="_blank" rel="noopener noreferrer" size="lg">

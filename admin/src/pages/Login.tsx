@@ -31,7 +31,7 @@ export default function Login() {
       <form className="login-box" onSubmit={handleSubmit}>
         <div className="login-header">
           <div className="login-logo"><IconSchool size={24} /></div>
-          <h1>TestFull</h1>
+          <h1>Test Market</h1>
           <p>Admin paneliga kirish</p>
         </div>
 

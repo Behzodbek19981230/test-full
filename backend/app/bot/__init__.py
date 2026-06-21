@@ -1,4 +1,3 @@
-import os
 import asyncio
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
@@ -10,10 +9,11 @@ from app.bot.handlers import (
     my_tests, start_test, handle_answer, my_results, cancel,
 )
 from app.bot.states import States
+from app.config import get_settings
 
 
 def run_bot():
-    token = os.getenv('TELEGRAM_BOT_TOKEN', '')
+    token = get_settings().TELEGRAM_BOT_TOKEN
     if not token:
         print('TELEGRAM_BOT_TOKEN topilmadi! Bot ishga tushmaydi.')
         return

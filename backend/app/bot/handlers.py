@@ -1,10 +1,10 @@
-import os
 import random
 from datetime import datetime, timezone
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, ConversationHandler
 from app.bot.states import States
 from app.database import SessionLocal
+from app.config import get_settings
 
 
 def get_db():
@@ -39,7 +39,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📝 Mening Testlarim", callback_data='my_tests')],
     ]
     await update.message.reply_text(
-        "🎓 *TestFull platformasiga xush kelibsiz!*\n\n"
+        "🎓 *Test Market platformasiga xush kelibsiz!*\n\n"
         "📚 /fanlar — Fanlar ro'yxati\n"
         "📝 /testlarim — Tasdiqlangan testlar\n"
         "📊 /natijalar — Test natijalari\n"
@@ -185,8 +185,9 @@ async def show_payment(msg, context: ContextTypes.DEFAULT_TYPE):
     count = context.user_data['question_count']
     total = count * context.user_data['price_per_q']
     context.user_data['total_price'] = total
-    card = os.getenv('TELEGRAM_PAYMENT_CARD', '8600-XXXX-XXXX-XXXX')
-    holder = os.getenv('TELEGRAM_CARD_HOLDER', 'ISM FAMILIYA')
+    settings = get_settings()
+    card = settings.TELEGRAM_PAYMENT_CARD
+    holder = settings.TELEGRAM_CARD_HOLDER
     mode_text = "🔀 Aralash" if context.user_data['mode'] == 'mixed' else "📂 Mavzulashtirilgan"
 
     text = (
