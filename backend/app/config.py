@@ -24,8 +24,7 @@ class Settings(BaseSettings):
         "http://localhost:5173",
     ]
 
-    class Config:
-        env_file = ".env"
+    model_config = {"env_file": ".env", "extra": "ignore"}
 
 
 @lru_cache()

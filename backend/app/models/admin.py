@@ -10,4 +10,5 @@ class Admin(Base):
     username = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(256), nullable=False)
     full_name = Column(String(200), nullable=False)
+    role = Column(String(50), nullable=False, default="admin")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

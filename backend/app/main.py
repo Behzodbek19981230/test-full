@@ -2,10 +2,9 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.database import engine, Base, SessionLocal
+from app.database import SessionLocal
 from app.controllers import api_router
 from app.services.auth_service import ensure_default_admin
-import app.models  # noqa: F401 — register all models
 
 
 def create_app() -> FastAPI:
@@ -25,7 +24,6 @@ def create_app() -> FastAPI:
 
     @application.on_event("startup")
     def startup():
-        Base.metadata.create_all(bind=engine)
         os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
         db = SessionLocal()
