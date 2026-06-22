@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
@@ -17,19 +17,18 @@ interface Question {
 }
 
 function RenderHTML({ html }: { html: string }) {
-  return <span dangerouslySetInnerHTML={{ __html: html }} />
-}
-
-function renderMathInElement(container: HTMLElement) {
-  const mathNodes = container.querySelectorAll('[data-latex]')
-  mathNodes.forEach(el => {
-    const latex = el.getAttribute('data-latex')
-    if (latex) {
-      try {
-        katex.render(latex, el as HTMLElement, { throwOnError: false })
-      } catch { /* skip */ }
-    }
-  })
+  const ref = useRef<HTMLSpanElement>(null)
+  useEffect(() => {
+    if (!ref.current) return
+    const nodes = ref.current.querySelectorAll('[data-latex]')
+    nodes.forEach(el => {
+      const latex = el.getAttribute('data-latex')
+      if (latex) {
+        try { katex.render(latex, el as HTMLElement, { throwOnError: false }) } catch {}
+      }
+    })
+  }, [html])
+  return <span ref={ref} dangerouslySetInnerHTML={{ __html: html }} />
 }
 
 export default function TestQuestions() {
@@ -47,13 +46,6 @@ export default function TestQuestions() {
       setQuestions(r.data.questions)
     })
   }, [tid])
-
-  useEffect(() => {
-    setTimeout(() => {
-      const el = document.querySelector('.question-list')
-      if (el) renderMathInElement(el as HTMLElement)
-    }, 100)
-  }, [questions])
 
   const deleteQ = async (q: Question) => {
     if (!confirm("Savolni o'chirishni tasdiqlaysizmi?")) return

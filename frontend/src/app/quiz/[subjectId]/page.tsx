@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import MathHTML from '@/components/MathRenderer'
 
 interface Subject {
   id: number; name: string; icon: string
@@ -164,7 +165,7 @@ export default function QuizPage() {
                     {r.is_correct ? '✓ To\'g\'ri' : '✗ Noto\'g\'ri'}
                   </span>
                 </div>
-                <div className="quiz-review-card__text" dangerouslySetInnerHTML={{ __html: r.question_text }} />
+                <div className="quiz-review-card__text"><MathHTML html={r.question_text} /></div>
                 <div className="quiz-review-card__options">
                   {OPTIONS.map((opt, i) => {
                     const isCorrect = r.correct_option === opt
@@ -175,7 +176,7 @@ export default function QuizPage() {
                     return (
                       <div key={opt} className={cls}>
                         <span className="quiz-review-opt__letter">{opt}</span>
-                        <span dangerouslySetInnerHTML={{ __html: r[OPTION_KEYS[i]] }} />
+                        <MathHTML html={r[OPTION_KEYS[i]]} />
                       </div>
                     )
                   })}
@@ -242,7 +243,7 @@ export default function QuizPage() {
               <span className="quiz-question__num">{currentQ + 1}-savol</span>
               <span className="quiz-question__of">/ {questions.length}</span>
             </div>
-            <div className="quiz-question__text" dangerouslySetInnerHTML={{ __html: q.question_text }} />
+            <div className="quiz-question__text"><MathHTML html={q.question_text} /></div>
 
             <div className="quiz-options">
               {OPTIONS.map((opt, i) => {
@@ -254,7 +255,7 @@ export default function QuizPage() {
                     onClick={() => handleAnswer(q.id, opt)}
                   >
                     <span className={`quiz-option__letter ${isSelected ? 'quiz-option__letter--selected' : ''}`}>{opt}</span>
-                    <span className="quiz-option__text" dangerouslySetInnerHTML={{ __html: q[OPTION_KEYS[i]] }} />
+                    <span className="quiz-option__text"><MathHTML html={q[OPTION_KEYS[i]]} /></span>
                   </button>
                 )
               })}

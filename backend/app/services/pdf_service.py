@@ -56,44 +56,64 @@ _SYMBOLS = {
 }
 
 
+def _match_brace(s: str, start: int) -> int:
+    if start >= len(s) or s[start] != '{':
+        return start
+    depth = 0
+    for i in range(start, len(s)):
+        if s[i] == '{':
+            depth += 1
+        elif s[i] == '}':
+            depth -= 1
+            if depth == 0:
+                return i
+    return len(s) - 1
+
+
+def _extract_brace_arg(s: str, pos: int) -> tuple[str, int]:
+    if pos >= len(s) or s[pos] != '{':
+        return '', pos
+    end = _match_brace(s, pos)
+    return s[pos + 1:end], end + 1
+
+
+def _replace_cmd_with_braces(s: str, cmd: str, fmt_fn) -> str:
+    result = []
+    i = 0
+    cmd_len = len(cmd)
+    while i < len(s):
+        if s[i:i + cmd_len] == cmd and (i + cmd_len >= len(s) or not s[i + cmd_len].isalpha()):
+            pos = i + cmd_len
+            args = []
+            while pos < len(s) and s[pos] == '{':
+                arg, pos = _extract_brace_arg(s, pos)
+                args.append(arg)
+                if len(args) >= 3:
+                    break
+            result.append(fmt_fn(*args))
+            i = pos
+        else:
+            result.append(s[i])
+            i += 1
+    return ''.join(result)
+
+
 def _latex_to_unicode(latex: str) -> str:
     s = latex.strip()
 
-    for cmd, char in {**_GREEK, **_SYMBOLS}.items():
-        s = s.replace(cmd, char)
+    combined = {**_GREEK, **_SYMBOLS}
+    sorted_cmds = sorted(combined.keys(), key=len, reverse=True)
+    for cmd in sorted_cmds:
+        pattern = re.escape(cmd) + r'(?![a-zA-Z])'
+        s = re.sub(pattern, combined[cmd], s)
 
     s = re.sub(r'\\text\{([^}]*)\}', r'\1', s)
     s = re.sub(r'\\textbf\{([^}]*)\}', r'\1', s)
     s = re.sub(r'\\mathrm\{([^}]*)\}', r'\1', s)
     s = re.sub(r'\\mathbb\{([^}]*)\}', r'\1', s)
 
-    def _sup(m):
-        content = m.group(1)
-        return content.translate(_SUPERSCRIPTS)
-
-    def _sub(m):
-        content = m.group(1)
-        return content.translate(_SUBSCRIPTS)
-
-    s = re.sub(r'\^{([^}]*)}', _sup, s)
-    s = re.sub(r'\^([a-zA-Z0-9])', lambda m: m.group(1).translate(_SUPERSCRIPTS), s)
-    s = re.sub(r'_{([^}]*)}', _sub, s)
-    s = re.sub(r'_([a-zA-Z0-9])', lambda m: m.group(1).translate(_SUBSCRIPTS), s)
-
-    def _frac(m):
-        num, den = m.group(1), m.group(2)
-        num = _latex_to_unicode(num)
-        den = _latex_to_unicode(den)
-        return f"({num}/{den})"
-
-    s = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', _frac, s)
-
-    s = re.sub(r'\\sqrt\[([^]]*)\]\{([^}]*)\}', lambda m: f'{m.group(1)}√({m.group(2)})', s)
-    s = re.sub(r'\\sqrt\{([^}]*)\}', lambda m: f'√({m.group(1)})', s)
-
-    s = re.sub(r'\\(?:sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|log|ln|exp|lim|max|min|sup|inf|det|dim|gcd|deg|arg|hom|ker)', lambda m: m.group(0)[1:], s)
-    s = re.sub(r'\\log', 'log', s)
-    s = re.sub(r'\\ln', 'ln', s)
+    s = re.sub(r'\\(?:sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan)', lambda m: m.group(0)[1:], s)
+    s = re.sub(r'\\(?:log|ln|exp|lim|max|min|det|dim|gcd|deg)', lambda m: m.group(0)[1:], s)
 
     s = re.sub(r'\\vec\{([^}]*)\}', r'\1⃗', s)
     s = re.sub(r'\\overrightarrow\{([^}]*)\}', r'\1⃗', s)
@@ -102,18 +122,31 @@ def _latex_to_unicode(latex: str) -> str:
     s = re.sub(r'\\bar\{([^}]*)\}', r'\1̄', s)
     s = re.sub(r'\\dot\{([^}]*)\}', r'\1̇', s)
 
-    s = re.sub(r'\\sum', '∑', s)
-    s = re.sub(r'\\prod', '∏', s)
-    s = re.sub(r'\\int', '∫', s)
-    s = re.sub(r'\\iint', '∬', s)
-    s = re.sub(r'\\oint', '∮', s)
-
-    s = re.sub(r'\\xrightarrow\{([^}]*)\}', lambda m: f'--{_latex_to_unicode(m.group(1))}→', s)
+    s = re.sub(r'\\xrightarrow\{([^}]*)\}', lambda m: f'-[{_latex_to_unicode(m.group(1))}]→', s)
+    s = re.sub(r'\\binom\{([^}]*)\}\{([^}]*)\}', r'C(\1,\2)', s)
 
     s = re.sub(r'\\begin\{cases\}(.*?)\\end\{cases\}', lambda m: m.group(1).replace('\\\\', '; '), s)
     s = re.sub(r'\\begin\{[^}]*\}(.*?)\\end\{[^}]*\}', lambda m: m.group(1).replace('\\\\', ', ').replace('&', ' '), s)
 
-    s = re.sub(r'\\binom\{([^}]*)\}\{([^}]*)\}', r'C(\1,\2)', s)
+    s = _replace_cmd_with_braces(s, '\\frac', lambda a, b='', *_: f'({_latex_to_unicode(a)}/{_latex_to_unicode(b)})')
+    s = _replace_cmd_with_braces(s, '\\sqrt', lambda a, *_: f'√({_latex_to_unicode(a)})')
+
+    s = re.sub(r'\\iint', '∬', s)
+    s = re.sub(r'\\oint', '∮', s)
+    s = re.sub(r'\\sum', '∑', s)
+    s = re.sub(r'\\prod', '∏', s)
+    s = re.sub(r'\\int', '∫', s)
+
+    def _sup(m):
+        return m.group(1).translate(_SUPERSCRIPTS)
+
+    def _sub(m):
+        return m.group(1).translate(_SUBSCRIPTS)
+
+    s = re.sub(r'\^{([^}]*)}', _sup, s)
+    s = re.sub(r'\^([a-zA-Z0-9])', lambda m: m.group(1).translate(_SUPERSCRIPTS), s)
+    s = re.sub(r'_{([^}]*)}', _sub, s)
+    s = re.sub(r'_([a-zA-Z0-9])', lambda m: m.group(1).translate(_SUBSCRIPTS), s)
 
     s = s.replace('\\,', ' ').replace('\\;', ' ').replace('\\!', '')
     s = s.replace('\\left', '').replace('\\right', '')
@@ -241,6 +274,7 @@ class TestPDF(FPDF):
             self.add_font("Sans", "B", sans_b, uni=True)
 
         self.fn = "TNR" if os.path.exists(tnr) else "Sans"
+        self.fn_q = "Sans" if os.path.exists(sans) else self.fn
         self.fn_wm = "Sans" if os.path.exists(sans) else self.fn
 
     _wm_img_cache = None
@@ -379,7 +413,7 @@ class TestPDF(FPDF):
 
     def _estimate_height_blocks(self, q_blocks, opt_blocks, col_w):
         h = 0
-        self.set_font(self.fn, "", self.FONT_SIZE)
+        self.set_font(self.fn_q, "", self.FONT_SIZE)
         for btype, bdata in q_blocks:
             if btype == 'text':
                 h += self._count_lines(bdata, col_w) * self.LINE_H
@@ -387,7 +421,7 @@ class TestPDF(FPDF):
                 h += self._img_height(bdata, col_w) + 2
         h += 1
 
-        self.set_font(self.fn, "", self.FONT_SIZE)
+        self.set_font(self.fn_q, "", self.FONT_SIZE)
         for letter, blocks in opt_blocks:
             for btype, bdata in blocks:
                 if btype == 'text':
@@ -416,7 +450,7 @@ class TestPDF(FPDF):
         return max(lines, 1)
 
     def _draw_question_blocks(self, num, q_blocks, opt_blocks, x, col_w):
-        self.set_font(self.fn, "", self.FONT_SIZE)
+        self.set_font(self.fn_q, "", self.FONT_SIZE)
         first = True
         for btype, bdata in q_blocks:
             if btype == 'text':
@@ -428,7 +462,7 @@ class TestPDF(FPDF):
             first = False
         self.ln(0.5)
 
-        self.set_font(self.fn, "", self.FONT_SIZE)
+        self.set_font(self.fn_q, "", self.FONT_SIZE)
         for letter, blocks in opt_blocks:
             first_opt = True
             for btype, bdata in blocks:
