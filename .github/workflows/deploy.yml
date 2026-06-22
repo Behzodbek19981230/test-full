@@ -4,13 +4,8 @@ on:
   push:
     branches: [main]
 
-env:
-  NVM_SETUP: |
-    export NVM_DIR="$HOME/.nvm"
-    source "$NVM_DIR/nvm.sh"
-
 jobs:
-  pull:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Pull latest code
@@ -25,11 +20,7 @@ jobs:
             cd /var/www/test-full
             git pull origin main
 
-  backend:
-    needs: pull
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install dependencies & migrate
+      - name: Deploy Backend
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -42,54 +33,40 @@ jobs:
             source venv/bin/activate
             pip install -r requirements.txt --quiet
             alembic upgrade head
-
-      - name: Restart backend
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          script: |
             export NVM_DIR="$HOME/.nvm"
             source "$NVM_DIR/nvm.sh"
             pm2 restart test-backend
 
-  frontend:
-    needs: pull
-    runs-on: ubuntu-latest
-    steps:
-      - name: Build & restart
+      - name: Deploy Frontend
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           script_stop: true
+          command_timeout: 10m
           script: |
             set -e
             export NVM_DIR="$HOME/.nvm"
             source "$NVM_DIR/nvm.sh"
             cd /var/www/test-full/frontend
-            npm ci
+            npm install --prefer-offline
             NEXT_PUBLIC_API_URL=https://api.test-market.uz npm run build
             pm2 restart test-frontend
 
-  admin:
-    needs: pull
-    runs-on: ubuntu-latest
-    steps:
-      - name: Build & reload nginx
+      - name: Deploy Admin
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           script_stop: true
+          command_timeout: 10m
           script: |
             set -e
             export NVM_DIR="$HOME/.nvm"
             source "$NVM_DIR/nvm.sh"
             cd /var/www/test-full/admin
-            npm ci
+            npm install --prefer-offline
             VITE_API_URL=https://api.test-market.uz npm run build
             sudo systemctl reload nginx
