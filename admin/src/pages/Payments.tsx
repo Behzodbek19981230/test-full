@@ -235,7 +235,7 @@ export default function Payments() {
 									<IconPhoto size={14} /> Screenshot
 								</div>
 								<img
-									src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : ''}/${selected.screenshot_file_id}`}
+									src={`${import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api'}/uploads/${selected.screenshot_file_id}`}
 									alt="To'lov cheki"
 									style={{
 										maxWidth: '100%',

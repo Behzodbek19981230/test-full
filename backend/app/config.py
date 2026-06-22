@@ -20,10 +20,17 @@ class Settings(BaseSettings):
 
     UPLOAD_DIR: str = "uploads"
 
+    FRONTEND_URL: str = "http://localhost:3000"
+    ADMIN_URL: str = "http://localhost:5173"
+
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:5173",
+        "https://test-market.uz",
+        "https://www.test-market.uz",
+        "https://admin.test-market.uz",
+        "https://api.test-market.uz",
     ]
 
     model_config = {"env_file": ".env", "extra": "ignore"}

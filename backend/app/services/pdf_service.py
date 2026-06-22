@@ -81,9 +81,9 @@ class TestPDF(FPDF):
 
         cx, cy = size // 2, size // 2
         r = max(tw, th) // 2 + 60
-        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(59, 130, 246, 38))
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(59, 130, 246, 30))
 
-        draw.text((tx, ty), text, font=font, fill=(59, 130, 246, 50))
+        draw.text((tx, ty), text, font=font, fill=(59, 130, 246, 90))
 
         cls._wm_img_cache = img
         return img
@@ -92,7 +92,7 @@ class TestPDF(FPDF):
         save_x, save_y = self.get_x(), self.get_y()
 
         wm_img = self._get_wm_image()
-        img_size = 160
+        img_size = self.w - 40
         cx = (self.w - img_size) / 2
         cy = (self.h - img_size) / 2
         self.image(wm_img, x=cx, y=cy, w=img_size, h=img_size)
