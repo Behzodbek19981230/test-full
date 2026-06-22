@@ -1,16 +1,16 @@
-import type { NextConfig } from 'next'
+import type { NextConfig } from 'next';
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${apiUrl}/api/:path*`,
-      },
-    ]
-  },
-}
+	async rewrites() {
+		return [
+			{
+				source: '/api/:path*',
+				destination: `${apiUrl}/api/:path*`,
+			},
+		];
+	},
+};
 
-export default nextConfig
+export default nextConfig;

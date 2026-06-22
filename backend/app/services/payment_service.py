@@ -16,7 +16,7 @@ def _to_dict(p: Payment) -> dict:
         "question_count": p.question_count,
         "mode": p.mode,
         "amount": p.amount,
-        "screenshot_file_id": p.screenshot_file_id,
+        "screenshot_file_id": f"/api/uploads/{p.screenshot_file_id}" if p.screenshot_file_id else None,
         "status": p.status,
         "admin_id": p.admin_id,
         "admin_note": p.admin_note,

@@ -22,7 +22,8 @@ jobs:
             cd /var/www/test-full/backend
             source venv/bin/activate
             pip install -r requirements.txt --quiet
-            sudo systemctl restart test-backend
+            alembic upgrade head
+            pm2 restart test-backend
 
             # Frontend
             cd /var/www/test-full/frontend

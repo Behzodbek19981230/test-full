@@ -114,7 +114,15 @@ async def handle_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Avval fanni tanlang: /fanlar")
         return ConversationHandler.END
 
-    file_id = update.message.photo[-1].file_id
+    import os, uuid
+    photo = update.message.photo[-1]
+    tg_file = await photo.get_file()
+
+    upload_dir = get_settings().UPLOAD_DIR
+    os.makedirs(os.path.join(upload_dir, "screenshots"), exist_ok=True)
+    filename = f"screenshots/{uuid.uuid4().hex}.jpg"
+    await tg_file.download_to_drive(os.path.join(upload_dir, filename))
+
     db = get_db()
     try:
         user = db.query(User).filter(User.telegram_id == update.effective_user.id).first()
@@ -123,7 +131,7 @@ async def handle_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return ConversationHandler.END
 
         payment = Payment(user_id=user.id, subject_id=ud['subject_id'], question_count=30,
-                          mode='mixed', amount=0, screenshot_file_id=file_id, status='pending')
+                          mode='mixed', amount=0, screenshot_file_id=filename, status='pending')
         db.add(payment)
         notif = Notification(admin_id=1, title="Yangi to'lov",
                              message=f"{user.full_name} — {ud['subject_name']}", type='payment')

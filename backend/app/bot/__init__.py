@@ -1,4 +1,3 @@
-import asyncio
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
     MessageHandler, ConversationHandler, filters,
@@ -10,13 +9,12 @@ from app.bot.states import States
 from app.config import get_settings
 
 
-def run_bot():
+def create_bot():
     token = get_settings().TELEGRAM_BOT_TOKEN
     if not token:
         print('TELEGRAM_BOT_TOKEN topilmadi! Bot ishga tushmaydi.')
-        return
+        return None
 
-    asyncio.set_event_loop(asyncio.new_event_loop())
     application = Application.builder().token(token).build()
 
     buy_conv = ConversationHandler(
@@ -33,4 +31,4 @@ def run_bot():
     application.add_handler(buy_conv)
     application.add_handler(CallbackQueryHandler(subjects_menu, pattern='^subjects$'))
 
-    application.run_polling(drop_pending_updates=True)
+    return application

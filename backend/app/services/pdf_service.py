@@ -53,11 +53,53 @@ class TestPDF(FPDF):
         self.fn = "TNR" if os.path.exists(tnr) else "Sans"
         self.fn_wm = "Sans" if os.path.exists(sans) else self.fn
 
+    _wm_img_cache = None
+
+    @classmethod
+    def _get_wm_image(cls):
+        if cls._wm_img_cache is not None:
+            return cls._wm_img_cache
+        from PIL import Image, ImageDraw, ImageFont
+
+        size = 800
+        img = Image.new("RGBA", (size, size), (255, 255, 255, 0))
+        draw = ImageDraw.Draw(img)
+
+        try:
+            font_path = os.path.join(os.path.dirname(__file__), "fonts", "DejaVuSans-Bold.ttf")
+            if not os.path.exists(font_path):
+                font_path = os.path.join(os.path.dirname(__file__), "fonts", "TimesNewRoman-Bold.ttf")
+            font = ImageFont.truetype(font_path, 340)
+        except Exception:
+            font = ImageFont.load_default()
+
+        text = "TM"
+        bbox = draw.textbbox((0, 0), text, font=font)
+        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        tx = (size - tw) // 2
+        ty = (size - th) // 2 - bbox[1]
+
+        cx, cy = size // 2, size // 2
+        r = max(tw, th) // 2 + 60
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(59, 130, 246, 38))
+
+        draw.text((tx, ty), text, font=font, fill=(59, 130, 246, 50))
+
+        cls._wm_img_cache = img
+        return img
+
     def _watermark(self):
         save_x, save_y = self.get_x(), self.get_y()
+
+        wm_img = self._get_wm_image()
+        img_size = 160
+        cx = (self.w - img_size) / 2
+        cy = (self.h - img_size) / 2
+        self.image(wm_img, x=cx, y=cy, w=img_size, h=img_size)
+
         save_font_family = self.font_family
         save_font_size = self.font_size_pt
-        save_font_style = self.font_style
+        save_font_style = 'B' if 'B' in self.font_style else ''
 
         self.set_font(self.fn_wm, "", 13)
         self.set_text_color(210, 210, 210)
