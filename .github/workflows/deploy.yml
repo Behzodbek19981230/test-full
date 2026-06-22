@@ -66,6 +66,7 @@ jobs:
                       cd frontend
 
                       npm install
+                      rm -rf .next
 
                       npm run build
 
