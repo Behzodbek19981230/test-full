@@ -20,15 +20,15 @@ function RenderHTML({ html }: { html: string }) {
   const ref = useRef<HTMLSpanElement>(null)
   useEffect(() => {
     if (!ref.current) return
-    const nodes = ref.current.querySelectorAll('[data-latex]')
-    nodes.forEach(el => {
+    ref.current.innerHTML = html
+    ref.current.querySelectorAll<HTMLElement>('[data-latex]').forEach(el => {
       const latex = el.getAttribute('data-latex')
       if (latex) {
-        try { katex.render(latex, el as HTMLElement, { throwOnError: false }) } catch {}
+        try { katex.render(latex, el, { throwOnError: false }) } catch {}
       }
     })
   }, [html])
-  return <span ref={ref} dangerouslySetInnerHTML={{ __html: html }} />
+  return <span ref={ref} />
 }
 
 export default function TestQuestions() {
