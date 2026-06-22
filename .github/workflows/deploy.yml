@@ -28,7 +28,7 @@ jobs:
             cd /var/www/test-full/frontend
             npm ci
             NEXT_PUBLIC_API_URL=https://api.test-market.uz npm run build
-            sudo systemctl restart test-frontend
+            pm2 restart test-frontend
 
             # Admin (static files - nginx serves directly)
             cd /var/www/test-full/admin
