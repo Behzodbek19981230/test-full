@@ -65,9 +65,9 @@ jobs:
 
                       cd frontend
 
-                      npm ci
+                      npm install
 
-                      NEXT_PUBLIC_API_URL=https://api.test-market.uz npm run build
+                      npm run build
 
                       pm2 restart test-frontend
 
@@ -96,7 +96,7 @@ jobs:
 
                       cd admin
 
-                      npm ci
+                      npm install
 
                       VITE_API_URL=https://api.test-market.uz npm run build
 
