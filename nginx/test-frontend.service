@@ -1,0 +1,15 @@
+[Unit]
+Description=Test Market Frontend (Next.js)
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/var/www/test-full/frontend
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=3
+Environment=PORT=3000
+Environment=NEXT_PUBLIC_API_URL=https://api.test-market.uz
+
+[Install]
+WantedBy=multi-user.target

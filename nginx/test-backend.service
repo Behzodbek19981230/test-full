@@ -1,0 +1,14 @@
+[Unit]
+Description=Test Market Backend (FastAPI)
+After=network.target postgresql.service
+
+[Service]
+User=root
+WorkingDirectory=/var/www/test-full/backend
+EnvironmentFile=/var/www/test-full/backend/.env
+ExecStart=/var/www/test-full/backend/venv/bin/python run.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
