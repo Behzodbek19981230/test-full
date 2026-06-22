@@ -33,6 +33,10 @@ jobs:
                       pip install -r requirements.txt
 
                       alembic upgrade head
+                      export NVM_DIR="/root/.nvm"
+                      source "$NVM_DIR/nvm.sh"
+
+                      nvm use 22
 
                       pm2 restart test-backend
 
