@@ -10,7 +10,7 @@ export default async function Image() {
     (
       <div
         style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #e0f2f1 50%, #f8fafc 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -28,7 +28,7 @@ export default async function Image() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'radial-gradient(circle at 20% 50%, rgba(99,102,241,0.15) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(6,182,212,0.1) 0%, transparent 50%)',
+            background: 'radial-gradient(circle at 20% 50%, rgba(26,127,138,0.12) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(212,132,42,0.08) 0%, transparent 50%)',
             display: 'flex',
           }}
         />
@@ -41,27 +41,19 @@ export default async function Image() {
             marginBottom: 32,
           }}
         >
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: 18,
-              background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 36,
-              color: 'white',
-              fontWeight: 900,
-            }}
-          >
-            TM
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={new URL('/logo.png', 'https://test-market.uz').toString()}
+            alt=""
+            width={80}
+            height={80}
+            style={{ borderRadius: 18, objectFit: 'contain' }}
+          />
           <span
             style={{
               fontSize: 48,
               fontWeight: 800,
-              color: 'white',
+              color: '#1e293b',
               letterSpacing: -1,
             }}
           >
@@ -72,7 +64,7 @@ export default async function Image() {
         <div
           style={{
             fontSize: 28,
-            color: 'rgba(148,163,184,0.9)',
+            color: '#475569',
             textAlign: 'center',
             maxWidth: 700,
             lineHeight: 1.5,
@@ -103,10 +95,10 @@ export default async function Image() {
                 gap: 4,
               }}
             >
-              <span style={{ fontSize: 36, fontWeight: 800, color: '#818cf8' }}>
+              <span style={{ fontSize: 36, fontWeight: 800, color: '#1a7f8a' }}>
                 {stat.num}
               </span>
-              <span style={{ fontSize: 16, color: 'rgba(148,163,184,0.7)' }}>
+              <span style={{ fontSize: 16, color: '#64748b' }}>
                 {stat.label}
               </span>
             </div>
@@ -119,7 +111,7 @@ export default async function Image() {
             bottom: 24,
             display: 'flex',
             fontSize: 16,
-            color: 'rgba(100,116,139,0.6)',
+            color: '#94a3b8',
           }}
         >
           test-market.uz

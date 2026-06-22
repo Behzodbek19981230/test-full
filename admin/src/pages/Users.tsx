@@ -28,7 +28,7 @@ export default function Users() {
   return (
     <div>
       <PageHeader
-        icon={<IconUsers size={22} />} iconColor="var(--primary-light)" iconBg="var(--primary-50)" title="Foydalanuvchilar"
+        icon={<IconUsers size={22} />} iconColor="var(--primary)" iconBg="var(--primary-50)" title="Foydalanuvchilar"
         badge={<Badge variant="info">{total}</Badge>}
         actions={<Input icon={IconSearch} placeholder="Qidirish..." value={search}
           onChange={e => { setSearch(e.target.value); setPage(1) }} style={{ width: 240 }} />}

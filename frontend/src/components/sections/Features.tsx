@@ -22,12 +22,12 @@ export default function Features() {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {features.map((f, i) => (
-            <div key={i} className="bg-dark-800 border border-white/[0.06] rounded-2xl p-7 transition-all duration-300 hover:border-white/10 hover:-translate-y-0.5">
+            <div key={i} className="bg-white border border-slate-200 shadow-sm rounded-2xl p-7 transition-all duration-300 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5">
               <div className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center mb-5 ${f.color}`}>
                 <f.icon size={26} />
               </div>
-              <h3 className="text-[17px] font-bold text-slate-50 mb-2">{f.title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
+              <h3 className="text-[17px] font-bold text-slate-900 mb-2">{f.title}</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>

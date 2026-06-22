@@ -559,11 +559,24 @@ def generate_and_send(variant_id: int, telegram_id: int, subject_name: str, subj
         db.close()
 
 
+def _get_logo_base64() -> str:
+    import base64
+    logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "frontend", "public", "logo.png")
+    if not os.path.exists(logo_path):
+        logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as f:
+            return "data:image/png;base64," + base64.b64encode(f.read()).decode()
+    return ""
+
+
 def _generate_html(questions, subject_name: str, variant_id: int) -> str:
     settings = get_settings()
     upload_dir = settings.UPLOAD_DIR
     variants_dir = os.path.join(upload_dir, "variants")
     os.makedirs(variants_dir, exist_ok=True)
+
+    logo_src = _get_logo_base64()
 
     option_labels = ['A', 'B', 'C', 'D']
     option_keys = ['option_a', 'option_b', 'option_c', 'option_d']
@@ -591,7 +604,7 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=800">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{subject_name} — Variant #{variant_id} | Test Market</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
@@ -607,7 +620,7 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
     }}
     .watermark-icon {{
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 500px; height: 500px; opacity: 0.03;
+      width: 500px; height: 500px; opacity: 0.04; object-fit: contain;
     }}
     .watermark-text {{
       position: absolute; top: 0; left: 0; width: 200%; height: 200%;
@@ -624,7 +637,7 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
     .cover {{ display: flex; align-items: center; justify-content: center; page-break-after: always; break-after: page; min-height: 90vh; }}
     .cover-inner {{ width: 100%; text-align: center; padding: 18mm 12mm; }}
     .cover-logo {{ margin-bottom: 16px; }}
-    .cover-logo svg {{ width: 80px; height: 80px; opacity: 0.15; }}
+    .cover-logo img {{ width: 100px; height: 100px; object-fit: contain; }}
     .cover-center {{ font-size: 18px; margin-bottom: 10px; color: #3b82f6; font-weight: 700; font-family: sans-serif; }}
     .cover-title {{ font-size: 28px; font-weight: 700; margin: 8px 0; }}
     .cover-subject {{ font-size: 16px; color: #333; margin-top: 4px; }}
@@ -634,9 +647,10 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
     .field-label {{ min-width: 100px; font-size: 14px; color: #111; font-weight: 600; }}
     .field-line {{ flex: 1; border-bottom: 1px solid #111; height: 18px; }}
 
-    .toolbar {{ position: sticky; top: 0; background: #fff; border-bottom: 1px solid #eee; padding: 8px 12px; display: flex; gap: 8px; align-items: center; z-index: 10; }}
-    .toolbar button {{ padding: 6px 14px; font-size: 14px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9; }}
-    .toolbar button:hover {{ background: #eee; }}
+    .toolbar {{ position: sticky; top: 0; z-index: 10; background: #fff; border-bottom: 1px solid #e5e7eb; padding: 10px 16px; display: flex; align-items: center; justify-content: center; }}
+    .toolbar .btn-download {{ display: inline-flex; align-items: center; gap: 8px; padding: 10px 28px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; border-radius: 8px; background: #3b82f6; color: #fff; font-family: sans-serif; box-shadow: 0 2px 8px rgba(59,130,246,0.3); transition: background 0.15s; }}
+    .toolbar .btn-download:hover {{ background: #2563eb; }}
+    .toolbar .btn-download svg {{ width: 18px; height: 18px; fill: currentColor; }}
 
     .header {{ text-align: center; margin-bottom: 12px; }}
     .title {{ font-size: 20px; font-weight: 700; margin: 0 0 6px 0; }}
@@ -644,8 +658,7 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
     .meta {{ font-size: 10px; color: #666; }}
 
     .questions-container {{
-      column-count: 2; column-gap: 36px;
-      column-rule: 1px solid #ddd;
+      column-count: 1;
       padding: 8px 12px;
     }}
     .question {{ break-inside: avoid; margin-bottom: 10px; }}
@@ -668,6 +681,7 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
 
     @media print {{
       .toolbar {{ display: none; }}
+      .questions-container {{ column-count: 2; column-gap: 36px; column-rule: 1px solid #ddd; }}
       .question {{ page-break-inside: avoid; }}
       html, body {{ margin: 0 !important; padding: 0 !important; font-size: 14px !important; overflow: visible !important; }}
       .cover {{ page-break-after: always !important; break-after: page !important; }}
@@ -678,22 +692,22 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
 <body>
   <!-- Watermark layer -->
   <div class="watermark">
-    <svg class="watermark-icon" viewBox="0 0 24 24" fill="rgba(59,130,246,0.06)">
-      <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
-    </svg>
+    <img class="watermark-icon" src="{logo_src}" alt="">
     <div class="watermark-text">{"".join('<span>Test Market</span>' for _ in range(200))}</div>
   </div>
 
   <div class="page-content">
     <div class="toolbar">
-      <button onclick="window.print()">🖨️ Chop etish / PDF saqlash</button>
-      <span style="color:#666; font-size:13px;">Chop etish oynasida "Save as PDF"ni tanlang.</span>
+      <button class="btn-download" onclick="window.print()">
+        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        Yuklab olish (PDF)
+      </button>
     </div>
 
     <div class="cover">
       <div class="cover-inner">
         <div class="cover-logo">
-          <svg viewBox="0 0 24 24" fill="rgba(59,130,246,0.25)"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>
+          <img src="{logo_src}" alt="Test Market">
         </div>
         <div class="cover-center">Test Market</div>
         <div class="cover-title">{subject_name}</div>

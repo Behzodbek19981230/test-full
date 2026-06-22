@@ -12,7 +12,7 @@ const typeConfig: Record<string, { icon: React.ReactNode; color: string; bg: str
   payment: { icon: <IconCreditCard size={20} />, color: 'var(--warning)', bg: 'var(--warning-50)' },
   test: { icon: <IconClipboardCheck size={20} />, color: 'var(--success)', bg: 'var(--success-50)' },
   system: { icon: <IconSettings size={20} />, color: 'var(--info)', bg: 'var(--info-50)' },
-  info: { icon: <IconInfoCircle size={20} />, color: 'var(--primary-light)', bg: 'var(--primary-50)' },
+  info: { icon: <IconInfoCircle size={20} />, color: 'var(--primary)', bg: 'var(--primary-50)' },
 }
 
 export default function Notifications() {
@@ -38,7 +38,7 @@ export default function Notifications() {
   return (
     <div>
       <PageHeader
-        icon={<IconBell size={22} />} iconColor="var(--primary-light)" iconBg="var(--primary-50)" title="Bildirishnomalar"
+        icon={<IconBell size={22} />} iconColor="var(--primary)" iconBg="var(--primary-50)" title="Bildirishnomalar"
         badge={unread > 0 ? <Badge variant="warning">{unread} yangi</Badge> : undefined}
         actions={unread > 0 ? <Button variant="ghost" size="sm" onClick={markAllRead}><IconChecks size={16} /> Barchasini o'qilgan</Button> : undefined}
       />

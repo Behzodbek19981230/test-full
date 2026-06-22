@@ -29,7 +29,7 @@ const styles: StylesConfig<SelectOption, false, GroupBase<SelectOption>> = {
     borderRadius: 'var(--radius-md)',
     minHeight: 38,
     fontSize: 14,
-    boxShadow: state.isFocused ? '0 0 0 3px rgba(99,102,241,0.1)' : 'none',
+    boxShadow: state.isFocused ? '0 0 0 3px rgba(26,127,138,0.1)' : 'none',
     cursor: 'pointer',
     '&:hover': { borderColor: 'var(--border-hover)' },
   }),
@@ -38,7 +38,7 @@ const styles: StylesConfig<SelectOption, false, GroupBase<SelectOption>> = {
     background: 'var(--bg-800)',
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius-lg)',
-    boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+    boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
     overflow: 'hidden',
     zIndex: 50,
     animation: 'uiSlideUp 0.12s ease-out',
@@ -53,9 +53,9 @@ const styles: StylesConfig<SelectOption, false, GroupBase<SelectOption>> = {
     background: state.isSelected
       ? 'var(--primary-50)'
       : state.isFocused
-        ? 'rgba(255,255,255,0.04)'
+        ? 'rgba(0,0,0,0.03)'
         : 'transparent',
-    color: state.isSelected ? 'var(--primary-light)' : 'var(--text-200)',
+    color: state.isSelected ? 'var(--primary)' : 'var(--text-200)',
     fontSize: 13,
     fontWeight: state.isSelected ? 600 : 500,
     padding: '8px 12px',
@@ -105,13 +105,13 @@ const styles: StylesConfig<SelectOption, false, GroupBase<SelectOption>> = {
   }),
   multiValueLabel: (base) => ({
     ...base,
-    color: 'var(--primary-light)',
+    color: 'var(--primary)',
     fontSize: 12,
     fontWeight: 600,
   }),
   multiValueRemove: (base) => ({
     ...base,
-    color: 'var(--primary-light)',
+    color: 'var(--primary)',
     '&:hover': { background: 'var(--primary-100)', color: 'var(--danger)' },
   }),
 }

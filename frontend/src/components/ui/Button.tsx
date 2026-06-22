@@ -4,8 +4,8 @@ type Variant = 'primary' | 'secondary'
 type Size = 'md' | 'lg'
 
 const variantCls: Record<Variant, string> = {
-  primary: 'bg-gradient-to-br from-primary to-primary-dark text-white shadow-[0_2px_12px_rgba(99,102,241,0.35)] hover:shadow-[0_4px_20px_rgba(99,102,241,0.45)] hover:-translate-y-0.5',
-  secondary: 'bg-white/[0.06] text-slate-200 border border-white/10 backdrop-blur-sm hover:bg-white/10 hover:border-white/20',
+  primary: 'bg-gradient-to-br from-primary to-primary-dark text-white shadow-[0_2px_12px_rgba(26,127,138,0.35)] hover:shadow-[0_4px_20px_rgba(26,127,138,0.45)] hover:-translate-y-0.5',
+  secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 hover:border-slate-400',
 }
 
 const sizeCls: Record<Size, string> = {

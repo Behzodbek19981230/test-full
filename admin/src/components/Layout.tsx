@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import api from '../api'
 import {
   IconLayoutDashboard, IconCreditCard, IconBooks, IconClipboardCheck,
-  IconUsers, IconBell, IconFileText, IconLogout, IconSchool, IconSend
+  IconUsers, IconBell, IconFileText, IconLogout, IconSend
 } from '@tabler/icons-react'
 
 export default function Layout() {
@@ -42,7 +42,7 @@ export default function Layout() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <div className="sidebar-logo-icon"><IconSchool size={18} /></div>
+            <img src="/logo.png" alt="Test Market" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'contain' }} />
             Test Market
           </div>
         </div>

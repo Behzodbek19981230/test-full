@@ -108,7 +108,7 @@ export default function QuestionForm() {
     <div className="qf-page">
       <PageHeader
         icon={<IconDeviceFloppy size={22} />}
-        iconColor="var(--primary-light)"
+        iconColor="var(--primary)"
         iconBg="var(--primary-50)"
         title={isEdit ? 'Savolni tahrirlash' : 'Yangi savol'}
         actions={
@@ -121,7 +121,7 @@ export default function QuestionForm() {
       {/* Savol matni */}
       <Card>
         <div className="qf-section-header">
-          <div className="qf-section-icon" style={{ background: 'var(--primary-50)', color: 'var(--primary-light)' }}>?</div>
+          <div className="qf-section-icon" style={{ background: 'var(--primary-50)', color: 'var(--primary)' }}>?</div>
           <div>
             <h3>Savol matni</h3>
             <p>Formulalar, rasmlar va formatlash qo'shishingiz mumkin</p>

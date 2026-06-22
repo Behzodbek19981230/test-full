@@ -23,13 +23,13 @@ export default function Dashboard() {
   const fmtMoney = (n: number) => n.toLocaleString() + ' so\'m'
 
   const tooltipStyle = {
-    contentStyle: { background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', fontSize: '13px' },
-    labelStyle: { color: '#94a3b8' },
+    contentStyle: { background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', fontSize: '13px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' },
+    labelStyle: { color: '#64748b' },
   }
 
   return (
     <div>
-      <PageHeader icon={<IconChartBar size={22} />} iconColor="var(--primary-light)" iconBg="var(--primary-50)" title="Dashboard" />
+      <PageHeader icon={<IconChartBar size={22} />} iconColor="var(--primary)" iconBg="var(--primary-50)" title="Dashboard" />
 
       <div className="ui-stats-row">
         <StatCard icon={<IconUsers size={22} />} color="purple" label="Jami foydalanuvchilar"
@@ -51,11 +51,11 @@ export default function Dashboard() {
           <div className="ui-chart">
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={data.daily_revenue}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={v => v.slice(8)} />
                 <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
                 <Tooltip {...tooltipStyle} formatter={(v: number) => [fmtMoney(v), 'Daromad']} />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="#1a7f8a" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -65,11 +65,11 @@ export default function Dashboard() {
           <div className="ui-chart">
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={data.daily_users}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={v => v.slice(8)} />
                 <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
                 <Tooltip {...tooltipStyle} />
-                <Line type="monotone" dataKey="count" stroke="#06b6d4" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="count" stroke="#d4842a" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

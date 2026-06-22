@@ -14,19 +14,19 @@ const items = [
 
 export default function Stats({ stats }: Props) {
   return (
-    <section className="py-16 border-y border-white/[0.04] bg-white/[0.01]">
+    <section className="py-16 border-y border-slate-200 bg-white">
       <Container>
         <div className="grid grid-cols-2 lg:grid-cols-4">
           {items.map((s, i) => (
             <div key={i} className="text-center py-6 relative">
-              {i < items.length - 1 && <div className="hidden lg:block absolute right-0 top-[20%] h-[60%] w-px bg-white/[0.06]" />}
+              {i < items.length - 1 && <div className="hidden lg:block absolute right-0 top-[20%] h-[60%] w-px bg-slate-200" />}
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 ${s.color}`}>
                 <s.icon size={24} />
               </div>
-              <div className="text-4xl font-extrabold text-slate-50 tracking-tight leading-tight">
+              <div className="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
                 {(stats[s.key] || s.fallback).toLocaleString()}+
               </div>
-              <div className="text-sm text-slate-500 mt-1">{s.label}</div>
+              <div className="text-sm text-slate-600 mt-1">{s.label}</div>
             </div>
           ))}
         </div>
