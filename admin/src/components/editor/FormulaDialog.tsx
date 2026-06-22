@@ -318,6 +318,96 @@ const TEMPLATES: Record<Tab, string[]> = {
   ],
 }
 
+const QUICK_SYMBOLS: Record<Tab, { label: string; latex: string }[]> = {
+  math: [
+    { label: 'π', latex: '\\pi' },
+    { label: '∞', latex: '\\infty' },
+    { label: '√', latex: '\\sqrt{}' },
+    { label: '±', latex: '\\pm' },
+    { label: '≠', latex: '\\neq' },
+    { label: '≈', latex: '\\approx' },
+    { label: '≤', latex: '\\leq' },
+    { label: '≥', latex: '\\geq' },
+    { label: '°', latex: '^{\\circ}' },
+    { label: '²', latex: '^{2}' },
+    { label: '³', latex: '^{3}' },
+    { label: 'ⁿ', latex: '^{n}' },
+    { label: '½', latex: '\\frac{1}{2}' },
+    { label: '⅓', latex: '\\frac{1}{3}' },
+    { label: 'α', latex: '\\alpha' },
+    { label: 'β', latex: '\\beta' },
+    { label: 'θ', latex: '\\theta' },
+    { label: 'φ', latex: '\\varphi' },
+    { label: 'Δ', latex: '\\Delta' },
+    { label: 'Σ', latex: '\\Sigma' },
+    { label: '∫', latex: '\\int' },
+    { label: '∂', latex: '\\partial' },
+    { label: '→', latex: '\\to' },
+    { label: '⇒', latex: '\\Rightarrow' },
+    { label: '∈', latex: '\\in' },
+    { label: '∅', latex: '\\emptyset' },
+    { label: '∠', latex: '\\angle' },
+    { label: '△', latex: '\\triangle' },
+    { label: '⊥', latex: '\\perp' },
+    { label: '∥', latex: '\\parallel' },
+  ],
+  physics: [
+    { label: 'Δ', latex: '\\Delta' },
+    { label: 'α', latex: '\\alpha' },
+    { label: 'β', latex: '\\beta' },
+    { label: 'γ', latex: '\\gamma' },
+    { label: 'λ', latex: '\\lambda' },
+    { label: 'μ', latex: '\\mu' },
+    { label: 'ν', latex: '\\nu' },
+    { label: 'ω', latex: '\\omega' },
+    { label: 'ε', latex: '\\varepsilon' },
+    { label: 'ρ', latex: '\\rho' },
+    { label: 'σ', latex: '\\sigma' },
+    { label: 'τ', latex: '\\tau' },
+    { label: 'Φ', latex: '\\Phi' },
+    { label: 'Ω', latex: '\\Omega' },
+    { label: 'π', latex: '\\pi' },
+    { label: '∞', latex: '\\infty' },
+    { label: '°', latex: '^{\\circ}' },
+    { label: '°C', latex: '^{\\circ}C' },
+    { label: '²', latex: '^{2}' },
+    { label: '³', latex: '^{3}' },
+    { label: '±', latex: '\\pm' },
+    { label: '≈', latex: '\\approx' },
+    { label: '→', latex: '\\to' },
+    { label: 'ℏ', latex: '\\hbar' },
+    { label: 'ε₀', latex: '\\varepsilon_0' },
+    { label: 'μ₀', latex: '\\mu_0' },
+    { label: '·', latex: '\\cdot' },
+    { label: '×', latex: '\\times' },
+    { label: '⃗', latex: '\\vec{}' },
+  ],
+  chemistry: [
+    { label: '→', latex: '\\rightarrow' },
+    { label: '⇌', latex: '\\rightleftharpoons' },
+    { label: '↑', latex: '\\uparrow' },
+    { label: '↓', latex: '\\downarrow' },
+    { label: 'Δ→', latex: '\\xrightarrow{\\Delta}' },
+    { label: 't°→', latex: '\\xrightarrow{t^\\circ}' },
+    { label: 'kat→', latex: '\\xrightarrow{\\text{kat}}' },
+    { label: '²⁺', latex: '^{2+}' },
+    { label: '³⁺', latex: '^{3+}' },
+    { label: '⁺', latex: '^{+}' },
+    { label: '⁻', latex: '^{-}' },
+    { label: '²⁻', latex: '^{2-}' },
+    { label: '₂', latex: '_2' },
+    { label: '₃', latex: '_3' },
+    { label: '₄', latex: '_4' },
+    { label: '°C', latex: '^{\\circ}C' },
+    { label: 'ΔH', latex: '\\Delta H' },
+    { label: 'ΔG', latex: '\\Delta G' },
+    { label: '≈', latex: '\\approx' },
+    { label: '·', latex: '\\cdot' },
+  ],
+  symbols: [],
+  greek: [],
+}
+
 const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: 'math', label: 'Matematika', icon: <IconMath size={15} /> },
   { key: 'physics', label: 'Fizika', icon: <IconAtom size={15} /> },
@@ -404,19 +494,36 @@ export default function FormulaDialog({ open, onClose, onInsert, initialLatex = 
         </div>
 
         <div className="fd-body">
+          {QUICK_SYMBOLS[tab].length > 0 && (
+            <>
+              <div className="fd-section-label">Tez belgilar</div>
+              <div className="fd-quick-symbols">
+                {QUICK_SYMBOLS[tab].map((s, i) => (
+                  <button
+                    key={`${tab}-qs-${i}`}
+                    className="fd-quick-btn"
+                    onClick={() => insertTemplate(s.latex)}
+                    title={s.latex}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              <div className="fd-section-label">Formulalar</div>
+            </>
+          )}
           <div className="fd-templates">
             {TEMPLATES[tab].map((tmpl, i) => {
               const ref = (el: HTMLButtonElement | null) => {
-                if (el && !el.dataset.rendered) {
+                if (el) {
                   try {
                     katex.render(tmpl, el, { throwOnError: false })
-                    el.dataset.rendered = '1'
                   } catch { /* skip */ }
                 }
               }
               return (
                 <button
-                  key={i}
+                  key={`${tab}-${i}`}
                   ref={ref}
                   className="fd-tmpl"
                   onClick={() => insertTemplate(tmpl)}

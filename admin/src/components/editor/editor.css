@@ -327,6 +327,38 @@
   transform: scale(1.05);
 }
 
+/* Quick symbols */
+.fd-quick-symbols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.fd-quick-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 34px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-900);
+  color: var(--text-200);
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.fd-quick-btn:hover {
+  background: rgba(99,102,241,0.1);
+  border-color: rgba(99,102,241,0.4);
+  color: var(--primary-light);
+  transform: scale(1.1);
+}
+
 /* Input */
 .fd-input {
   width: 100%;

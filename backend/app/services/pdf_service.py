@@ -19,9 +19,199 @@ from app.models.variant import TestVariant
 logger = logging.getLogger(__name__)
 
 
+_SUPERSCRIPTS = str.maketrans('0123456789+-=()nabicdex', '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿᵃᵇⁱᶜᵈᵉˣ')
+_SUBSCRIPTS = str.maketrans('0123456789+-=()aeiourbjklmnpstx', '₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₐₑᵢₒᵤᵣᵦⱼₖₗₘₙₚₛₜₓ')
+
+_GREEK = {
+    '\\alpha': 'α', '\\beta': 'β', '\\gamma': 'γ', '\\delta': 'δ',
+    '\\epsilon': 'ε', '\\varepsilon': 'ε', '\\zeta': 'ζ', '\\eta': 'η',
+    '\\theta': 'θ', '\\vartheta': 'ϑ', '\\iota': 'ι', '\\kappa': 'κ',
+    '\\lambda': 'λ', '\\mu': 'μ', '\\nu': 'ν', '\\xi': 'ξ',
+    '\\pi': 'π', '\\rho': 'ρ', '\\sigma': 'σ', '\\tau': 'τ',
+    '\\upsilon': 'υ', '\\phi': 'φ', '\\varphi': 'φ', '\\chi': 'χ',
+    '\\psi': 'ψ', '\\omega': 'ω',
+    '\\Gamma': 'Γ', '\\Delta': 'Δ', '\\Theta': 'Θ', '\\Lambda': 'Λ',
+    '\\Xi': 'Ξ', '\\Pi': 'Π', '\\Sigma': 'Σ', '\\Phi': 'Φ',
+    '\\Psi': 'Ψ', '\\Omega': 'Ω',
+}
+
+_SYMBOLS = {
+    '\\infty': '∞', '\\pm': '±', '\\mp': '∓', '\\times': '×',
+    '\\div': '÷', '\\cdot': '·', '\\neq': '≠', '\\approx': '≈',
+    '\\leq': '≤', '\\geq': '≥', '\\ll': '≪', '\\gg': '≫',
+    '\\equiv': '≡', '\\sim': '∼', '\\propto': '∝',
+    '\\in': '∈', '\\notin': '∉', '\\subset': '⊂', '\\supset': '⊃',
+    '\\cup': '∪', '\\cap': '∩', '\\emptyset': '∅',
+    '\\forall': '∀', '\\exists': '∃', '\\neg': '¬',
+    '\\land': '∧', '\\lor': '∨',
+    '\\rightarrow': '→', '\\leftarrow': '←', '\\leftrightarrow': '↔',
+    '\\Rightarrow': '⇒', '\\Leftarrow': '⇐', '\\Leftrightarrow': '⇔',
+    '\\to': '→', '\\uparrow': '↑', '\\downarrow': '↓',
+    '\\partial': '∂', '\\nabla': '∇', '\\hbar': 'ℏ',
+    '\\angle': '∠', '\\triangle': '△', '\\perp': '⊥', '\\parallel': '∥',
+    '\\circ': '°', '\\bullet': '•', '\\star': '★',
+    '\\rightleftharpoons': '⇌',
+    '\\ell': 'ℓ', '\\Re': 'ℜ', '\\Im': 'ℑ',
+    '\\ldots': '…', '\\cdots': '⋯', '\\vdots': '⋮',
+}
+
+
+def _latex_to_unicode(latex: str) -> str:
+    s = latex.strip()
+
+    for cmd, char in {**_GREEK, **_SYMBOLS}.items():
+        s = s.replace(cmd, char)
+
+    s = re.sub(r'\\text\{([^}]*)\}', r'\1', s)
+    s = re.sub(r'\\textbf\{([^}]*)\}', r'\1', s)
+    s = re.sub(r'\\mathrm\{([^}]*)\}', r'\1', s)
+    s = re.sub(r'\\mathbb\{([^}]*)\}', r'\1', s)
+
+    def _sup(m):
+        content = m.group(1)
+        return content.translate(_SUPERSCRIPTS)
+
+    def _sub(m):
+        content = m.group(1)
+        return content.translate(_SUBSCRIPTS)
+
+    s = re.sub(r'\^{([^}]*)}', _sup, s)
+    s = re.sub(r'\^([a-zA-Z0-9])', lambda m: m.group(1).translate(_SUPERSCRIPTS), s)
+    s = re.sub(r'_{([^}]*)}', _sub, s)
+    s = re.sub(r'_([a-zA-Z0-9])', lambda m: m.group(1).translate(_SUBSCRIPTS), s)
+
+    def _frac(m):
+        num, den = m.group(1), m.group(2)
+        num = _latex_to_unicode(num)
+        den = _latex_to_unicode(den)
+        return f"({num}/{den})"
+
+    s = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', _frac, s)
+
+    s = re.sub(r'\\sqrt\[([^]]*)\]\{([^}]*)\}', lambda m: f'{m.group(1)}√({m.group(2)})', s)
+    s = re.sub(r'\\sqrt\{([^}]*)\}', lambda m: f'√({m.group(1)})', s)
+
+    s = re.sub(r'\\(?:sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|log|ln|exp|lim|max|min|sup|inf|det|dim|gcd|deg|arg|hom|ker)', lambda m: m.group(0)[1:], s)
+    s = re.sub(r'\\log', 'log', s)
+    s = re.sub(r'\\ln', 'ln', s)
+
+    s = re.sub(r'\\vec\{([^}]*)\}', r'\1⃗', s)
+    s = re.sub(r'\\overrightarrow\{([^}]*)\}', r'\1⃗', s)
+    s = re.sub(r'\\overline\{([^}]*)\}', r'\1', s)
+    s = re.sub(r'\\hat\{([^}]*)\}', r'\1̂', s)
+    s = re.sub(r'\\bar\{([^}]*)\}', r'\1̄', s)
+    s = re.sub(r'\\dot\{([^}]*)\}', r'\1̇', s)
+
+    s = re.sub(r'\\sum', '∑', s)
+    s = re.sub(r'\\prod', '∏', s)
+    s = re.sub(r'\\int', '∫', s)
+    s = re.sub(r'\\iint', '∬', s)
+    s = re.sub(r'\\oint', '∮', s)
+
+    s = re.sub(r'\\xrightarrow\{([^}]*)\}', lambda m: f'--{_latex_to_unicode(m.group(1))}→', s)
+
+    s = re.sub(r'\\begin\{cases\}(.*?)\\end\{cases\}', lambda m: m.group(1).replace('\\\\', '; '), s)
+    s = re.sub(r'\\begin\{[^}]*\}(.*?)\\end\{[^}]*\}', lambda m: m.group(1).replace('\\\\', ', ').replace('&', ' '), s)
+
+    s = re.sub(r'\\binom\{([^}]*)\}\{([^}]*)\}', r'C(\1,\2)', s)
+
+    s = s.replace('\\,', ' ').replace('\\;', ' ').replace('\\!', '')
+    s = s.replace('\\left', '').replace('\\right', '')
+    s = s.replace('\\{', '{').replace('\\}', '}')
+    s = re.sub(r'\\[a-zA-Z]+', '', s)
+    s = s.replace('{', '').replace('}', '')
+    s = re.sub(r'\s+', ' ', s).strip()
+
+    return s
+
+
 def _strip_html(text: str) -> str:
+    text = re.sub(
+        r'<span[^>]*data-latex="([^"]*)"[^>]*>.*?</span>',
+        lambda m: _latex_to_unicode(m.group(1)),
+        text,
+        flags=re.DOTALL,
+    )
+    text = re.sub(
+        r'<span[^>]*latex="([^"]*)"[^>]*>.*?</span>',
+        lambda m: _latex_to_unicode(m.group(1)),
+        text,
+        flags=re.DOTALL,
+    )
+
+    text = re.sub(r'<img[^>]*>', '', text)
+
+    text = re.sub(r'</li>\s*<li', '</li>\n<li', text)
     text = re.sub(r'<br\s*/?>', '\n', text)
+    text = re.sub(r'</p>\s*<p', '\n<p', text)
+
     return re.sub(r'<[^>]+>', '', text).strip()
+
+
+def _parse_html_blocks(html: str) -> list:
+    """Parse HTML into list of ('text', str) and ('image', bytes) blocks."""
+    html = re.sub(
+        r'<span[^>]*data-latex="([^"]*)"[^>]*>.*?</span>',
+        lambda m: _latex_to_unicode(m.group(1)),
+        html, flags=re.DOTALL,
+    )
+    html = re.sub(
+        r'<span[^>]*latex="([^"]*)"[^>]*>.*?</span>',
+        lambda m: _latex_to_unicode(m.group(1)),
+        html, flags=re.DOTALL,
+    )
+
+    blocks = []
+    img_pattern = re.compile(r'<img[^>]*src="([^"]*)"[^>]*/?>',  re.DOTALL)
+    last_end = 0
+
+    for m in img_pattern.finditer(html):
+        before = html[last_end:m.start()]
+        if before.strip():
+            blocks.append(('text', _clean_tags(before)))
+
+        src = m.group(1)
+        img_bytes = _resolve_image(src)
+        if img_bytes:
+            blocks.append(('image', img_bytes))
+        last_end = m.end()
+
+    remaining = html[last_end:]
+    if remaining.strip():
+        blocks.append(('text', _clean_tags(remaining)))
+
+    if not blocks:
+        blocks.append(('text', _clean_tags(html)))
+
+    return blocks
+
+
+def _clean_tags(text: str) -> str:
+    text = re.sub(r'</li>\s*<li', '</li>\n<li', text)
+    text = re.sub(r'<br\s*/?>', '\n', text)
+    text = re.sub(r'</p>\s*<p', '\n<p', text)
+    return re.sub(r'<[^>]+>', '', text).strip()
+
+
+def _resolve_image(src: str) -> bytes | None:
+    import base64
+    if src.startswith('data:image'):
+        try:
+            _, data = src.split(',', 1)
+            return base64.b64decode(data)
+        except Exception:
+            return None
+    if src.startswith(('http://', 'https://', '/')):
+        try:
+            url = src
+            if src.startswith('/'):
+                url = get_settings().FRONTEND_URL.rstrip('/') + src
+            resp = requests.get(url, timeout=10)
+            if resp.status_code == 200:
+                return resp.content
+        except Exception:
+            pass
+    return None
 
 
 class TestPDF(FPDF):
@@ -162,12 +352,12 @@ class TestPDF(FPDF):
         max_y = self.h - m - 5
 
         for i, q in enumerate(questions, 1):
-            q_text = _strip_html(q.question_text)
-            options = []
+            q_blocks = _parse_html_blocks(q.question_text)
+            opt_blocks = []
             for letter, opt in [("A", q.option_a), ("B", q.option_b), ("C", q.option_c), ("D", q.option_d)]:
-                options.append(f"{letter}) {_strip_html(opt) or '-'}")
+                opt_blocks.append((letter, _parse_html_blocks(opt)))
 
-            needed = self._estimate_height(q_text, options, col_w)
+            needed = self._estimate_height_blocks(q_blocks, opt_blocks, col_w)
 
             if self.get_y() + needed > max_y:
                 if col == 0:
@@ -178,7 +368,7 @@ class TestPDF(FPDF):
                     y_start = self.get_y()
                     col = 0
 
-            self._draw_question(i, q_text, options, col_x[col], col_w)
+            self._draw_question_blocks(i, q_blocks, opt_blocks, col_x[col], col_w)
 
         mid_x = m + col_w + self.GAP / 2
         for p in range(1, self.pages_count + 1):
@@ -187,17 +377,35 @@ class TestPDF(FPDF):
             self.line(mid_x, m, mid_x, self.h - m)
         self.page = self.pages_count
 
-    def _estimate_height(self, q_text, options, col_w):
+    def _estimate_height_blocks(self, q_blocks, opt_blocks, col_w):
         h = 0
         self.set_font(self.fn, "", self.FONT_SIZE)
-        lines = self._count_lines(q_text, col_w)
-        h += lines * self.LINE_H + 1
+        for btype, bdata in q_blocks:
+            if btype == 'text':
+                h += self._count_lines(bdata, col_w) * self.LINE_H
+            else:
+                h += self._img_height(bdata, col_w) + 2
+        h += 1
 
         self.set_font(self.fn, "", self.FONT_SIZE)
-        for opt in options:
-            h += self._count_lines(opt, col_w - 5) * self.LINE_H
+        for letter, blocks in opt_blocks:
+            for btype, bdata in blocks:
+                if btype == 'text':
+                    h += self._count_lines(f"{letter}) {bdata}", col_w - 5) * self.LINE_H
+                else:
+                    h += self._img_height(bdata, col_w - 5) + 2
         h += 3
         return h
+
+    def _img_height(self, img_bytes, max_w):
+        from PIL import Image as PILImage
+        try:
+            img = PILImage.open(io.BytesIO(img_bytes))
+            w, h = img.size
+            scale = min(max_w / (w * 0.264583), 1.0)
+            return h * 0.264583 * scale
+        except Exception:
+            return 15
 
     def _count_lines(self, text, width):
         lines = 0
@@ -207,18 +415,55 @@ class TestPDF(FPDF):
             lines += segment_lines
         return max(lines, 1)
 
-    def _draw_question(self, num, q_text, options, x, col_w):
-        self.set_x(x)
+    def _draw_question_blocks(self, num, q_blocks, opt_blocks, x, col_w):
         self.set_font(self.fn, "", self.FONT_SIZE)
-        self.multi_cell(col_w, self.LINE_H, f"{num}. {q_text}")
+        first = True
+        for btype, bdata in q_blocks:
+            if btype == 'text':
+                self.set_x(x)
+                prefix = f"{num}. " if first else ""
+                self.multi_cell(col_w, self.LINE_H, f"{prefix}{bdata}")
+            else:
+                self._draw_image_block(bdata, x, col_w)
+            first = False
         self.ln(0.5)
 
         self.set_font(self.fn, "", self.FONT_SIZE)
-        for opt in options:
-            self.set_x(x + 5)
-            self.multi_cell(col_w - 5, self.LINE_H, opt)
+        for letter, blocks in opt_blocks:
+            first_opt = True
+            for btype, bdata in blocks:
+                if btype == 'text':
+                    self.set_x(x + 5)
+                    prefix = f"{letter}) " if first_opt else ""
+                    self.multi_cell(col_w - 5, self.LINE_H, f"{prefix}{bdata}")
+                else:
+                    self._draw_image_block(bdata, x + 5, col_w - 5)
+                first_opt = False
 
         self.ln(2.5)
+
+    def _draw_image_block(self, img_bytes, x, max_w):
+        from PIL import Image as PILImage
+        try:
+            pil_img = PILImage.open(io.BytesIO(img_bytes))
+            w_px, h_px = pil_img.size
+            w_mm = w_px * 0.264583
+            h_mm = h_px * 0.264583
+            if w_mm > max_w:
+                scale = max_w / w_mm
+                w_mm = max_w
+                h_mm *= scale
+            max_h = 40
+            if h_mm > max_h:
+                scale = max_h / h_mm
+                h_mm = max_h
+                w_mm *= scale
+            self.set_x(x)
+            self.image(pil_img, x=x, y=self.get_y(), w=w_mm, h=h_mm)
+            self.set_y(self.get_y() + h_mm + 1)
+        except Exception:
+            self.set_x(x)
+            self.multi_cell(max_w, self.LINE_H, "[rasm]")
 
 
 def generate_and_send(variant_id: int, telegram_id: int, subject_name: str, subject_id: int, question_count: int):
