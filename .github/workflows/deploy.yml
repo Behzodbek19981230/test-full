@@ -8,30 +8,56 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
+      - name: Pull latest code
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
+          script_stop: true
           script: |
+            set -e
             cd /var/www/test-full
             git pull origin main
 
-            # Backend
+      - name: Deploy Backend
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script_stop: true
+          script: |
+            set -e
             cd /var/www/test-full/backend
             source venv/bin/activate
             pip install -r requirements.txt --quiet
             alembic upgrade head
             pm2 restart test-backend
 
-            # Frontend
+      - name: Deploy Frontend
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script_stop: true
+          script: |
+            set -e
             cd /var/www/test-full/frontend
             npm ci
             NEXT_PUBLIC_API_URL=https://api.test-market.uz npm run build
             pm2 restart test-frontend
 
-            # Admin (static files - nginx serves directly)
+      - name: Deploy Admin
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script_stop: true
+          script: |
+            set -e
             cd /var/www/test-full/admin
             npm ci
             VITE_API_URL=https://api.test-market.uz npm run build
