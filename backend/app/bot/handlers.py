@@ -75,7 +75,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"👋 *Salom, {full_name}!*\n"
         f"Test Market platformasiga xush kelibsiz!\n\n"
-        "Fanni tanlang, to'lov chekini yuboring — 30 savollik test PDF shaklida yuboriladi!\n\n"
+        "Fanni tanlang, to'lov chekini yuboring — 30 savollik test linki yuboriladi!\n\n"
         "📚 /fanlar — Boshlash",
         parse_mode='Markdown', reply_markup=InlineKeyboardMarkup(keyboard),
     )
@@ -188,7 +188,7 @@ async def handle_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         "✅ *Chek qabul qilindi!*\n\n"
-        "⏳ Admin tasdiqlagandan so'ng test PDF yuboriladi.",
+        "⏳ Admin tasdiqlagandan so'ng test linki yuboriladi.",
         parse_mode='Markdown',
     )
     context.user_data.clear()

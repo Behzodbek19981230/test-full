@@ -508,29 +508,37 @@ def generate_and_send(variant_id: int, telegram_id: int, subject_name: str, subj
             sys.stdout.write(f"Variant #{variant_id} topilmadi")
             return
 
-        sys.stdout.write(f"Variant #{variant_id}: PDF generatsiya boshlanmoqda ({subject_name}, {question_count} ta)")
+        sys.stdout.write(f"Variant #{variant_id}: Savollar tanlanmoqda ({subject_name}, {question_count} ta)")
 
-        pdf_bytes, error, q_ids = _generate_pdf(db, subject_name, subject_id, question_count, variant_id)
-        if not pdf_bytes:
-            err = error or "Savollar topilmadi"
-            sys.stdout.write(f"Variant #{variant_id}: {err}")
+        questions = (
+            db.query(Question)
+            .join(Topic)
+            .filter(Topic.subject_id == subject_id, Topic.is_active == True)
+            .all()
+        )
+        if not questions:
             variant.status = "failed"
-            variant.error_log = err
+            variant.error_log = "Bu fanda savollar topilmadi"
             db.commit()
             return
 
-        if q_ids:
-            variant.question_ids = ",".join(str(qid) for qid in q_ids)
-            db.commit()
+        count = min(question_count, len(questions))
+        selected = random.sample(questions, count)
+        variant.question_ids = ",".join(str(q.id) for q in selected)
+        db.commit()
 
-        sys.stdout.write(f"Variant #{variant_id}: PDF tayyor ({len(pdf_bytes)} bytes), Telegramga yuborilmoqda...")
+        sys.stdout.write(f"Variant #{variant_id}: {count} ta savol tanlandi, HTML generatsiya qilinmoqda...")
 
-        success, err_msg = _send_to_telegram(telegram_id, pdf_bytes, subject_name, question_count, variant_id)
+        html_path = _generate_html(selected, subject_name, variant_id)
+
+        sys.stdout.write(f"Variant #{variant_id}: HTML tayyor, link yuborilmoqda...")
+
+        success, err_msg = _send_link_to_telegram(telegram_id, subject_name, question_count, variant_id, html_path)
         variant.status = "sent" if success else "failed"
         if success:
             variant.sent_at = datetime.now(timezone.utc)
             variant.error_log = None
-            sys.stdout.write(f"Variant #{variant_id}: Muvaffaqiyatli yuborildi (telegram_id={telegram_id})")
+            sys.stdout.write(f"Variant #{variant_id}: Link muvaffaqiyatli yuborildi (telegram_id={telegram_id})")
         else:
             variant.error_log = err_msg
             sys.stdout.write(f"Variant #{variant_id}: Yuborishda xato — {err_msg}")
@@ -551,50 +559,216 @@ def generate_and_send(variant_id: int, telegram_id: int, subject_name: str, subj
         db.close()
 
 
-def _generate_pdf(db, subject_name: str, subject_id: int, question_count: int, variant_id: int) -> tuple[bytes | None, str | None, list[int] | None]:
-    try:
-        questions = (
-            db.query(Question)
-            .join(Topic)
-            .filter(Topic.subject_id == subject_id, Topic.is_active == True)
-            .all()
-        )
-        if not questions:
-            return None, "Bu fanda savollar topilmadi", None
+def _generate_html(questions, subject_name: str, variant_id: int) -> str:
+    settings = get_settings()
+    upload_dir = settings.UPLOAD_DIR
+    variants_dir = os.path.join(upload_dir, "variants")
+    os.makedirs(variants_dir, exist_ok=True)
 
-        count = min(question_count, len(questions))
-        selected = random.sample(questions, count)
+    option_labels = ['A', 'B', 'C', 'D']
+    option_keys = ['option_a', 'option_b', 'option_c', 'option_d']
 
-        pdf = TestPDF(subject_name, variant_id)
-        pdf.set_auto_page_break(auto=False)
-        pdf.questions_two_col(selected)
+    questions_html = ""
+    for i, q in enumerate(questions, 1):
+        answers_html = ""
+        for label, key in zip(option_labels, option_keys):
+            val = getattr(q, key, '') or ''
+            answers_html += f'<span class="answer"><strong>{label})</strong> {val}</span>\n'
 
-        q_ids = [q.id for q in selected]
-        return pdf.output(), None, q_ids
-    except Exception as e:
-        return None, f"PDF generatsiya xatosi: {str(e)}", None
+        questions_html += f"""<div class="question">
+  <div class="q-row">
+    <span class="q-no">{i}.</span>
+    <div class="q-content">
+      <div class="q-text">{q.question_text}</div>
+      <div class="answers">{answers_html}</div>
+    </div>
+  </div>
+</div>\n"""
+
+    now_str = datetime.now().strftime("%d.%m.%Y")
+
+    html = f"""<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=800">
+  <title>{subject_name} — Variant #{variant_id} | Test Market</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+  <style>
+    @page {{ size: A4; margin: 0.5in; }}
+    * {{ box-sizing: border-box; }}
+    body {{ font-family: Times, 'Times New Roman', serif; margin: 0; color: #111; font-size: 16px; position: relative; }}
+
+    /* ===== WATERMARK ===== */
+    .watermark {{
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0; overflow: hidden;
+    }}
+    .watermark-icon {{
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 500px; height: 500px; opacity: 0.03;
+    }}
+    .watermark-text {{
+      position: absolute; top: 0; left: 0; width: 200%; height: 200%;
+      transform: rotate(-35deg); transform-origin: center center;
+    }}
+    .watermark-text span {{
+      display: inline-block; font-size: 14px; font-weight: 700;
+      color: rgba(59,130,246,0.08); white-space: nowrap;
+      margin: 18px 28px; font-family: sans-serif;
+    }}
+
+    /* ===== LAYOUT ===== */
+    .page-content {{ position: relative; z-index: 1; }}
+    .cover {{ display: flex; align-items: center; justify-content: center; page-break-after: always; break-after: page; min-height: 90vh; }}
+    .cover-inner {{ width: 100%; text-align: center; padding: 18mm 12mm; }}
+    .cover-logo {{ margin-bottom: 16px; }}
+    .cover-logo svg {{ width: 80px; height: 80px; opacity: 0.15; }}
+    .cover-center {{ font-size: 18px; margin-bottom: 10px; color: #3b82f6; font-weight: 700; font-family: sans-serif; }}
+    .cover-title {{ font-size: 28px; font-weight: 700; margin: 8px 0; }}
+    .cover-subject {{ font-size: 16px; color: #333; margin-top: 4px; }}
+    .cover-meta {{ font-size: 14px; color: #444; margin-top: 14px; }}
+    .cover-fields {{ margin-top: 30px; max-width: 520px; margin-left: auto; margin-right: auto; text-align: left; }}
+    .field-row {{ display: flex; align-items: center; gap: 10px; margin: 14px 0; }}
+    .field-label {{ min-width: 100px; font-size: 14px; color: #111; font-weight: 600; }}
+    .field-line {{ flex: 1; border-bottom: 1px solid #111; height: 18px; }}
+
+    .toolbar {{ position: sticky; top: 0; background: #fff; border-bottom: 1px solid #eee; padding: 8px 12px; display: flex; gap: 8px; align-items: center; z-index: 10; }}
+    .toolbar button {{ padding: 6px 14px; font-size: 14px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9; }}
+    .toolbar button:hover {{ background: #eee; }}
+
+    .header {{ text-align: center; margin-bottom: 12px; }}
+    .title {{ font-size: 20px; font-weight: 700; margin: 0 0 6px 0; }}
+    .subtitle {{ font-size: 12px; margin: 2px 0; color: #333; }}
+    .meta {{ font-size: 10px; color: #666; }}
+
+    .questions-container {{
+      column-count: 2; column-gap: 36px;
+      column-rule: 1px solid #ddd;
+      padding: 8px 12px;
+    }}
+    .question {{ break-inside: avoid; margin-bottom: 10px; }}
+    .q-row {{ display: flex; align-items: flex-start; gap: 6px; }}
+    .q-no {{ color: #000; font-weight: 600; min-width: 26px; flex-shrink: 0; font-size: 12px; }}
+    .q-content {{ flex: 1; font-size: 12px; }}
+    .q-text {{ margin-bottom: 4px; font-size: 12px; }}
+    .q-text img {{ max-width: 100%; height: auto; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; margin: 4px 0; display: block; }}
+
+    /* ===== ANSWERS INLINE ===== */
+    .answers {{ margin-top: 4px; line-height: 1.6;display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap; gap: 6px; }}
+    .answer {{ font-size: 12px; display:flex; align-items: center; gap: 4px; margin-bottom: 2px; }}
+    .answer img {{ max-width: 120px; height: auto; max-height: 80px; border: 1px solid #ddd; border-radius: 3px; vertical-align: middle; }}
+
+    .section {{ padding: 8px 12px; }}
+    .footer {{ text-align: center; margin-top: 20px; font-size: 10px; color: #999; }}
+
+    @media print {{
+      .toolbar {{ display: none; }}
+      .question {{ page-break-inside: avoid; }}
+      html, body {{ margin: 0 !important; padding: 0 !important; font-size: 14px !important; overflow: visible !important; }}
+      .cover {{ page-break-after: always !important; break-after: page !important; }}
+      .watermark {{ position: fixed; }}
+    }}
+  </style>
+</head>
+<body>
+  <!-- Watermark layer -->
+  <div class="watermark">
+    <svg class="watermark-icon" viewBox="0 0 24 24" fill="rgba(59,130,246,0.06)">
+      <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+    </svg>
+    <div class="watermark-text">{"".join('<span>Test Market</span>' for _ in range(200))}</div>
+  </div>
+
+  <div class="page-content">
+    <div class="toolbar">
+      <button onclick="window.print()">🖨️ Chop etish / PDF saqlash</button>
+      <span style="color:#666; font-size:13px;">Chop etish oynasida "Save as PDF"ni tanlang.</span>
+    </div>
+
+    <div class="cover">
+      <div class="cover-inner">
+        <div class="cover-logo">
+          <svg viewBox="0 0 24 24" fill="rgba(59,130,246,0.25)"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>
+        </div>
+        <div class="cover-center">Test Market</div>
+        <div class="cover-title">{subject_name}</div>
+        <div class="cover-subject">Variant #{variant_id} &mdash; {len(questions)} ta savol</div>
+        <div class="cover-meta">{now_str}</div>
+        <div class="cover-fields">
+          <div class="field-row"><span class="field-label">F.I.Sh:</span><div class="field-line"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="header">
+        <div class="title">{subject_name} — Variant #{variant_id}</div>
+        <div class="subtitle">{len(questions)} ta savol</div>
+        <div class="meta">test-market.uz &bull; {now_str}</div>
+      </div>
+      <div class="questions-container">
+{questions_html}
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script>
+    document.querySelectorAll('[data-latex]').forEach(function(el){{
+      var latex = el.getAttribute('data-latex');
+      if(latex) try {{ katex.render(latex, el, {{throwOnError:false}}); }} catch(e) {{}}
+    }});
+  </script>
+</body>
+</html>"""
+
+    filename = f"variant_{variant_id}.html"
+    filepath = os.path.join(variants_dir, filename)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(html)
+
+    return f"variants/{filename}"
 
 
-def _send_to_telegram(telegram_id: int, pdf_bytes: bytes, subject_name: str, question_count: int, variant_id: int) -> tuple[bool, str | None]:
+def _send_link_to_telegram(telegram_id: int, subject_name: str, question_count: int, variant_id: int, html_path: str) -> tuple[bool, str | None]:
     settings = get_settings()
     token = settings.TELEGRAM_BOT_TOKEN
     if not token:
         return False, "TELEGRAM_BOT_TOKEN sozlanmagan"
 
-    url = f"https://api.telegram.org/bot{token}/sendDocument"
-    caption = (
+    frontend_url = settings.FRONTEND_URL.rstrip("/")
+    variant_link = f"{frontend_url}/api/uploads/{html_path}"
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    text = (
         f"✅ To'lovingiz tasdiqlandi!\n\n"
         f"📚 {subject_name}\n"
         f"❓ {question_count} ta savol\n"
         f"🆔 Variant: #{variant_id}\n\n"
+        f"Javoblarni shu chatga yuboring:\n"
+        f"<b>{variant_id}:ABCDABCD...</b>\n\n"
         f"Omad tilaymiz!"
     )
 
-    files = {"document": (f"{subject_name}_v{variant_id}.pdf", io.BytesIO(pdf_bytes), "application/pdf")}
-    data = {"chat_id": telegram_id, "caption": caption}
+    data = {
+        "chat_id": telegram_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "reply_markup": {
+            "inline_keyboard": [[
+                {"text": "📝 Testni ochish", "url": variant_link}
+            ]]
+        },
+    }
 
     try:
-        resp = requests.post(url, data=data, files=files, timeout=30)
+        resp = requests.post(url, json=data, timeout=30)
         if resp.status_code == 200:
             return True, None
         return False, f"Telegram API xato: {resp.status_code} — {resp.text[:300]}"
