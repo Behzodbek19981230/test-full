@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  pull:
     runs-on: ubuntu-latest
     steps:
       - name: Pull latest code
@@ -20,7 +20,11 @@ jobs:
             cd /var/www/test-full
             git pull origin main
 
-      - name: Deploy Backend
+  backend:
+    needs: pull
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies & migrate
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -33,9 +37,20 @@ jobs:
             source venv/bin/activate
             pip install -r requirements.txt --quiet
             alembic upgrade head
-            pm2 restart test-backend
 
-      - name: Deploy Frontend
+      - name: Restart backend
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: pm2 restart test-backend
+
+  frontend:
+    needs: pull
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build & restart
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -49,7 +64,11 @@ jobs:
             NEXT_PUBLIC_API_URL=https://api.test-market.uz npm run build
             pm2 restart test-frontend
 
-      - name: Deploy Admin
+  admin:
+    needs: pull
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build & reload nginx
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
