@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { Suspense, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { IconSchool, IconBrandGoogle, IconBrandTelegram } from '@tabler/icons-react'
@@ -31,6 +31,14 @@ function getPostLoginRedirect(params: URLSearchParams): string {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-dark-900"><div className="quiz-loading__spinner" /></div>}>
+      <LoginContent />
+    </Suspense>
+  )
+}
+
+function LoginContent() {
   const { user, loading, loginWithGoogle, loginWithTelegram } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
