@@ -25,16 +25,61 @@ def get_or_create_user(telegram_user):
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    get_or_create_user(update.effective_user)
+    from app.models.subject import Subject
+
+    user_id = get_or_create_user(update.effective_user)
+    full_name = update.effective_user.full_name or "Foydalanuvchi"
+
+    args = context.args
+    if args and args[0].startswith("sub_"):
+        try:
+            subject_id = int(args[0].split("_")[1])
+        except (IndexError, ValueError):
+            subject_id = None
+
+        if subject_id:
+            db = get_db()
+            try:
+                subject = db.query(Subject).filter(Subject.id == subject_id, Subject.is_active == True).first()
+            finally:
+                db.close()
+
+            if subject:
+                await update.message.reply_text(
+                    f"👋 *Salom, {full_name}!*\n"
+                    f"Test Market platformasiga xush kelibsiz!\n\n"
+                    f"📚 Siz *{subject.name}* fanini tanladingiz.",
+                    parse_mode='Markdown',
+                )
+                context.user_data['subject_id'] = subject.id
+                context.user_data['subject_name'] = subject.name
+
+                settings = get_settings()
+                card = settings.TELEGRAM_PAYMENT_CARD
+                holder = settings.TELEGRAM_CARD_HOLDER
+
+                text = (
+                    f"📚 *{subject.name}* — 30 ta savol\n\n"
+                    f" Narxi: 5000 so'm\n\n"
+                    f"💳 Karta raqami:\n`{card}`\n"
+                    f"👤 {holder}\n\n"
+                    f"✅ To'lov qilib *chek screenshotini* yuboring.\n"
+                    f"🚫 /cancel — Bekor qilish"
+                )
+                await update.message.reply_text(text, parse_mode='Markdown')
+                return States.WAITING_SCREENSHOT
+
     keyboard = [
         [InlineKeyboardButton("📚 Fanlar", callback_data='subjects')],
     ]
     await update.message.reply_text(
-        "🎓 *Test Market platformasiga xush kelibsiz!*\n\n"
+        f"👋 *Salom, {full_name}!*\n"
+        f"Test Market platformasiga xush kelibsiz!\n\n"
         "Fanni tanlang, to'lov chekini yuboring — 30 savollik test PDF shaklida yuboriladi!\n\n"
         "📚 /fanlar — Boshlash",
         parse_mode='Markdown', reply_markup=InlineKeyboardMarkup(keyboard),
     )
+    return ConversationHandler.END
 
 
 async def subjects_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -95,6 +140,7 @@ async def select_subject(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = (
         f"📚 *{context.user_data['subject_name']}* — 30 ta savol\n\n"
+        f" Narxi: 5000 so'm\n\n"
         f"💳 Karta raqami:\n`{card}`\n"
         f"👤 {holder}\n\n"
         f"✅ To'lov qilib *chek screenshotini* yuboring.\n"
@@ -147,6 +193,114 @@ async def handle_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     context.user_data.clear()
     return ConversationHandler.END
+
+
+async def check_answers(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from app.models.variant import TestVariant
+    from app.models.question import Question
+    from app.models.user import User
+
+    text = update.message.text.strip()
+
+    parts = text.split(":")
+    if len(parts) != 2:
+        return
+    try:
+        variant_id = int(parts[0].strip())
+    except ValueError:
+        return
+    user_answers = parts[1].strip().upper()
+
+    if not user_answers or not all(c in "ABCD" for c in user_answers):
+        await update.message.reply_text("❌ Javoblar faqat A, B, C, D harflaridan iborat bo'lishi kerak.")
+        return
+
+    db = get_db()
+    try:
+        user = db.query(User).filter(User.telegram_id == update.effective_user.id).first()
+        if not user:
+            await update.message.reply_text("❌ Avval /start yuboring.")
+            return
+
+        variant = db.query(TestVariant).filter(
+            TestVariant.id == variant_id,
+            TestVariant.user_id == user.id,
+        ).first()
+        if not variant:
+            await update.message.reply_text("❌ Variant topilmadi yoki sizga tegishli emas.")
+            return
+
+        if variant.status == "checked":
+            await update.message.reply_text(
+                f"ℹ️ Variant #{variant_id} allaqachon tekshirilgan.\n"
+                f"✅ Natija: *{variant.correct_count}* / {variant.question_count} (*{variant.score}%*)",
+                parse_mode="Markdown",
+            )
+            return
+
+        if variant.status != "sent":
+            await update.message.reply_text("❌ Bu variant hali yuborilmagan.")
+            return
+
+        if not variant.question_ids:
+            await update.message.reply_text("❌ Bu variantning savollari tizimda saqlanmagan.")
+            return
+
+        q_ids = [int(qid) for qid in variant.question_ids.split(",")]
+        questions = {q.id: q for q in db.query(Question).filter(Question.id.in_(q_ids)).all()}
+        ordered = [questions[qid] for qid in q_ids if qid in questions]
+
+        if len(user_answers) != len(ordered):
+            await update.message.reply_text(
+                f"❌ Javoblar soni mos emas.\n"
+                f"Variantda *{len(ordered)}* ta savol bor, siz *{len(user_answers)}* ta javob yubordingiz.",
+                parse_mode="Markdown",
+            )
+            return
+
+        correct = 0
+        wrong_list = []
+        for i, (q, ans) in enumerate(zip(ordered, user_answers), 1):
+            if ans == q.correct_option.upper():
+                correct += 1
+            else:
+                wrong_list.append(f"  {i}. Siz: {ans} | To'g'ri: {q.correct_option.upper()}")
+
+        total = len(ordered)
+        percent = round(correct / total * 100, 1)
+
+        if percent >= 80:
+            emoji = "🏆"
+        elif percent >= 60:
+            emoji = "👍"
+        elif percent >= 40:
+            emoji = "📖"
+        else:
+            emoji = "💪"
+
+        result = (
+            f"{emoji} *Variant #{variant_id} natijalari:*\n\n"
+            f"✅ To'g'ri: *{correct}* / {total}\n"
+            f"❌ Xato: *{total - correct}*\n"
+            f"📊 Ball: *{percent}%*\n"
+        )
+
+        if wrong_list:
+            result += f"\n📋 *Xato javoblar:*\n" + "\n".join(wrong_list)
+
+        result += f"\n\n📚 /fanlar — Yangi test"
+
+        from datetime import datetime, timezone
+        variant.user_answers = user_answers
+        variant.correct_count = correct
+        variant.score = round(percent)
+        variant.status = "checked"
+        variant.checked_at = datetime.now(timezone.utc)
+        db.commit()
+
+        await update.message.reply_text(result, parse_mode="Markdown")
+    finally:
+        db.close()
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):

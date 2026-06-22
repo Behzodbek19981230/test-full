@@ -21,9 +21,12 @@ def pending_count(db: Session = Depends(get_db), admin: Admin = Depends(get_curr
 
 @router.put("/{payment_id}/approve")
 def approve_payment(payment_id: int, body: PaymentAction, request: Request, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
-    result = payment_service.approve(db, payment_id, admin.id, body.note)
+    try:
+        result = payment_service.approve(db, payment_id, admin.id, body.note, body.amount)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Variant yaratishda xatolik: {str(e)}")
     if not result:
-        raise HTTPException(status_code=400, detail="Bu to'lov allaqachon ko'rib chiqilgan")
+        raise HTTPException(status_code=400, detail="Bu to'lov allaqachon ko'rib chiqilgan yoki topilmadi")
     audit_service.log_action(db, admin.id, "approve", "payment", payment_id, f"To'lov tasdiqlandi: {result['amount']} so'm", request.client.host)
     return result
 

@@ -16,7 +16,7 @@ export default function Users() {
   const [search, setSearch] = useState('')
 
   const load = () => {
-    api.get(`/users?page=${page}&per_page=20&search=${search}`).then(r => {
+    api.get(`/users?page=${page}&per_page=10&search=${search}`).then(r => {
       setUsers(r.data.users); setTotal(r.data.total)
     })
   }
@@ -57,7 +57,7 @@ export default function Users() {
             ]}
           />
         </CardBody>
-        <Pagination page={page} totalPages={Math.ceil(total / 20)} onPageChange={setPage} />
+        <Pagination page={page} totalPages={Math.ceil(total / 10)} onPageChange={setPage} />
       </Card>
     </div>
   )

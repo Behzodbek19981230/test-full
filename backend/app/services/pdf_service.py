@@ -59,31 +59,41 @@ class TestPDF(FPDF):
     def _get_wm_image(cls):
         if cls._wm_img_cache is not None:
             return cls._wm_img_cache
-        from PIL import Image, ImageDraw, ImageFont
+        from PIL import Image, ImageDraw
 
         size = 800
         img = Image.new("RGBA", (size, size), (255, 255, 255, 0))
         draw = ImageDraw.Draw(img)
 
-        try:
-            font_path = os.path.join(os.path.dirname(__file__), "fonts", "DejaVuSans-Bold.ttf")
-            if not os.path.exists(font_path):
-                font_path = os.path.join(os.path.dirname(__file__), "fonts", "TimesNewRoman-Bold.ttf")
-            font = ImageFont.truetype(font_path, 340)
-        except Exception:
-            font = ImageFont.load_default()
-
-        text = "TM"
-        bbox = draw.textbbox((0, 0), text, font=font)
-        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        tx = (size - tw) // 2
-        ty = (size - th) // 2 - bbox[1]
-
         cx, cy = size // 2, size // 2
-        r = max(tw, th) // 2 + 60
-        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(59, 130, 246, 30))
+        r = 320
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(59, 130, 246, 25))
 
-        draw.text((tx, ty), text, font=font, fill=(59, 130, 246, 90))
+        color = (59, 130, 246, 80)
+        w = 8
+
+        s = 380
+        ox, oy = (size - s) // 2, (size - s) // 2
+
+        def p(x, y):
+            return (ox + x * s / 24, oy + y * s / 24)
+
+        # graduation cap top: M22,9 L12,5 L2,9 L12,13 L22,9
+        cap = [p(22, 9), p(12, 5), p(2, 9), p(12, 13), p(22, 9)]
+        draw.line(cap, fill=color, width=w, joint="curve")
+        # right pole: V6 from (22,9) to (22,15)
+        draw.line([p(22, 9), p(22, 15)], fill=color, width=w)
+        # building arc: M6,10.6 V16 ... M18,10.6 V16
+        draw.line([p(6, 10.6), p(6, 16)], fill=color, width=w)
+        draw.line([p(18, 10.6), p(18, 16)], fill=color, width=w)
+        # bottom arc approximation
+        arc_pts = []
+        for i in range(21):
+            t = i / 20.0
+            x = 6 + t * 12
+            y = 16 + 3 * math.sin(t * math.pi)
+            arc_pts.append(p(x, y))
+        draw.line(arc_pts, fill=color, width=w, joint="curve")
 
         cls._wm_img_cache = img
         return img
@@ -221,7 +231,7 @@ def generate_and_send(variant_id: int, telegram_id: int, subject_name: str, subj
 
         sys.stdout.write(f"Variant #{variant_id}: PDF generatsiya boshlanmoqda ({subject_name}, {question_count} ta)")
 
-        pdf_bytes, error = _generate_pdf(db, subject_name, subject_id, question_count, variant_id)
+        pdf_bytes, error, q_ids = _generate_pdf(db, subject_name, subject_id, question_count, variant_id)
         if not pdf_bytes:
             err = error or "Savollar topilmadi"
             sys.stdout.write(f"Variant #{variant_id}: {err}")
@@ -229,6 +239,10 @@ def generate_and_send(variant_id: int, telegram_id: int, subject_name: str, subj
             variant.error_log = err
             db.commit()
             return
+
+        if q_ids:
+            variant.question_ids = ",".join(str(qid) for qid in q_ids)
+            db.commit()
 
         sys.stdout.write(f"Variant #{variant_id}: PDF tayyor ({len(pdf_bytes)} bytes), Telegramga yuborilmoqda...")
 
@@ -258,7 +272,7 @@ def generate_and_send(variant_id: int, telegram_id: int, subject_name: str, subj
         db.close()
 
 
-def _generate_pdf(db, subject_name: str, subject_id: int, question_count: int, variant_id: int) -> tuple[bytes | None, str | None]:
+def _generate_pdf(db, subject_name: str, subject_id: int, question_count: int, variant_id: int) -> tuple[bytes | None, str | None, list[int] | None]:
     try:
         questions = (
             db.query(Question)
@@ -267,7 +281,7 @@ def _generate_pdf(db, subject_name: str, subject_id: int, question_count: int, v
             .all()
         )
         if not questions:
-            return None, "Bu fanda savollar topilmadi"
+            return None, "Bu fanda savollar topilmadi", None
 
         count = min(question_count, len(questions))
         selected = random.sample(questions, count)
@@ -276,9 +290,10 @@ def _generate_pdf(db, subject_name: str, subject_id: int, question_count: int, v
         pdf.set_auto_page_break(auto=False)
         pdf.questions_two_col(selected)
 
-        return pdf.output(), None
+        q_ids = [q.id for q in selected]
+        return pdf.output(), None, q_ids
     except Exception as e:
-        return None, f"PDF generatsiya xatosi: {str(e)}"
+        return None, f"PDF generatsiya xatosi: {str(e)}", None
 
 
 def _send_to_telegram(telegram_id: int, pdf_bytes: bytes, subject_name: str, question_count: int, variant_id: int) -> tuple[bool, str | None]:

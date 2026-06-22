@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { IconSchool, IconBrandGoogle, IconBrandTelegram } from '@tabler/icons-react'
 import { useAuth } from '@/context/AuthContext'
@@ -23,17 +23,35 @@ declare global {
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
 const TELEGRAM_BOT_NAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME || ''
 
+function getPostLoginRedirect(params: URLSearchParams): string {
+  if (params.get('redirect') === 'bot' && params.get('subject')) {
+    return `https://t.me/${TELEGRAM_BOT_NAME}?start=sub_${params.get('subject')}`
+  }
+  return '/'
+}
+
 export default function LoginPage() {
   const { user, loading, loginWithGoogle, loginWithTelegram } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const googleBtnRef = useRef<HTMLDivElement>(null)
   const tgContainerRef = useRef<HTMLDivElement>(null)
 
+  const redirectAfterLogin = () => {
+    const target = getPostLoginRedirect(searchParams)
+    if (target.startsWith('http')) {
+      window.open(target, '_blank')
+      router.push('/')
+    } else {
+      router.push(target)
+    }
+  }
+
   useEffect(() => {
     if (!loading && user) {
-      router.push('/')
+      redirectAfterLogin()
     }
-  }, [user, loading, router])
+  }, [user, loading])
 
   // Google Sign-In
   useEffect(() => {
@@ -64,11 +82,10 @@ export default function LoginPage() {
   const handleGoogleResponse = useCallback(async (response: { credential: string }) => {
     try {
       await loginWithGoogle(response.credential)
-      router.push('/')
     } catch {
       alert('Google orqali kirishda xatolik')
     }
-  }, [loginWithGoogle, router])
+  }, [loginWithGoogle])
 
   // Telegram Login
   useEffect(() => {
@@ -77,7 +94,6 @@ export default function LoginPage() {
     window.onTelegramAuth = async (tgUser: Record<string, unknown>) => {
       try {
         await loginWithTelegram(tgUser)
-        router.push('/')
       } catch {
         alert('Telegram orqali kirishda xatolik')
       }

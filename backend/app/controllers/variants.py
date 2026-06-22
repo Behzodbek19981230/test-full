@@ -18,6 +18,14 @@ def get_variants(status: str = None, page: int = 1, per_page: int = 20, db: Sess
     return variant_service.get_variants(db, status, page, per_page)
 
 
+@router.get("/{variant_id}")
+def get_variant_detail(variant_id: int, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+    result = variant_service.get_detail(db, variant_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Variant topilmadi")
+    return result
+
+
 @router.put("/{variant_id}/status")
 def update_variant_status(variant_id: int, body: StatusUpdate, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
     result = variant_service.update_status(db, variant_id, body.status)

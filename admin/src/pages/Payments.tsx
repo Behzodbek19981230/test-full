@@ -5,6 +5,15 @@ import api from '../api';
 import { PageHeader, Button, Dialog, Badge, Card, CardBody, Textarea, Pagination } from '../components/ui';
 import Table from '../components/ui/Table';
 
+function formatMoney(val: string): string {
+	const digits = val.replace(/\D/g, '');
+	return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+function parseMoney(val: string): number {
+	return parseInt(val.replace(/\s/g, ''), 10) || 0;
+}
+
 interface Payment {
 	id: number;
 	user: { full_name: string; username: string; telegram_id: number };
@@ -25,9 +34,10 @@ export default function Payments() {
 	const [statusFilter, setStatusFilter] = useState('pending');
 	const [selected, setSelected] = useState<Payment | null>(null);
 	const [note, setNote] = useState('');
+	const [amountDisplay, setAmountDisplay] = useState('');
 
 	const load = () => {
-		api.get(`/payments?status=${statusFilter}&page=${page}&per_page=20`).then((r) => {
+		api.get(`/payments?status=${statusFilter}&page=${page}&per_page=10`).then((r) => {
 			setPayments(r.data.payments);
 			setTotal(r.data.total);
 		});
@@ -38,14 +48,21 @@ export default function Payments() {
 	}, [page, statusFilter]);
 
 	const approve = async (id: number) => {
+		const amount = parseMoney(amountDisplay);
+		if (!amount) {
+			toast.error("Summani kiriting");
+			return;
+		}
 		try {
-			await api.put(`/payments/${id}/approve`, { note });
-			toast.success("To'lov tasdiqlandi");
+			await api.put(`/payments/${id}/approve`, { note, amount });
+			toast.success("To'lov tasdiqlandi va variant yaratildi");
 			setSelected(null);
 			setNote('');
+			setAmountDisplay('');
 			load();
-		} catch {
-			toast.error('Xatolik');
+		} catch (e: any) {
+			const msg = e.response?.data?.detail || 'Xatolik yuz berdi';
+			toast.error(msg);
 		}
 	};
 
@@ -60,8 +77,9 @@ export default function Payments() {
 			setSelected(null);
 			setNote('');
 			load();
-		} catch {
-			toast.error('Xatolik');
+		} catch (e: any) {
+			const msg = e.response?.data?.detail || 'Xatolik yuz berdi';
+			toast.error(msg);
 		}
 	};
 
@@ -167,6 +185,7 @@ export default function Payments() {
 										onClick={() => {
 											setSelected(p);
 											setNote('');
+											setAmountDisplay(formatMoney(String(p.amount > 0 ? p.amount : 5000)));
 										}}
 									>
 										<IconEye size={16} />
@@ -176,7 +195,7 @@ export default function Payments() {
 						]}
 					/>
 				</CardBody>
-				<Pagination page={page} totalPages={Math.ceil(total / 20)} onPageChange={setPage} />
+				<Pagination page={page} totalPages={Math.ceil(total / 10)} onPageChange={setPage} />
 			</Card>
 
 			<Dialog
@@ -248,12 +267,30 @@ export default function Payments() {
 						)}
 
 						{selected.status === 'pending' && (
-							<Textarea
-								label='Izoh'
-								value={note}
-								onChange={(e) => setNote(e.target.value)}
-								placeholder='Ixtiyoriy izoh...'
-							/>
+							<div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+								<div className='ui-field'>
+									<label className='ui-label'>To'lov summasi</label>
+									<div className='ui-input-wrap' style={{ position: 'relative' }}>
+										<input
+											className='ui-input'
+											inputMode='numeric'
+											placeholder='0'
+											value={amountDisplay}
+											onChange={(e) => setAmountDisplay(formatMoney(e.target.value))}
+											style={{ paddingRight: 50 }}
+										/>
+										<span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--text-400)', fontWeight: 500, pointerEvents: 'none' }}>
+											so'm
+										</span>
+									</div>
+								</div>
+								<Textarea
+									label='Izoh'
+									value={note}
+									onChange={(e) => setNote(e.target.value)}
+									placeholder='Ixtiyoriy izoh...'
+								/>
+							</div>
 						)}
 
 						{selected.status !== 'pending' && selected.admin_note && (

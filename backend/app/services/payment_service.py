@@ -43,13 +43,15 @@ def get_pending_count(db: Session) -> int:
     return db.query(Payment).filter(Payment.status == "pending").count()
 
 
-def approve(db: Session, payment_id: int, admin_id: int, note: str = "") -> dict | None:
+def approve(db: Session, payment_id: int, admin_id: int, note: str = "", amount: int = None) -> dict | None:
     p = db.query(Payment).filter(Payment.id == payment_id).first()
     if not p or p.status != "pending":
         return None
     p.status = "approved"
     p.admin_id = admin_id
     p.admin_note = note
+    if amount is not None:
+        p.amount = amount
 
     notif = Notification(
         user_id=p.user_id, admin_id=admin_id, title="To'lov tasdiqlandi",
@@ -57,15 +59,20 @@ def approve(db: Session, payment_id: int, admin_id: int, note: str = "") -> dict
         type="payment",
     )
     db.add(notif)
-    db.commit()
-    db.refresh(p)
 
     variant = TestVariant(
         payment_id=p.id, user_id=p.user_id, subject_id=p.subject_id,
         question_count=p.question_count, status="pending",
     )
     db.add(variant)
-    db.commit()
+
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    db.refresh(p)
     db.refresh(variant)
 
     telegram_id = p.user.telegram_id if p.user else None
