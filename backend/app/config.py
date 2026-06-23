@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = "admin123"
 
     UPLOAD_DIR: str = "uploads"
+    MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024  # 50 MB
 
     FRONTEND_URL: str = "http://localhost:3000"
     ADMIN_URL: str = "http://localhost:5173"

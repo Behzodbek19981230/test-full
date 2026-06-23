@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { IconBooks, IconPlus, IconEdit, IconBan, IconCheck, IconStarFilled } from '@tabler/icons-react';
+import { IconBooks, IconPlus, IconEdit, IconBan, IconCheck, IconStarFilled, IconFileText } from '@tabler/icons-react';
 import api from '../api';
 import {
 	PageHeader,
@@ -39,6 +40,7 @@ export default function Subjects() {
 		is_mandatory: false, mandatory_question_count: 10,
 	});
 
+	const navigate = useNavigate();
 	const load = () => api.get('/subjects/all').then((r) => setSubjects(r.data));
 	useEffect(() => { load(); }, []);
 
@@ -169,6 +171,11 @@ export default function Subjects() {
 												label: 'Tahrirlash',
 												icon: <IconEdit size={15} />,
 												onClick: () => openEdit(s),
+											},
+											{
+												label: 'Materiallar',
+												icon: <IconFileText size={15} />,
+												onClick: () => navigate(`/materials/${s.id}`),
 											},
 											{
 												label: s.is_mandatory ? 'Majburiydan chiqarish' : 'Majburiy qilish',

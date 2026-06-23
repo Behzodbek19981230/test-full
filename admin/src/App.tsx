@@ -10,6 +10,7 @@ import Variants from './pages/Variants'
 import Users from './pages/Users'
 import AuditLogs from './pages/AuditLogs'
 import Notifications from './pages/Notifications'
+import Materials from './pages/Materials'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth()
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="users" element={<Users />} />
         <Route path="audit" element={<AuditLogs />} />
         <Route path="notifications" element={<Notifications />} />
+        <Route path="materials/:subjectId" element={<Materials />} />
       </Route>
     </Routes>
   )
