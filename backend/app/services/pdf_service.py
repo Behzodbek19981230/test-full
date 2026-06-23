@@ -604,15 +604,32 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
+  <meta name="theme-color" content="#ffffff">
   <title>{subject_name} — Variant #{variant_id} | Test Market</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
   <style>
     @page {{ size: A4; margin: 0.5in; }}
     * {{ box-sizing: border-box; }}
-    html {{ color-scheme: light only; }}
-    body {{ font-family: Times, 'Times New Roman', serif; margin: 0; color: #111; font-size: 16px; position: relative; background: #fff; }}
+    html {{ color-scheme: light only !important; }}
+    html, body, div, span, p, strong, em, h1, h2, h3, h4, table, td, th {{
+      color: #111 !important;
+      background-color: transparent;
+    }}
+    body {{
+      font-family: Times, 'Times New Roman', serif;
+      margin: 0;
+      color: #111 !important;
+      font-size: 16px;
+      position: relative;
+      background: #ffffff !important;
+      -webkit-text-fill-color: #111;
+    }}
+
+    .katex, .katex * {{ color: #111 !important; -webkit-text-fill-color: #111 !important; }}
 
     /* ===== WATERMARK ===== */
     .watermark {{
@@ -621,7 +638,7 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
     }}
     .watermark-icon {{
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 500px; height: 500px; opacity: 0.04; object-fit: contain;
+      width: 300px; height: 300px; opacity: 0.04; object-fit: contain;
     }}
     .watermark-text {{
       position: absolute; top: 0; left: 0; width: 200%; height: 200%;
@@ -629,34 +646,55 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
     }}
     .watermark-text span {{
       display: inline-block; font-size: 14px; font-weight: 700;
-      color: rgba(59,130,246,0.08); white-space: nowrap;
-      margin: 18px 28px; font-family: sans-serif;
+      color: rgba(59,130,246,0.08) !important; -webkit-text-fill-color: rgba(59,130,246,0.08) !important;
+      white-space: nowrap; margin: 18px 28px; font-family: sans-serif;
     }}
 
     /* ===== LAYOUT ===== */
     .page-content {{ position: relative; z-index: 1; }}
     .cover {{ display: flex; align-items: center; justify-content: center; page-break-after: always; break-after: page; min-height: 90vh; }}
-    .cover-inner {{ width: 100%; text-align: center; padding: 18mm 12mm; }}
+    .cover-inner {{ width: 100%; text-align: center; padding: 60px 20px; }}
     .cover-logo {{ margin-bottom: 16px; }}
     .cover-logo img {{ width: 100px; height: 100px; object-fit: contain; }}
-    .cover-center {{ font-size: 18px; margin-bottom: 10px; color: #3b82f6; font-weight: 700; font-family: sans-serif; }}
-    .cover-title {{ font-size: 28px; font-weight: 700; margin: 8px 0; }}
-    .cover-subject {{ font-size: 16px; color: #333; margin-top: 4px; }}
-    .cover-meta {{ font-size: 14px; color: #444; margin-top: 14px; }}
+    .cover-center {{ font-size: 18px; margin-bottom: 10px; color: #3b82f6 !important; -webkit-text-fill-color: #3b82f6 !important; font-weight: 700; font-family: sans-serif; }}
+    .cover-title {{ font-size: 24px; font-weight: 700; margin: 8px 0; }}
+    .cover-subject {{ font-size: 16px; color: #333 !important; -webkit-text-fill-color: #333 !important; margin-top: 4px; }}
+    .cover-meta {{ font-size: 14px; color: #444 !important; -webkit-text-fill-color: #444 !important; margin-top: 14px; }}
     .cover-fields {{ margin-top: 30px; max-width: 520px; margin-left: auto; margin-right: auto; text-align: left; }}
     .field-row {{ display: flex; align-items: center; gap: 10px; margin: 14px 0; }}
-    .field-label {{ min-width: 100px; font-size: 14px; color: #111; font-weight: 600; }}
-    .field-line {{ flex: 1; border-bottom: 1px solid #111; height: 18px; }}
+    .field-label {{ min-width: 100px; font-size: 14px; font-weight: 600; }}
+    .field-line {{ flex: 1; border-bottom: 1px solid #111 !important; height: 18px; }}
 
-    .toolbar {{ position: sticky; top: 0; z-index: 10; background: #fff; border-bottom: 1px solid #e5e7eb; padding: 10px 16px; display: flex; align-items: center; justify-content: center; }}
-    .toolbar .btn-download {{ display: inline-flex; align-items: center; gap: 8px; padding: 10px 28px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; border-radius: 8px; background: #3b82f6; color: #fff; font-family: sans-serif; box-shadow: 0 2px 8px rgba(59,130,246,0.3); transition: background 0.15s; }}
-    .toolbar .btn-download:hover {{ background: #2563eb; }}
-    .toolbar .btn-download svg {{ width: 18px; height: 18px; fill: currentColor; }}
+    .toolbar {{
+      position: sticky; top: 0; z-index: 10;
+      background: #ffffff !important;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px 16px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }}
+    .toolbar .btn {{
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 24px; font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; border-radius: 10px;
+      color: #fff !important; -webkit-text-fill-color: #fff !important;
+      font-family: sans-serif; transition: opacity 0.15s;
+      text-decoration: none;
+    }}
+    .btn-print {{
+      background: #3b82f6 !important;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+    }}
+    .btn-share {{
+      background: #10b981 !important;
+      box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+    }}
+    .toolbar .btn:active {{ opacity: 0.8; }}
+    .toolbar .btn svg {{ width: 18px; height: 18px; fill: currentColor; }}
 
     .header {{ text-align: center; margin-bottom: 12px; }}
-    .title {{ font-size: 20px; font-weight: 700; margin: 0 0 6px 0; }}
-    .subtitle {{ font-size: 12px; margin: 2px 0; color: #333; }}
-    .meta {{ font-size: 10px; color: #666; }}
+    .title {{ font-size: 18px; font-weight: 700; margin: 0 0 6px 0; }}
+    .subtitle {{ font-size: 12px; margin: 2px 0; color: #333 !important; -webkit-text-fill-color: #333 !important; }}
+    .meta {{ font-size: 10px; color: #666 !important; -webkit-text-fill-color: #666 !important; }}
 
     .questions-container {{
       column-count: 1;
@@ -664,24 +702,26 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
     }}
     .question {{ break-inside: avoid; margin-bottom: 10px; }}
     .q-row {{ display: flex; align-items: flex-start; gap: 6px; }}
-    .q-no {{ color: #000; font-weight: 600; min-width: 26px; flex-shrink: 0; font-size: 12px; }}
+    .q-no {{ font-weight: 600; min-width: 26px; flex-shrink: 0; font-size: 12px; }}
     .q-content {{ flex: 1; font-size: 12px; }}
     .q-text {{ margin-bottom: 4px; font-size: 12px; }}
     .q-text img {{ max-width: 100%; height: auto; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; margin: 4px 0; display: block; }}
 
-    /* ===== ANSWERS INLINE ===== */
-    .answers {{ margin-top: 4px; line-height: 1.6;display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap; gap: 6px; }}
-    .answer {{ font-size: 12px; display:flex; align-items: center; gap: 4px; margin-bottom: 2px; }}
+    .answers {{ margin-top: 4px; line-height: 1.6; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }}
+    .answer {{ font-size: 12px; display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }}
     .answer img {{ max-width: 120px; height: auto; max-height: 80px; border: 1px solid #ddd; border-radius: 3px; vertical-align: middle; }}
 
     .section {{ padding: 8px 12px; }}
-    .footer {{ text-align: center; margin-top: 20px; font-size: 10px; color: #999; }}
+
+    @media screen and (max-width: 600px) {{
+      .cover-inner {{ padding: 40px 16px; }}
+      .cover-title {{ font-size: 22px; }}
+      .questions-container {{ padding: 4px 8px; }}
+      .watermark-icon {{ width: 200px; height: 200px; }}
+    }}
 
     @media print {{
-      .toolbar {{ display: none; }}
+      .toolbar {{ display: none !important; }}
       .questions-container {{ column-count: 2; column-gap: 36px; column-rule: 1px solid #ddd; }}
       .question {{ page-break-inside: avoid; }}
       html, body {{ margin: 0 !important; padding: 0 !important; font-size: 14px !important; overflow: visible !important; }}
@@ -691,17 +731,20 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
   </style>
 </head>
 <body>
-  <!-- Watermark layer -->
   <div class="watermark">
     <img class="watermark-icon" src="{logo_src}" alt="">
     <div class="watermark-text">{"".join('<span>Test Market</span>' for _ in range(200))}</div>
   </div>
 
   <div class="page-content">
-    <div class="toolbar">
-      <button class="btn-download" onclick="window.print()">
+    <div class="toolbar" id="toolbar">
+      <button class="btn btn-print" onclick="handleDownload()">
         <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-        Yuklab olish (PDF)
+        <span id="dlText">Yuklab olish</span>
+      </button>
+      <button class="btn btn-share" id="shareBtn" style="display:none" onclick="handleShare()">
+        <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+        Ulashish
       </button>
     </div>
 
@@ -739,6 +782,28 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
       var latex = el.getAttribute('data-latex');
       if(latex) try {{ katex.render(latex, el, {{throwOnError:false}}); }} catch(e) {{}}
     }});
+
+    var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile && navigator.share) {{
+      document.getElementById('shareBtn').style.display = 'inline-flex';
+    }}
+    if (isMobile) {{
+      document.getElementById('dlText').textContent = 'PDF saqlash';
+    }}
+
+    function handleDownload() {{
+      window.print();
+    }}
+
+    function handleShare() {{
+      if (navigator.share) {{
+        navigator.share({{
+          title: '{subject_name} — Variant #{variant_id}',
+          text: 'Test Market — {subject_name} testi',
+          url: window.location.href
+        }}).catch(function(){{}});
+      }}
+    }}
   </script>
 </body>
 </html>"""
