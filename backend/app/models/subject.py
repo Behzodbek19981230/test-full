@@ -13,6 +13,8 @@ class Subject(Base):
     icon = Column(Text, default="📚")
     price_per_question = Column(Integer, default=500)
     is_active = Column(Boolean, default=True)
+    is_mandatory = Column(Boolean, default=False)
+    mandatory_question_count = Column(Integer, default=10)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     topics = relationship("Topic", back_populates="subject", order_by="Topic.order_num")

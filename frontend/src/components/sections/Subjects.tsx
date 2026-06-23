@@ -29,6 +29,7 @@ interface Subject {
 	price_per_question: number;
 	question_count: number;
 	description: string;
+	is_mandatory?: boolean;
 }
 
 export default function Subjects({ subjects }: { subjects: Subject[] }) {
@@ -81,7 +82,7 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
 				</div>
 
 				<div ref={gridRef} className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4'>
-					{subjects.map((s, i) => (
+					{subjects.filter(s => !s.is_mandatory).map((s, i) => (
 						<button
 							key={s.id}
 							onClick={() => setSelected(s)}
@@ -92,8 +93,12 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
 								<SubjectIcon icon={s.icon} size={28} />
 							</div>
 							<div className='flex-1 min-w-0'>
-								<h3 className='text-[14px] sm:text-[15px] font-bold text-slate-900 mb-0.5 truncate'>{s.name}</h3>
-								<p className='text-[12px] sm:text-[13px] text-slate-500 line-clamp-1'>{s.description}</p>
+								<h3 className='text-[14px] sm:text-[15px] font-bold text-slate-900 mb-0.5 truncate'>
+									{s.name}
+								</h3>
+								<p className='text-[12px] sm:text-[13px] text-slate-500 line-clamp-1'>
+									{s.description}
+								</p>
 							</div>
 							<div className='w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/60 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-white transition-all shrink-0'>
 								<IconArrowRight size={15} />
@@ -130,7 +135,6 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
 								<SubjectIcon icon={selected.icon} size={28} />
 								<div>
 									<h3 className='text-base sm:text-lg font-bold text-slate-900'>{selected.name}</h3>
-									<p className='text-[13px] sm:text-sm text-slate-500'>{selected.question_count} savol mavjud</p>
 								</div>
 							</div>
 							<button
@@ -142,7 +146,9 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
 						</div>
 
 						<div className='p-4 sm:p-5 space-y-3 pb-6 sm:pb-5'>
-							<p className='text-[13px] sm:text-sm text-slate-400 mb-3 sm:mb-4'>Qanday formatda test ishlashni tanlang:</p>
+							<p className='text-[13px] sm:text-sm text-slate-400 mb-3 sm:mb-4'>
+								Qanday formatda test ishlashni tanlang:
+							</p>
 
 							<button
 								onClick={() => handleOnlineClick(selected.id)}
@@ -157,7 +163,9 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
 										{user ? '30 ta savol · 45 daqiqa · Natija shu yerda' : 'Avval tizimga kiring'}
 									</p>
 								</div>
-								<span className='text-slate-400 group-hover:text-primary-light transition-colors'>→</span>
+								<span className='text-slate-400 group-hover:text-primary-light transition-colors'>
+									→
+								</span>
 							</button>
 
 							<button
@@ -168,7 +176,9 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
 									<IconBrandTelegram size={22} />
 								</div>
 								<div className='flex-1'>
-									<h4 className='text-[14px] sm:text-[15px] font-bold text-slate-900'>Bot orqali yechaman</h4>
+									<h4 className='text-[14px] sm:text-[15px] font-bold text-slate-900'>
+										Bot orqali yechaman
+									</h4>
 									<p className='text-[12px] sm:text-[13px] text-slate-500'>
 										{user ? 'Telegram bot orqali · PDF yuklab olish' : 'Avval tizimga kiring'}
 									</p>

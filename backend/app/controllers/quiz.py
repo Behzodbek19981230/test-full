@@ -48,6 +48,59 @@ def generate_quiz(subject_id: int, count: int = 30, db: Session = Depends(get_db
     }
 
 
+@router.get("/mandatory/generate")
+def generate_mandatory_quiz(db: Session = Depends(get_db)):
+    mandatory_subjects = db.query(Subject).filter(
+        Subject.is_mandatory == True, Subject.is_active == True
+    ).all()
+
+    if not mandatory_subjects:
+        raise HTTPException(status_code=404, detail="Majburiy fanlar topilmadi")
+
+    all_questions = []
+    subjects_info = []
+
+    for subj in mandatory_subjects:
+        count = subj.mandatory_question_count or 10
+        topic_ids = [t.id for t in db.query(Topic.id).filter(
+            Topic.subject_id == subj.id, Topic.is_active == True
+        ).all()]
+
+        if not topic_ids:
+            continue
+
+        questions = db.query(Question).filter(
+            Question.topic_id.in_(topic_ids)
+        ).order_by(func.random()).limit(count).all()
+
+        subjects_info.append({
+            "id": subj.id, "name": subj.name, "icon": subj.icon,
+            "question_count": len(questions),
+        })
+
+        for q in questions:
+            all_questions.append({
+                "id": q.id,
+                "subject_id": subj.id,
+                "subject_name": subj.name,
+                "question_text": q.question_text,
+                "option_a": q.option_a,
+                "option_b": q.option_b,
+                "option_c": q.option_c,
+                "option_d": q.option_d,
+            })
+
+    if not all_questions:
+        raise HTTPException(status_code=404, detail="Majburiy fanlarda savollar topilmadi")
+
+    return {
+        "subject": {"id": 0, "name": "Majburiy fanlar", "icon": "📋"},
+        "subjects": subjects_info,
+        "total": len(all_questions),
+        "questions": all_questions,
+    }
+
+
 @router.post("/{subject_id}/check")
 def check_quiz(subject_id: int, body: dict, db: Session = Depends(get_db)):
     """Check answers. Body: {"answers": {"question_id": "A", ...}}"""

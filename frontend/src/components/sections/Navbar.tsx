@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 
 const links = [
 	{ href: '#fanlar', label: 'Fanlar' },
+	{ href: '#majburiy', label: 'Majburiy fanlar' },
 	{ href: '#qanday', label: 'Qanday ishlaydi' },
 	{ href: '#imkoniyatlar', label: 'Imkoniyatlar' },
 ];

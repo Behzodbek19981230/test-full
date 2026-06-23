@@ -59,9 +59,15 @@ export default function QuizPage() {
 	const [checking, setChecking] = useState(false);
 	const [currentQ, setCurrentQ] = useState(0);
 
+	const isMandatory = subjectId === 'mandatory';
+
 	// Load quiz
 	useEffect(() => {
-		fetch(`/api/quiz/${subjectId}/generate?count=30`)
+		const url = isMandatory
+			? '/api/quiz/mandatory/generate'
+			: `/api/quiz/${subjectId}/generate?count=30`;
+
+		fetch(url)
 			.then((r) => {
 				if (!r.ok) throw new Error('Xato');
 				return r.json();
@@ -98,7 +104,8 @@ export default function QuizPage() {
 		if (checking) return;
 		setChecking(true);
 		try {
-			const res = await fetch(`/api/quiz/${subjectId}/check`, {
+			const checkId = isMandatory ? '0' : subjectId;
+			const res = await fetch(`/api/quiz/${checkId}/check`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ answers }),

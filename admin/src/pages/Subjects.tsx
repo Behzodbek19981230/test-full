@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { IconBooks, IconPlus, IconEdit, IconBan, IconCheck } from '@tabler/icons-react';
+import { IconBooks, IconPlus, IconEdit, IconBan, IconCheck, IconStarFilled } from '@tabler/icons-react';
 import api from '../api';
 import {
 	PageHeader,
@@ -24,6 +24,8 @@ interface Subject {
 	icon: string;
 	price_per_question: number;
 	is_active: boolean;
+	is_mandatory: boolean;
+	mandatory_question_count: number;
 	topic_count: number;
 	question_count: number;
 }
@@ -32,21 +34,25 @@ export default function Subjects() {
 	const [subjects, setSubjects] = useState<Subject[]>([]);
 	const [showModal, setShowModal] = useState(false);
 	const [editing, setEditing] = useState<Subject | null>(null);
-	const [form, setForm] = useState({ name: '', description: '', icon: '📚', price_per_question: 500 });
+	const [form, setForm] = useState({
+		name: '', description: '', icon: '📚', price_per_question: 500,
+		is_mandatory: false, mandatory_question_count: 10,
+	});
 
 	const load = () => api.get('/subjects/all').then((r) => setSubjects(r.data));
-	useEffect(() => {
-		load();
-	}, []);
+	useEffect(() => { load(); }, []);
 
 	const openCreate = () => {
 		setEditing(null);
-		setForm({ name: '', description: '', icon: '📚', price_per_question: 500 });
+		setForm({ name: '', description: '', icon: '📚', price_per_question: 500, is_mandatory: false, mandatory_question_count: 10 });
 		setShowModal(true);
 	};
 	const openEdit = (s: Subject) => {
 		setEditing(s);
-		setForm({ name: s.name, description: s.description || '', icon: s.icon, price_per_question: s.price_per_question });
+		setForm({
+			name: s.name, description: s.description || '', icon: s.icon, price_per_question: s.price_per_question,
+			is_mandatory: s.is_mandatory || false, mandatory_question_count: s.mandatory_question_count || 10,
+		});
 		setShowModal(true);
 	};
 
@@ -70,6 +76,12 @@ export default function Subjects() {
 	const toggleActive = async (s: Subject) => {
 		await api.put(`/subjects/${s.id}`, { is_active: !s.is_active });
 		toast.success(s.is_active ? "Fan o'chirildi" : 'Fan yoqildi');
+		load();
+	};
+
+	const toggleMandatory = async (s: Subject) => {
+		await api.put(`/subjects/${s.id}`, { is_mandatory: !s.is_mandatory });
+		toast.success(s.is_mandatory ? "Majburiylikdan chiqarildi" : 'Majburiy fanga aylandi');
 		load();
 	};
 
@@ -105,7 +117,18 @@ export default function Subjects() {
 									</div>
 								),
 							},
-							{ key: 'name', header: 'Nomi', render: (s) => <span className='td-main'>{s.name}</span> },
+							{
+								key: 'name', header: 'Nomi', render: (s) => (
+									<div>
+										<span className='td-main'>{s.name}</span>
+										{s.is_mandatory && (
+											<Badge variant='purple' style={{ marginLeft: 6, fontSize: 10 }}>
+												<IconStarFilled size={10} /> Majburiy · {s.mandatory_question_count} ta
+											</Badge>
+										)}
+									</div>
+								),
+							},
 							{
 								key: 'desc',
 								header: 'Tavsif',
@@ -146,6 +169,11 @@ export default function Subjects() {
 												label: 'Tahrirlash',
 												icon: <IconEdit size={15} />,
 												onClick: () => openEdit(s),
+											},
+											{
+												label: s.is_mandatory ? 'Majburiydan chiqarish' : 'Majburiy qilish',
+												icon: <IconStarFilled size={15} />,
+												onClick: () => toggleMandatory(s),
 											},
 											{
 												label: s.is_active ? "O'chirish" : 'Yoqish',
@@ -206,6 +234,33 @@ export default function Subjects() {
 						value={form.icon}
 						onChange={(icon) => setForm({ ...form, icon })}
 					/>
+
+					<div style={{ marginTop: 14, padding: 14, background: 'var(--bg-900)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+						<label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+							<input
+								type='checkbox'
+								checked={form.is_mandatory}
+								onChange={(e) => setForm({ ...form, is_mandatory: e.target.checked })}
+								style={{ width: 18, height: 18, accentColor: 'var(--primary)' }}
+							/>
+							<div>
+								<div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-100)' }}>Majburiy fan</div>
+								<div style={{ fontSize: 12, color: 'var(--text-500)' }}>DTM majburiy fanlar blokiga kiradi</div>
+							</div>
+						</label>
+						{form.is_mandatory && (
+							<div style={{ marginTop: 10 }}>
+								<Input
+									label='Savol soni (majburiy blokda)'
+									type='number'
+									value={form.mandatory_question_count}
+									onChange={(e) => setForm({ ...form, mandatory_question_count: +e.target.value })}
+									min={1}
+									max={30}
+								/>
+							</div>
+						)}
+					</div>
 				</form>
 			</Dialog>
 		</div>

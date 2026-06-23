@@ -86,8 +86,7 @@ export default function Hero() {
 					{/* Right — Mock card */}
 					<div className='hidden lg:flex justify-center' style={{ perspective: 1000 }}>
 						<div
-							className={`animate-on-scroll anim-hero-card w-full max-w-[400px] bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xl [transform:rotateY(-5deg)_rotateX(2deg)] hover:[transform:rotateY(0)_rotateX(0)] transition-transform duration-500 ${v}`}
-							style={{ animationDuration: '1s', animationDelay: '0.5s' }}
+							className={`hero-card w-full max-w-[400px] bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xl ${v ? 'hero-card--visible' : ''}`}
 						>
 							<div className='px-6 py-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between'>
 								<div className='flex items-center gap-3'>
