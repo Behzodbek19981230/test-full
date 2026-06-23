@@ -1,10 +1,8 @@
 'use client';
 
-import { IconBrandTelegram, IconArrowRight, IconClock, IconFileText, IconCheck } from '@tabler/icons-react';
+import { IconArrowRight, IconClock, IconFileText, IconCheck } from '@tabler/icons-react';
 import { LinkButton, Container } from '../ui';
 import { useInView } from '@/hooks/useInView';
-
-const BOT_URL = `https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME}`;
 
 export default function Hero() {
 	const { ref, inView } = useInView(0.1);
@@ -46,8 +44,8 @@ export default function Hero() {
 							className={`animate-on-scroll anim-fade-up flex flex-col sm:flex-row gap-3 mb-8 sm:mb-12 ${v}`}
 							style={{ animationDuration: '0.8s', animationDelay: '0.4s' }}
 						>
-							<LinkButton href={BOT_URL} target='_blank' rel='noopener noreferrer' size='lg'>
-								<IconBrandTelegram size={20} /> Telegram orqali boshlash
+							<LinkButton href='#majburiy' size='lg'>
+								Bepul test ishlash <IconArrowRight size={18} />
 							</LinkButton>
 							<LinkButton href='#fanlar' variant='secondary' size='lg'>
 								Testlarni ko&apos;rish <IconArrowRight size={18} />

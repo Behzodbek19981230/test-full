@@ -6,7 +6,7 @@ const SITE_URL = 'https://test-market.uz';
 const SITE_NAME = 'Test Market';
 const TITLE = 'Test Market — DTM va Attestatsiyaga Tayyorlanish Platformasi';
 const DESCRIPTION =
-	"Abituriyent, o'qituvchi va o'quvchilar uchun DTM va attestatsiyaga tayyorlanish platformasi. Barcha fanlar bo'yicha sinov testlari, real vaqtda natijalar va Telegram bot orqali qulay tayyorlanish.";
+	"Abituriyent, o'qituvchi va o'quvchilar uchun DTM va attestatsiyaga tayyorlanish platformasi. Bepul majburiy fanlar testlari, barcha fanlar bo'yicha sinov testlari, real vaqtda natijalar va Telegram bot orqali qulay tayyorlanish.";
 
 export const metadata: Metadata = {
 	metadataBase: new URL(SITE_URL),
@@ -17,6 +17,9 @@ export const metadata: Metadata = {
 	description: DESCRIPTION,
 	keywords: [
 		'DTM testlar',
+		'bepul DTM testlar',
+		'bepul test',
+		'majburiy fanlar test',
 		'milliy sertifikat testlar',
 		'attestatsiya testlari',
 		'online test',
@@ -33,6 +36,8 @@ export const metadata: Metadata = {
 		'kimyo test',
 		'tarix test',
 		'matematika',
+		"o'zbekiston tarixi test",
+		'ona tili test',
 	],
 	authors: [{ name: SITE_NAME, url: SITE_URL }],
 	creator: SITE_NAME,
@@ -95,12 +100,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 		url: SITE_URL,
 		description: DESCRIPTION,
 		sameAs: [`https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME}`],
-		offers: {
-			'@type': 'Offer',
-			category: 'Online Test',
-			description: "DTM va attestatsiya uchun barcha fanlar bo'yicha professional testlar",
-			areaServed: { '@type': 'Country', name: 'Uzbekistan' },
-		},
+		offers: [
+			{
+				'@type': 'Offer',
+				category: 'Online Test',
+				price: '0',
+				priceCurrency: 'UZS',
+				description: "Majburiy fanlar bo'yicha bepul DTM testlari — matematika, ona tili, O'zbekiston tarixi",
+				areaServed: { '@type': 'Country', name: 'Uzbekistan' },
+			},
+			{
+				'@type': 'Offer',
+				category: 'Online Test',
+				description: "DTM va attestatsiya uchun barcha fanlar bo'yicha professional testlar",
+				areaServed: { '@type': 'Country', name: 'Uzbekistan' },
+			},
+		],
 	};
 
 	return (

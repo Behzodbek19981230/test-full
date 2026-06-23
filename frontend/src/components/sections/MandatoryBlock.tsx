@@ -76,13 +76,6 @@ export default function MandatoryBlock({ subjects }: { subjects: Subject[] }) {
 				</div>
 
 				{/* Summary */}
-				<div
-					className={`animate-on-scroll anim-fade-up mt-6 sm:mt-8 flex items-center justify-center gap-4 sm:gap-6 text-[13px] sm:text-sm text-slate-500 ${gridInView ? 'in-view' : ''}`}
-					style={{ animationDuration: '0.5s', animationDelay: '0.3s' }}
-				>
-					<span>Jami: <strong className='text-slate-800'>{totalQuestions} ta savol</strong></span>
-					<span>Vaqt: <strong className='text-slate-800'>{Math.ceil(totalQuestions * 1.5)} daqiqa</strong></span>
-				</div>
 			</Container>
 
 			{/* Mode selection modal */}
@@ -104,7 +97,9 @@ export default function MandatoryBlock({ subjects }: { subjects: Subject[] }) {
 								<SubjectIcon icon={selected.icon} size={28} />
 								<div>
 									<h3 className='text-base sm:text-lg font-bold text-slate-900'>{selected.name}</h3>
-									<p className='text-[13px] sm:text-sm text-slate-500'>{selected.mandatory_question_count} ta savol</p>
+									<p className='text-[13px] sm:text-sm text-slate-500'>
+										{selected.mandatory_question_count} ta savol
+									</p>
 								</div>
 							</div>
 							<button
@@ -136,7 +131,9 @@ export default function MandatoryBlock({ subjects }: { subjects: Subject[] }) {
 										{selected.mandatory_question_count} ta savol · Natija shu yerda
 									</p>
 								</div>
-								<span className='text-slate-400 group-hover:text-primary-light transition-colors'>→</span>
+								<span className='text-slate-400 group-hover:text-primary-light transition-colors'>
+									→
+								</span>
 							</button>
 
 							<button
@@ -150,10 +147,10 @@ export default function MandatoryBlock({ subjects }: { subjects: Subject[] }) {
 									<IconBrandTelegram size={22} />
 								</div>
 								<div className='flex-1'>
-									<h4 className='text-[14px] sm:text-[15px] font-bold text-slate-900'>Bot orqali yechaman</h4>
-									<p className='text-[12px] sm:text-[13px] text-slate-500'>
-										Telegram bot orqali
-									</p>
+									<h4 className='text-[14px] sm:text-[15px] font-bold text-slate-900'>
+										Bot orqali yechaman
+									</h4>
+									<p className='text-[12px] sm:text-[13px] text-slate-500'>Telegram bot orqali</p>
 								</div>
 								<span className='text-slate-400 group-hover:text-secondary transition-colors'>→</span>
 							</button>
