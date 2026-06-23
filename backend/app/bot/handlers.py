@@ -1,8 +1,11 @@
+import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, ConversationHandler
 from app.bot.states import States
 from app.database import SessionLocal
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 def get_db():
@@ -170,6 +173,8 @@ async def handle_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await tg_file.download_to_drive(os.path.join(upload_dir, filename))
 
     db = get_db()
+    payment_id = None
+    notify_data = None
     try:
         user = db.query(User).filter(User.telegram_id == update.effective_user.id).first()
         if not user:
@@ -182,12 +187,25 @@ async def handle_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         notif = Notification(admin_id=1, title="Yangi to'lov",
                              message=f"{user.full_name} — {ud['subject_name']}", type='payment')
         db.add(notif)
+
+        notify_data = {
+            'full_name': user.full_name or 'Noma\'lum',
+            'username': user.username or '',
+            'telegram_id': user.telegram_id,
+            'subject_name': ud['subject_name'],
+            'question_count': payment.question_count,
+        }
+
         db.commit()
         db.refresh(payment)
-
-        await _notify_admin(context, payment, user, ud['subject_name'], os.path.join(upload_dir, filename))
+        payment_id = payment.id
+        notify_data['payment_id'] = payment_id
+        notify_data['created_at'] = payment.created_at.strftime('%d.%m.%Y %H:%M') if payment.created_at else ''
     finally:
         db.close()
+
+    if notify_data and payment_id:
+        await _notify_admin(context, notify_data, os.path.join(upload_dir, filename))
 
     await update.message.reply_text(
         "✅ *Chek qabul qilindi!*\n\n"
@@ -198,25 +216,33 @@ async def handle_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
-async def _notify_admin(context: ContextTypes.DEFAULT_TYPE, payment, user, subject_name: str, screenshot_path: str):
+def _escape_html(text: str) -> str:
+    return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+
+async def _notify_admin(context: ContextTypes.DEFAULT_TYPE, data: dict, screenshot_path: str):
     import os
     settings = get_settings()
     admin_chat_id = settings.ADMIN_CHAT_ID
 
+    name = _escape_html(data['full_name'])
+    username = _escape_html(data['username'])
+    subject = _escape_html(data['subject_name'])
+
     text = (
-        f"💰 *Yangi to'lov #{payment.id}*\n\n"
-        f"👤 *Foydalanuvchi:* {user.full_name}\n"
-        f"📱 *Username:* @{user.username or '—'}\n"
-        f"🆔 *Telegram ID:* `{user.telegram_id}`\n\n"
-        f"📚 *Fan:* {subject_name}\n"
-        f"📝 *Savollar:* {payment.question_count} ta\n"
-        f"📅 *Sana:* {payment.created_at.strftime('%d.%m.%Y %H:%M')}\n"
+        f"💰 <b>Yangi to'lov #{data['payment_id']}</b>\n\n"
+        f"👤 <b>Foydalanuvchi:</b> {name}\n"
+        f"📱 <b>Username:</b> @{username or '—'}\n"
+        f"🆔 <b>Telegram ID:</b> <code>{data['telegram_id']}</code>\n\n"
+        f"📚 <b>Fan:</b> {subject}\n"
+        f"📝 <b>Savollar:</b> {data['question_count']} ta\n"
+        f"📅 <b>Sana:</b> {data['created_at']}\n"
     )
 
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("✅ Tasdiqlash", callback_data=f"pay_approve_{payment.id}"),
-            InlineKeyboardButton("❌ Rad etish", callback_data=f"pay_reject_{payment.id}"),
+            InlineKeyboardButton("✅ Tasdiqlash", callback_data=f"pay_approve_{data['payment_id']}"),
+            InlineKeyboardButton("❌ Rad etish", callback_data=f"pay_reject_{data['payment_id']}"),
         ]
     ])
 
@@ -227,18 +253,26 @@ async def _notify_admin(context: ContextTypes.DEFAULT_TYPE, payment, user, subje
                     chat_id=admin_chat_id,
                     photo=photo,
                     caption=text,
-                    parse_mode='Markdown',
+                    parse_mode='HTML',
                     reply_markup=keyboard,
                 )
         else:
             await context.bot.send_message(
                 chat_id=admin_chat_id,
-                text=text + "\n⚠️ _Screenshot topilmadi_",
-                parse_mode='Markdown',
+                text=text + "\n⚠️ <i>Screenshot topilmadi</i>",
+                parse_mode='HTML',
                 reply_markup=keyboard,
             )
     except Exception as e:
-        print(f"Admin notification error: {e}")
+        logger.error(f"Admin notification error: {e}")
+        try:
+            await context.bot.send_message(
+                chat_id=admin_chat_id,
+                text=f"💰 Yangi to'lov #{data['payment_id']}\n{name} — {subject}\nScreenshot yuborishda xatolik.",
+                reply_markup=keyboard,
+            )
+        except Exception:
+            logger.error(f"Admin fallback notification also failed")
 
 
 async def admin_approve_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -256,20 +290,26 @@ async def admin_approve_callback(update: Update, context: ContextTypes.DEFAULT_T
         db.close()
 
     if not result:
-        await query.edit_message_caption(
-            caption=query.message.caption + "\n\n⚠️ *Bu to'lov allaqachon ko'rib chiqilgan.*",
-            parse_mode='Markdown',
-        ) if query.message.caption else await query.edit_message_text(
-            text="⚠️ Bu to'lov allaqachon ko'rib chiqilgan.",
-        )
+        try:
+            if query.message.caption:
+                await query.edit_message_caption(
+                    caption=query.message.caption + "\n\n⚠️ Bu to'lov allaqachon ko'rib chiqilgan.",
+                )
+            else:
+                await query.edit_message_text(text="⚠️ Bu to'lov allaqachon ko'rib chiqilgan.")
+        except Exception:
+            pass
         return
 
-    original = query.message.caption or query.message.text or ""
-    new_text = original + "\n\n✅ *TASDIQLANDI*"
-    if query.message.caption:
-        await query.edit_message_caption(caption=new_text, parse_mode='Markdown')
-    else:
-        await query.edit_message_text(text=new_text, parse_mode='Markdown')
+    try:
+        original = query.message.caption or query.message.text or ""
+        new_text = original + "\n\n✅ TASDIQLANDI"
+        if query.message.caption:
+            await query.edit_message_caption(caption=new_text)
+        else:
+            await query.edit_message_text(text=new_text)
+    except Exception:
+        pass
 
 
 async def admin_reject_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -279,12 +319,18 @@ async def admin_reject_callback(update: Update, context: ContextTypes.DEFAULT_TY
     payment_id = int(query.data.split('_')[2])
     context.user_data['reject_payment_id'] = payment_id
 
-    original = query.message.caption or query.message.text or ""
-    new_text = original + "\n\n✏️ *Rad etish sababini yozing:*"
-    if query.message.caption:
-        await query.edit_message_caption(caption=new_text, parse_mode='Markdown')
-    else:
-        await query.edit_message_text(text=new_text, parse_mode='Markdown')
+    try:
+        original = query.message.caption or query.message.text or ""
+        new_text = original + "\n\n✏️ Rad etish sababini yozing:"
+        if query.message.caption:
+            await query.edit_message_caption(caption=new_text)
+        else:
+            await query.edit_message_text(text=new_text)
+    except Exception:
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=f"✏️ To'lov #{payment_id} uchun rad etish sababini yozing:",
+        )
 
     return States.ADMIN_REJECT_REASON
 

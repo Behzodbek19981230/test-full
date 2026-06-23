@@ -1,3 +1,4 @@
+from telegram import BotCommand
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
     MessageHandler, ConversationHandler, filters,
@@ -10,13 +11,21 @@ from app.bot.states import States
 from app.config import get_settings
 
 
+async def _post_init(application: Application) -> None:
+    await application.bot.set_my_commands([
+        BotCommand("start", "Botni ishga tushirish"),
+        BotCommand("fanlar", "Fanlar ro'yxati"),
+        BotCommand("cancel", "Bekor qilish"),
+    ])
+
+
 def create_bot():
     token = get_settings().TELEGRAM_BOT_TOKEN
     if not token:
         print('TELEGRAM_BOT_TOKEN topilmadi! Bot ishga tushmaydi.')
         return None
 
-    application = Application.builder().token(token).build()
+    application = Application.builder().token(token).post_init(_post_init).build()
 
     admin_chat_id = get_settings().ADMIN_CHAT_ID
 
