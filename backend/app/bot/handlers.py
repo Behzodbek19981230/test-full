@@ -27,6 +27,31 @@ def get_or_create_user(telegram_user):
         db.close()
 
 
+def _start_free_generation(user_id: int, telegram_id: int, subject_id: int, subject_name: str, question_count: int):
+    import threading
+    from app.models.variant import TestVariant
+    from app.services.pdf_service import generate_and_send
+
+    db = get_db()
+    try:
+        variant = TestVariant(
+            user_id=user_id, subject_id=subject_id,
+            question_count=question_count, status="pending",
+        )
+        db.add(variant)
+        db.commit()
+        db.refresh(variant)
+        vid = variant.id
+    finally:
+        db.close()
+
+    threading.Thread(
+        target=generate_and_send,
+        args=(vid, telegram_id, subject_name, subject_id, question_count),
+        daemon=True,
+    ).start()
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     from app.models.subject import Subject
 
@@ -42,20 +67,37 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if subject_id:
             db = get_db()
+            subj_data = None
             try:
                 subject = db.query(Subject).filter(Subject.id == subject_id, Subject.is_active == True).first()
+                if subject:
+                    subj_data = {
+                        'id': subject.id, 'name': subject.name,
+                        'is_mandatory': subject.is_mandatory or False,
+                        'q_count': subject.mandatory_question_count or 10,
+                    }
             finally:
                 db.close()
 
-            if subject:
+            if subj_data and subj_data['is_mandatory']:
+                await update.message.reply_text(
+                    f"📚 *{subj_data['name']}* — {subj_data['q_count']} ta savol\n\n"
+                    f"✅ Majburiy fan — *bepul!*\n⏳ Test tayyorlanmoqda...",
+                    parse_mode='Markdown',
+                )
+                _start_free_generation(user_id, update.effective_user.id, subj_data['id'], subj_data['name'], subj_data['q_count'])
+                context.user_data.clear()
+                return ConversationHandler.END
+
+            if subj_data:
                 await update.message.reply_text(
                     f"👋 *Salom, {full_name}!*\n"
                     f"Test Market platformasiga xush kelibsiz!\n\n"
-                    f"📚 Siz *{subject.name}* fanini tanladingiz.",
+                    f"📚 Siz *{subj_data['name']}* fanini tanladingiz.",
                     parse_mode='Markdown',
                 )
-                context.user_data['subject_id'] = subject.id
-                context.user_data['subject_name'] = subject.name
+                context.user_data['subject_id'] = subj_data['id']
+                context.user_data['subject_name'] = subj_data['name']
 
                 settings = get_settings()
                 card = settings.TELEGRAM_PAYMENT_CARD
@@ -100,13 +142,24 @@ async def subjects_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(text)
             return
 
+        regular = [s for s in subjects if not s.is_mandatory]
+        mandatory = [s for s in subjects if s.is_mandatory]
+
         keyboard = []
-        for s in subjects:
+        for s in regular:
             icon = s.icon if s.icon and not s.icon.startswith(('<', '/', 'h')) else '📚'
             keyboard.append([InlineKeyboardButton(
                 f"{icon} {s.name}",
                 callback_data=f'buy_{s.id}'
             )])
+
+        if mandatory:
+            for s in mandatory:
+                icon = s.icon if s.icon and not s.icon.startswith(('<', '/', 'h')) else '📚'
+                keyboard.append([InlineKeyboardButton(
+                    f"{icon} {s.name} ✅ Bepul",
+                    callback_data=f'buy_{s.id}'
+                )])
 
         text = "📚 *Fanni tanlang:*"
         if update.callback_query:
@@ -120,6 +173,7 @@ async def subjects_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def select_subject(update: Update, context: ContextTypes.DEFAULT_TYPE):
     from app.models.subject import Subject
+    from app.models.user import User
 
     query = update.callback_query
     await query.answer()
@@ -130,6 +184,21 @@ async def select_subject(update: Update, context: ContextTypes.DEFAULT_TYPE):
         subject = db.query(Subject).filter(Subject.id == subject_id).first()
         if not subject:
             await query.edit_message_text("❌ Fan topilmadi")
+            return ConversationHandler.END
+
+        if subject.is_mandatory:
+            user = db.query(User).filter(User.telegram_id == update.effective_user.id).first()
+            user_id = user.id if user else get_or_create_user(update.effective_user)
+            q_count = subject.mandatory_question_count or 10
+            subj_name = subject.name
+            subj_id = subject.id
+            await query.edit_message_text(
+                f"📚 *{subj_name}* — {q_count} ta savol\n\n"
+                f"✅ Majburiy fan — *bepul!*\n⏳ Test tayyorlanmoqda...",
+                parse_mode='Markdown',
+            )
+            _start_free_generation(user_id, update.effective_user.id, subj_id, subj_name, q_count)
+            context.user_data.clear()
             return ConversationHandler.END
 
         context.user_data['subject_id'] = subject_id

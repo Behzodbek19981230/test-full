@@ -34,6 +34,7 @@ interface StatsData {
 
 export default function Home() {
 	const [subjects, setSubjects] = useState<Subject[]>([]);
+	const [mandatorySubjects, setMandatorySubjects] = useState<Subject[]>([]);
 	const [stats, setStats] = useState<StatsData>({
 		total_users: 0,
 		total_questions: 0,
@@ -44,15 +45,17 @@ export default function Home() {
 	useEffect(() => {
 		fetch('/api/subjects')
 			.then((r) => r.json())
-			.then(setSubjects)
+			.then((data) => {
+				setSubjects(data.filter((s: Subject) => !s.is_mandatory));
+				setMandatorySubjects(data.filter((s: Subject) => s.is_mandatory));
+			})
 			.catch(() => {});
 		fetch('/api/stats/public')
 			.then((r) => r.json())
 			.then(setStats)
 			.catch(() => {});
 	}, []);
-
-	const mandatorySubjects = subjects.filter((s) => s.is_mandatory);
+	console.log(subjects);
 	console.log(mandatorySubjects);
 
 	return (

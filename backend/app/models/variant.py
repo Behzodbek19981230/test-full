@@ -8,7 +8,7 @@ class TestVariant(Base):
     __tablename__ = "test_variants"
 
     id = Column(Integer, primary_key=True, index=True)
-    payment_id = Column(Integer, ForeignKey("payments.id"), nullable=False)
+    payment_id = Column(Integer, ForeignKey("payments.id"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=False)
     question_count = Column(Integer, default=30)

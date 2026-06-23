@@ -825,27 +825,34 @@ def _send_link_to_telegram(telegram_id: int, subject_name: str, question_count: 
     frontend_url = settings.FRONTEND_URL.rstrip("/")
     variant_link = f"{frontend_url}/api/uploads/{html_path}"
 
+    is_localhost = "localhost" in frontend_url or "127.0.0.1" in frontend_url
+
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     text = (
-        f"✅ To'lovingiz tasdiqlandi!\n\n"
+        f"✅ Testingiz tayyor!\n\n"
         f"📚 {subject_name}\n"
         f"❓ {question_count} ta savol\n"
         f"🆔 Variant: #{variant_id}\n\n"
-        f"Javoblarni shu chatga yuboring:\n"
+        f"📝 Javoblarni shu chatga yuboring:\n"
         f"<b>{variant_id}:ABCDABCD...</b>\n\n"
         f"Omad tilaymiz!"
     )
+
+    if is_localhost:
+        text += f"\n\n🔗 Test linki:\n{variant_link}"
 
     data = {
         "chat_id": telegram_id,
         "text": text,
         "parse_mode": "HTML",
-        "reply_markup": {
+    }
+
+    if not is_localhost:
+        data["reply_markup"] = {
             "inline_keyboard": [[
                 {"text": "📝 Testni ochish", "url": variant_link}
             ]]
-        },
-    }
+        }
 
     try:
         resp = requests.post(url, json=data, timeout=30)
