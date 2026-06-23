@@ -25,14 +25,15 @@ export default function Navbar() {
 
 	return (
 		<nav
-			className={`fixed top-0 left-0 right-0 z-50 px-6 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-xl border-b border-slate-200' : ''}`}
+			className={`fixed top-0 left-0 right-0 z-50 px-6 transition-all duration-300 bg-white ${scrolled ? 'backdrop-blur-xl border-b border-slate-200' : ''}`}
 		>
 			<Container>
 				<div className='flex items-center justify-between h-[72px]'>
-					<a href='/' className='flex items-center gap-2.5 text-[22px] font-extrabold tracking-tight'>
-						<img src='/logo.png' alt='Test Market' className='w-22 h-22 rounded-[10px] object-contain' />
-						<span className='bg-gradient-to-br from-slate-800 to-slate-600 bg-clip-text text-transparent'>
-							Test Market
+					<a href='/' className='flex items-center gap-2.5' style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+						<img src='/icon.png' alt='Test Market' className='w-18 h-18 rounded-[10px] object-contain' />
+						<span className='text-[22px] font-bold tracking-[-0.5px]'>
+							<span className='text-slate-800'>Test</span>
+							<span className='bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent'>Market</span>
 						</span>
 					</a>
 

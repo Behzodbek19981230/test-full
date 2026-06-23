@@ -43,7 +43,7 @@ export default async function Image() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={new URL('/logo.png', 'https://test-market.uz').toString()}
+            src={new URL('/icon.png', 'https://test-market.uz').toString()}
             alt=""
             width={80}
             height={80}

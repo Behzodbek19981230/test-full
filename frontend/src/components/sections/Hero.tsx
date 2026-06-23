@@ -5,7 +5,7 @@ const BOT_URL = `https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME}`;
 
 export default function Hero() {
 	return (
-		<section className='min-h-screen flex items-center relative pt-[72px] overflow-hidden'>
+		<section className='min-h-screen flex items-center relative pt-[72px] overflow-hidden bg-white'>
 			{/* BG */}
 			<div className='absolute inset-0'>
 				<div className='absolute w-[800px] h-[800px] rounded-full bg-[radial-gradient(circle,rgba(26,127,138,0.06)_0%,transparent_70%)] -top-[200px] -left-[200px] animate-[float1_20s_ease-in-out_infinite]' />

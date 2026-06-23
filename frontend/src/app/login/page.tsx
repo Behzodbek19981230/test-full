@@ -34,7 +34,7 @@ export default function LoginPage() {
 	return (
 		<Suspense
 			fallback={
-				<div className='min-h-screen flex items-center justify-center bg-slate-50'>
+				<div className='min-h-screen flex items-center justify-center bg-white'>
 					<div className='quiz-loading__spinner' />
 				</div>
 			}
@@ -131,24 +131,20 @@ function LoginContent() {
 
 	if (loading) {
 		return (
-			<div className='min-h-screen flex items-center justify-center bg-slate-50'>
+			<div className='min-h-screen flex items-center justify-center bg-white'>
 				<div className='quiz-loading__spinner' />
 			</div>
 		);
 	}
 
 	return (
-		<div className='min-h-screen flex items-center justify-center bg-slate-50 px-4'>
+		<div className='min-h-screen flex items-center justify-center bg-white px-4'>
 			<div className='w-full max-w-[400px]'>
 				{/* Logo */}
 				<div className='text-center mb-8'>
 					<Link href='/' className='inline-flex items-center gap-2.5 text-2xl font-extrabold'>
-						<img src='/logo.png' alt='Test Market' className='w-15 h-15 rounded-xl object-contain' />
-						<span className='bg-gradient-to-br from-slate-800 to-slate-600 bg-clip-text text-transparent'>
-							Test Market
-						</span>
+						<img src='/logo.png' alt='Test Market' className='w-50 h-50 rounded-xl object-contain' />
 					</Link>
-					<p className='text-slate-500 text-sm mt-3'>Tizimga kirish</p>
 				</div>
 
 				{/* Card */}

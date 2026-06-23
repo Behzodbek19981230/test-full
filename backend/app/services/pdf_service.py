@@ -611,7 +611,8 @@ def _generate_html(questions, subject_name: str, variant_id: int) -> str:
   <style>
     @page {{ size: A4; margin: 0.5in; }}
     * {{ box-sizing: border-box; }}
-    body {{ font-family: Times, 'Times New Roman', serif; margin: 0; color: #111; font-size: 16px; position: relative; }}
+    html {{ color-scheme: light only; }}
+    body {{ font-family: Times, 'Times New Roman', serif; margin: 0; color: #111; font-size: 16px; position: relative; background: #fff; }}
 
     /* ===== WATERMARK ===== */
     .watermark {{
