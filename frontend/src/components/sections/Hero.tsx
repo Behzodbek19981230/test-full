@@ -36,8 +36,9 @@ export default function Hero() {
 							className={`animate-on-scroll anim-fade-up text-[15px] sm:text-[17px] text-slate-600 leading-relaxed mb-7 sm:mb-9 max-w-[480px] ${v}`}
 							style={{ animationDuration: '0.8s', animationDelay: '0.25s' }}
 						>
-							Abituriyent, o&apos;qituvchi va o&apos;quvchilar uchun maxsus platforma. Sinov testlarini
-							ishlang, natijangizni real vaqtda tekshiring.
+							Test Market — DTM va attestatsiyaga mukammal tayyorlanish uchun yaratilgan platforma.
+							Abituriyent, o&apos;qituvchi va o&apos;quvchilar uchun barcha fanlar bo&apos;yicha sinov
+							testlarini ishlang, natijangizni real vaqtda tekshiring va bilimingizni mustahkamlang.
 						</p>
 
 						<div

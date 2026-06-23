@@ -9,6 +9,7 @@ import {
 	MandatoryBlock,
 	HowItWorks,
 	Features,
+	SeoContent,
 	CTA,
 	Footer,
 } from '@/components/sections';
@@ -67,6 +68,7 @@ export default function Home() {
 			<MandatoryBlock subjects={mandatorySubjects} />
 			<HowItWorks />
 			<Features />
+			<SeoContent />
 			<CTA />
 			<Footer />
 		</>

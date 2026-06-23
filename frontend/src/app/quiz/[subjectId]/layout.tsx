@@ -30,5 +30,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default function QuizLayout({ children }: { children: React.ReactNode }) {
-  return children
+  return (
+    <>
+      <link
+        rel='stylesheet'
+        href='https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css'
+        crossOrigin='anonymous'
+      />
+      {children}
+    </>
+  )
 }

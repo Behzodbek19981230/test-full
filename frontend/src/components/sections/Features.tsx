@@ -5,12 +5,12 @@ import { Container, SectionHeader } from '../ui';
 import { useInView } from '@/hooks/useInView';
 
 const features = [
-  { icon: IconDeviceMobile, color: 'bg-primary/[0.12] text-primary-light', title: 'Telegram Bot', desc: 'Qulay bot orqali istalgan vaqtda, istalgan joyda test ishlang' },
-  { icon: IconBolt, color: 'bg-secondary/[0.12] text-secondary', title: 'Tezkor Tekshirish', desc: 'Javoblaringiz bir zumda tekshiriladi va batafsil natija ko\'rsatiladi' },
-  { icon: IconChartBar, color: 'bg-success/[0.12] text-success', title: 'Batafsil Tahlil', desc: 'Har bir savol bo\'yicha to\'g\'ri va noto\'g\'ri javoblar tahlili' },
-  { icon: IconTarget, color: 'bg-accent/[0.12] text-accent', title: 'DTM Formati', desc: 'Haqiqiy DTM va attestatsiya formatida professional testlar' },
-  { icon: IconCreditCard, color: 'bg-rose-500/[0.12] text-rose-400', title: 'Oson To\'lov', desc: 'Plastik karta orqali qulay va xavfsiz to\'lov tizimi' },
-  { icon: IconBooks, color: 'bg-blue-500/[0.12] text-blue-400', title: 'Ko\'p Fanlar', desc: 'Barcha DTM fanlari bo\'yicha doimiy yangilanib turadigan testlar' },
+  { icon: IconDeviceMobile, color: 'bg-primary/[0.12] text-primary-light', title: 'Telegram Bot', desc: 'Qulay Telegram bot orqali istalgan vaqtda va istalgan joyda DTM testlarini ishlashingiz mumkin. Tayyorlanish jarayoni smartfoningizda davom etadi.' },
+  { icon: IconBolt, color: 'bg-secondary/[0.12] text-secondary', title: 'Tezkor Tekshirish', desc: 'Javoblaringiz bir zumda avtomatik tekshiriladi. Har bir savol bo\'yicha batafsil natija va to\'g\'ri javoblar ko\'rsatiladi.' },
+  { icon: IconChartBar, color: 'bg-success/[0.12] text-success', title: 'Batafsil Tahlil', desc: 'Har bir savol bo\'yicha to\'g\'ri va noto\'g\'ri javoblaringiz tahlil qilinadi. Qaysi mavzularda kuchli yoki zaif ekanligingizni bilib oling.' },
+  { icon: IconTarget, color: 'bg-accent/[0.12] text-accent', title: 'DTM Formati', desc: 'Barcha testlar haqiqiy DTM va attestatsiya imtihoni formatida tuzilgan. Mukammal tayyorlanish uchun real sharoitda mashq qiling.' },
+  { icon: IconCreditCard, color: 'bg-rose-500/[0.12] text-rose-400', title: 'Oson To\'lov', desc: 'Plastik karta orqali qulay va xavfsiz to\'lov tizimi. To\'lov qilib chek screenshotini yuboring va testni boshlang.' },
+  { icon: IconBooks, color: 'bg-blue-500/[0.12] text-blue-400', title: 'Ko\'p Fanlar', desc: 'Matematika, fizika, kimyo, biologiya, tarix, ingliz tili va boshqa barcha DTM fanlari bo\'yicha doimiy yangilanib turadigan testlar mavjud.' },
 ]
 
 export default function Features() {
