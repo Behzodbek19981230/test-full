@@ -24,8 +24,13 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 const TELEGRAM_BOT_NAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME || '';
 
 function getPostLoginRedirect(params: URLSearchParams): string {
-	if (params.get('redirect') === 'bot' && params.get('subject')) {
-		return `https://t.me/${TELEGRAM_BOT_NAME}?start=sub_${params.get('subject')}`;
+	const redirect = params.get('redirect');
+	const subject = params.get('subject');
+	if (redirect === 'bot' && subject) {
+		return `https://t.me/${TELEGRAM_BOT_NAME}?start=sub_${subject}`;
+	}
+	if (redirect === 'quiz' && subject) {
+		return `/quiz/${subject}`;
 	}
 	return '/';
 }
@@ -138,19 +143,19 @@ function LoginContent() {
 	}
 
 	return (
-		<div className='min-h-screen flex items-center justify-center bg-white px-4'>
+		<div className='min-h-[100dvh] flex items-center justify-center bg-white px-4 py-8'>
 			<div className='w-full max-w-[400px]'>
 				{/* Logo */}
-				<div className='text-center mb-8'>
+				<div className='text-center mb-6 sm:mb-8'>
 					<Link href='/' className='inline-flex items-center gap-2.5 text-2xl font-extrabold'>
-						<img src='/logo.png' alt='Test Market' className='w-50 h-50 rounded-xl object-contain' />
+						<img src='/logo.png' alt='Test Market' className='w-36 h-36 sm:w-50 sm:h-50 rounded-xl object-contain' />
 					</Link>
 				</div>
 
 				{/* Card */}
-				<div className='bg-white border border-slate-200 shadow-lg rounded-3xl p-8'>
-					<h1 className='text-xl font-bold text-slate-900 text-center mb-2'>Xush kelibsiz!</h1>
-					<p className='text-sm text-slate-500 text-center mb-8'>Testlarni ishlash uchun tizimga kiring</p>
+				<div className='bg-white border border-slate-200 shadow-lg rounded-2xl sm:rounded-3xl p-6 sm:p-8'>
+					<h1 className='text-lg sm:text-xl font-bold text-slate-900 text-center mb-2'>Xush kelibsiz!</h1>
+					<p className='text-[13px] sm:text-sm text-slate-500 text-center mb-6 sm:mb-8'>Testlarni ishlash uchun tizimga kiring</p>
 
 					{/* Google */}
 					{GOOGLE_CLIENT_ID && (

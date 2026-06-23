@@ -64,11 +64,10 @@ export default function Layout() {
 				<div className='sidebar-header'>
 					<div className='sidebar-logo'>
 						<img
-							src='/icon.png'
+							src='/logo.png'
 							alt='Test Market'
-							style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'contain' }}
+							style={{ width: 100, height: 80, borderRadius: 6, objectFit: 'cover' }}
 						/>
-						Test Market
 					</div>
 				</div>
 

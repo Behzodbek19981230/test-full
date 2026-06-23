@@ -10,7 +10,7 @@ const variantCls: Record<Variant, string> = {
 
 const sizeCls: Record<Size, string> = {
   md: 'px-5 py-2.5 text-sm rounded-xl',
-  lg: 'px-8 py-3.5 text-base rounded-2xl',
+  lg: 'px-5 py-3 text-[15px] sm:px-8 sm:py-3.5 sm:text-base rounded-2xl',
 }
 
 const base = 'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap'

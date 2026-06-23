@@ -25,15 +25,25 @@ export default function Navbar() {
 
 	return (
 		<nav
-			className={`fixed top-0 left-0 right-0 z-50 px-6 transition-all duration-300 bg-white ${scrolled ? 'backdrop-blur-xl border-b border-slate-200' : ''}`}
+			className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white ${scrolled ? 'backdrop-blur-xl border-b border-slate-200' : ''}`}
 		>
 			<Container>
-				<div className='flex items-center justify-between h-[72px]'>
-					<a href='/' className='flex items-center gap-2.5' style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-						<img src='/icon.png' alt='Test Market' className='w-18 h-18 rounded-[10px] object-contain' />
-						<span className='text-[22px] font-bold tracking-[-0.5px]'>
+				<div className='flex items-center justify-between h-[60px] sm:h-[72px]'>
+					<a
+						href='/'
+						className='flex items-center gap-2'
+						style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+					>
+						<img
+							src='/icon.png'
+							alt='Test Market'
+							className='w-10 h-10 sm:w-18 sm:h-18 rounded-lg sm:rounded-[10px] object-contain'
+						/>
+						<span className='text-lg sm:text-[22px] font-bold tracking-[-0.5px]'>
 							<span className='text-slate-800'>Test</span>
-							<span className='bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent'>Market</span>
+							<span className='bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent'>
+								Market
+							</span>
 						</span>
 					</a>
 
@@ -50,10 +60,10 @@ export default function Navbar() {
 						))}
 					</ul>
 
-					<div className='flex items-center gap-3'>
+					<div className='flex items-center gap-2 sm:gap-3'>
 						{!loading &&
 							(user ? (
-								<div className='flex items-center gap-3'>
+								<div className='flex items-center gap-2 sm:gap-3'>
 									<div className='flex items-center gap-2'>
 										{user.avatar ? (
 											<img
@@ -87,26 +97,29 @@ export default function Navbar() {
 									<IconLogin size={16} /> Kirish
 								</Link>
 							))}
-						<button className='md:hidden text-slate-700 p-2' onClick={() => setOpen(!open)}>
-							{open ? <IconX size={24} /> : <IconMenu2 size={24} />}
+						<button className='md:hidden text-slate-700 p-1.5' onClick={() => setOpen(!open)}>
+							{open ? <IconX size={22} /> : <IconMenu2 size={22} />}
 						</button>
 					</div>
 				</div>
 
-				{open && (
-					<div className='md:hidden pb-4 flex flex-col gap-1'>
+				{/* Mobile menu */}
+				<div
+					className={`md:hidden overflow-hidden transition-all duration-300 ${open ? 'max-h-60 pb-4' : 'max-h-0'}`}
+				>
+					<div className='flex flex-col gap-1 pt-1 border-t border-slate-100'>
 						{links.map((l) => (
 							<a
 								key={l.href}
 								href={l.href}
 								onClick={() => setOpen(false)}
-								className='px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all'
+								className='px-4 py-3 rounded-xl text-[15px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all active:bg-slate-100'
 							>
 								{l.label}
 							</a>
 						))}
 					</div>
-				)}
+				</div>
 			</Container>
 		</nav>
 	);

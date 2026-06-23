@@ -1,12 +1,21 @@
+'use client';
+
 import { Container } from '../ui';
+import { useInView } from '@/hooks/useInView';
 
 const BOT_URL = `https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME}`;
 
 export default function Footer() {
+	const { ref, inView } = useInView(0.3);
+
 	return (
 		<footer className='py-10 border-t border-slate-200'>
 			<Container>
-				<div className='flex flex-col sm:flex-row justify-between items-center gap-4'>
+				<div
+					ref={ref}
+					className={`animate-on-scroll anim-fade-up flex flex-col sm:flex-row justify-between items-center gap-4 ${inView ? 'in-view' : ''}`}
+					style={{ animationDuration: '0.6s' }}
+				>
 					<span className='text-sm text-slate-500'>
 						&copy; 2026 Test Market. Barcha huquqlar himoyalangan.
 					</span>

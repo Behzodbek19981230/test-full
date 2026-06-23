@@ -1,5 +1,9 @@
-import { IconUsers, IconClipboardCheck, IconChartBar, IconBooks } from '@tabler/icons-react'
-import { Container } from '../ui'
+'use client';
+
+import { useEffect, useState } from 'react';
+import { IconUsers, IconClipboardCheck, IconChartBar, IconBooks } from '@tabler/icons-react';
+import { Container } from '../ui';
+import { useInView } from '@/hooks/useInView';
 
 interface Props {
   stats: { total_users: number; total_questions: number; total_attempts: number; total_subjects: number }
@@ -12,21 +16,51 @@ const items = [
   { icon: IconBooks, color: 'text-accent bg-accent/10', key: 'total_subjects' as const, fallback: 12, label: 'Fanlar' },
 ]
 
+function AnimatedCounter({ target, started }: { target: number; started: boolean }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!started || target === 0) return;
+    let frame: number;
+    const duration = 1800;
+    const start = performance.now();
+
+    const step = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) frame = requestAnimationFrame(step);
+    };
+
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [target, started]);
+
+  return <>{(started ? count : 0).toLocaleString()}+</>;
+}
+
 export default function Stats({ stats }: Props) {
+  const { ref, inView } = useInView(0.3);
+
   return (
-    <section className="py-16 border-y border-slate-200 bg-white">
+    <section className="py-10 sm:py-16 border-y border-slate-200 bg-white">
       <Container>
-        <div className="grid grid-cols-2 lg:grid-cols-4">
+        <div ref={ref} className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-0">
           {items.map((s, i) => (
-            <div key={i} className="text-center py-6 relative">
+            <div
+              key={i}
+              className={`animate-on-scroll anim-fade-up text-center py-4 sm:py-6 relative ${inView ? 'in-view' : ''}`}
+              style={{ animationDuration: '0.7s', animationDelay: `${i * 0.12}s` }}
+            >
               {i < items.length - 1 && <div className="hidden lg:block absolute right-0 top-[20%] h-[60%] w-px bg-slate-200" />}
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 ${s.color}`}>
-                <s.icon size={24} />
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3 ${s.color}`}>
+                <s.icon size={22} className="sm:hidden" />
+                <s.icon size={24} className="hidden sm:block" />
               </div>
-              <div className="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                {(stats[s.key] || s.fallback).toLocaleString()}+
+              <div className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                <AnimatedCounter target={stats[s.key] || s.fallback} started={inView} />
               </div>
-              <div className="text-sm text-slate-600 mt-1">{s.label}</div>
+              <div className="text-xs sm:text-sm text-slate-600 mt-1">{s.label}</div>
             </div>
           ))}
         </div>

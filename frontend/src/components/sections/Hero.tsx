@@ -1,28 +1,32 @@
+'use client';
+
 import { IconBrandTelegram, IconArrowRight, IconClock, IconFileText, IconCheck } from '@tabler/icons-react';
 import { LinkButton, Container } from '../ui';
+import { useInView } from '@/hooks/useInView';
 
 const BOT_URL = `https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME}`;
 
 export default function Hero() {
+	const { ref, inView } = useInView(0.1);
+	const v = inView ? 'in-view' : '';
+
 	return (
-		<section className='min-h-screen flex items-center relative pt-[72px] overflow-hidden bg-white'>
+		<section className='min-h-[calc(100dvh)] flex items-center relative pt-[60px] sm:pt-[72px] overflow-hidden bg-white'>
 			{/* BG */}
 			<div className='absolute inset-0'>
-				<div className='absolute w-[800px] h-[800px] rounded-full bg-[radial-gradient(circle,rgba(26,127,138,0.06)_0%,transparent_70%)] -top-[200px] -left-[200px] animate-[float1_20s_ease-in-out_infinite]' />
-				<div className='absolute w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(212,132,42,0.06)_0%,transparent_70%)] -bottom-[100px] -right-[100px] animate-[float2_25s_ease-in-out_infinite]' />
+				<div className='absolute w-[500px] sm:w-[800px] h-[500px] sm:h-[800px] rounded-full bg-[radial-gradient(circle,rgba(26,127,138,0.06)_0%,transparent_70%)] -top-[200px] -left-[200px] animate-[float1_20s_ease-in-out_infinite]' />
+				<div className='absolute w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] rounded-full bg-[radial-gradient(circle,rgba(212,132,42,0.06)_0%,transparent_70%)] -bottom-[100px] -right-[100px] animate-[float2_25s_ease-in-out_infinite]' />
 				<div className='absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]' />
 			</div>
 
-			<Container className='relative z-10'>
-				<div className='grid lg:grid-cols-2 gap-20 items-center'>
+			<Container className='relative z-10 py-10 sm:py-0'>
+				<div ref={ref} className='grid lg:grid-cols-2 gap-10 lg:gap-20 items-center'>
 					{/* Left */}
 					<div>
-						<div className='inline-flex items-center gap-2 px-3.5 py-1.5 pl-2 bg-primary/[0.08] border border-primary/20 rounded-full text-[13px] font-medium text-primary mb-6'>
-							<span className='w-2 h-2 rounded-full bg-success animate-[pulse-dot_2s_infinite]' />
-							DTM 2024-2025 yangi testlar
-						</div>
-
-						<h1 className='text-[58px] font-black leading-[1.08] tracking-[-1.5px] text-slate-900 mb-5 max-lg:text-[40px]'>
+						<h1
+							className={`animate-on-scroll anim-fade-up text-[32px] sm:text-[42px] lg:text-[58px] font-black leading-[1.12] sm:leading-[1.08] tracking-[-1px] sm:tracking-[-1.5px] text-slate-900 mb-4 sm:mb-5 ${v}`}
+							style={{ animationDuration: '0.8s', animationDelay: '0.1s' }}
+						>
 							DTM va Attestatsiyaga
 							<br />
 							<span className='bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent'>
@@ -30,12 +34,18 @@ export default function Hero() {
 							</span>
 						</h1>
 
-						<p className='text-[17px] text-slate-600 leading-relaxed mb-9 max-w-[480px]'>
+						<p
+							className={`animate-on-scroll anim-fade-up text-[15px] sm:text-[17px] text-slate-600 leading-relaxed mb-7 sm:mb-9 max-w-[480px] ${v}`}
+							style={{ animationDuration: '0.8s', animationDelay: '0.25s' }}
+						>
 							Abituriyent, o&apos;qituvchi va o&apos;quvchilar uchun maxsus platforma. Sinov testlarini
 							ishlang, natijangizni real vaqtda tekshiring.
 						</p>
 
-						<div className='flex gap-3 mb-12 max-sm:flex-col'>
+						<div
+							className={`animate-on-scroll anim-fade-up flex flex-col sm:flex-row gap-3 mb-8 sm:mb-12 ${v}`}
+							style={{ animationDuration: '0.8s', animationDelay: '0.4s' }}
+						>
 							<LinkButton href={BOT_URL} target='_blank' rel='noopener noreferrer' size='lg'>
 								<IconBrandTelegram size={20} /> Telegram orqali boshlash
 							</LinkButton>
@@ -44,12 +54,15 @@ export default function Hero() {
 							</LinkButton>
 						</div>
 
-						<div className='flex items-center gap-4'>
+						<div
+							className={`animate-on-scroll anim-fade-up flex items-center gap-3 sm:gap-4 ${v}`}
+							style={{ animationDuration: '0.8s', animationDelay: '0.55s' }}
+						>
 							<div className='flex'>
 								{['A', 'B', 'S', 'N'].map((l, i) => (
 									<div
 										key={i}
-										className='w-9 h-9 rounded-full border-2 border-white flex items-center justify-center text-sm font-bold text-white -ml-2 first:ml-0'
+										className='w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-white flex items-center justify-center text-xs sm:text-sm font-bold text-white -ml-2 first:ml-0'
 										style={{
 											background: [
 												'linear-gradient(135deg,#1a7f8a,#15686f)',
@@ -63,7 +76,7 @@ export default function Hero() {
 									</div>
 								))}
 							</div>
-							<p className='text-[13px] text-slate-500'>
+							<p className='text-[12px] sm:text-[13px] text-slate-500'>
 								<strong className='text-slate-800 font-semibold'>500+</strong> foydalanuvchi ishonch
 								bildirgan
 							</p>
@@ -72,7 +85,10 @@ export default function Hero() {
 
 					{/* Right — Mock card */}
 					<div className='hidden lg:flex justify-center' style={{ perspective: 1000 }}>
-						<div className='w-full max-w-[400px] bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xl [transform:rotateY(-5deg)_rotateX(2deg)] hover:[transform:rotateY(0)_rotateX(0)] transition-transform duration-500'>
+						<div
+							className={`animate-on-scroll anim-hero-card w-full max-w-[400px] bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xl [transform:rotateY(-5deg)_rotateX(2deg)] hover:[transform:rotateY(0)_rotateX(0)] transition-transform duration-500 ${v}`}
+							style={{ animationDuration: '1s', animationDelay: '0.5s' }}
+						>
 							<div className='px-6 py-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between'>
 								<div className='flex items-center gap-3'>
 									<div className='w-[42px] h-[42px] rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white'>
