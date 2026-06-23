@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   IconFileText, IconClock, IconCircleCheck, IconCircleX, IconSend, IconRefresh,
-  IconEye, IconCheck, IconX as IconXMark,
+  IconEye, IconCheck, IconX as IconXMark, IconTrash,
 } from '@tabler/icons-react'
 import api from '../api'
-import { PageHeader, Button, Badge, Card, CardBody, Pagination } from '../components/ui'
+import { PageHeader, Button, Badge, Card, CardBody, Pagination, ConfirmDialog } from '../components/ui'
 import Dialog from '../components/ui/Dialog'
 import Table from '../components/ui/Table'
 
@@ -55,6 +55,7 @@ export default function Variants() {
   const [statusFilter, setStatusFilter] = useState('')
   const [detail, setDetail] = useState<VariantDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [showClear, setShowClear] = useState(false)
 
   const load = () => {
     const params = new URLSearchParams({ page: String(page), per_page: '10' })
@@ -76,6 +77,18 @@ export default function Variants() {
       toast.error('Variant ma\'lumotlarini yuklashda xatolik')
     } finally {
       setDetailLoading(false)
+    }
+  }
+
+  const clearAll = async () => {
+    try {
+      await api.delete('/variants/clear')
+      toast.success('Variantlar tozalandi')
+      setShowClear(false)
+      setPage(1)
+      load()
+    } catch {
+      toast.error('Xatolik')
     }
   }
 
@@ -127,6 +140,7 @@ export default function Variants() {
               {t.label}
             </Button>
           ))}
+          {total > 0 && <Button variant="danger" size="sm" onClick={() => setShowClear(true)}><IconTrash size={14} /> Tozalash</Button>}
         </>}
       />
 
@@ -272,6 +286,13 @@ export default function Variants() {
           </div>
         )}
       </Dialog>
+
+      <ConfirmDialog
+        open={showClear}
+        onClose={() => setShowClear(false)}
+        onConfirm={clearAll}
+        message={<>Barcha <strong>{total}</strong> ta variant o'chiriladi. Bu amalni qaytarib bo'lmaydi.</>}
+      />
     </div>
   )
 }

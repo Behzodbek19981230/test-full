@@ -5,6 +5,7 @@ from app.dependencies import get_current_admin
 from app.schemas.payment import PaymentAction
 from app.services import payment_service, audit_service
 from app.models.admin import Admin
+from app.models.payment import Payment
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -38,3 +39,13 @@ def reject_payment(payment_id: int, body: PaymentAction, request: Request, db: S
         raise HTTPException(status_code=400, detail="Bu to'lov allaqachon ko'rib chiqilgan")
     audit_service.log_action(db, admin.id, "reject", "payment", payment_id, f"To'lov rad etildi: {result['amount']} so'm", request.client.host)
     return result
+
+
+@router.delete("/clear")
+def clear_payments(status: str = None, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+    query = db.query(Payment)
+    if status:
+        query = query.filter(Payment.status == status)
+    count = query.delete()
+    db.commit()
+    return {"deleted": count}

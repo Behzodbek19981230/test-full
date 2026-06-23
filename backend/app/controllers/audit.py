@@ -63,3 +63,17 @@ def mark_all_read(db: Session = Depends(get_db), admin: Admin = Depends(get_curr
     db.query(Notification).filter(Notification.admin_id.isnot(None), Notification.is_read == False).update({"is_read": True})
     db.commit()
     return {"message": "Barcha bildirishnomalar o'qildi"}
+
+
+@router.delete("/notifications/clear")
+def clear_notifications(db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+    count = db.query(Notification).filter(Notification.admin_id.isnot(None)).delete()
+    db.commit()
+    return {"deleted": count}
+
+
+@router.delete("/audit-logs/clear")
+def clear_audit_logs(db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+    count = db.query(AuditLog).delete()
+    db.commit()
+    return {"deleted": count}

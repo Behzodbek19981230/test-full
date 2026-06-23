@@ -43,7 +43,14 @@ export default function Layout() {
 
 	const navItems: {
 		section: string;
-		items: { to: string; icon: typeof IconLayoutDashboard; label: string; end?: boolean; badge?: number; badgeColor?: 'warning' | 'danger' }[];
+		items: {
+			to: string;
+			icon: typeof IconLayoutDashboard;
+			label: string;
+			end?: boolean;
+			badge?: number;
+			badgeColor?: 'warning' | 'danger';
+		}[];
 	}[] = [
 		{
 			section: 'Asosiy',
@@ -64,7 +71,13 @@ export default function Layout() {
 			section: 'Boshqaruv',
 			items: [
 				{ to: '/users', icon: IconUsers, label: 'Foydalanuvchilar' },
-				{ to: '/notifications', icon: IconBell, label: 'Bildirishnomalar', badge: unreadNotifs || undefined, badgeColor: 'danger' },
+				{
+					to: '/notifications',
+					icon: IconBell,
+					label: 'Bildirishnomalar',
+					badge: unreadNotifs || undefined,
+					badgeColor: 'danger',
+				},
 				{ to: '/audit', icon: IconFileText, label: 'Audit Log' },
 			],
 		},
@@ -93,7 +106,11 @@ export default function Layout() {
 										<item.icon size={20} className='nav-icon' />
 										{item.label}
 										{item.badge && item.badge > 0 && (
-											<span className={`nav-badge ${item.badgeColor === 'danger' ? 'nav-badge--danger' : ''}`}>{item.badge}</span>
+											<span
+												className={`nav-badge ${item.badgeColor === 'danger' ? 'nav-badge--danger' : ''}`}
+											>
+												{item.badge}
+											</span>
 										)}
 									</NavLink>
 								</li>
@@ -125,14 +142,10 @@ export default function Layout() {
 				<button className='mobile-topbar-btn' onClick={() => setSidebarOpen(true)}>
 					<IconMenu2 size={22} />
 				</button>
-				<span className='mobile-topbar-title'>Test Market Admin</span>
-				<div style={{ width: 36 }} />
 			</header>
 
 			{/* Mobile overlay */}
-			{sidebarOpen && (
-				<div className='sidebar-overlay' onClick={() => setSidebarOpen(false)} />
-			)}
+			{sidebarOpen && <div className='sidebar-overlay' onClick={() => setSidebarOpen(false)} />}
 
 			{/* Sidebar */}
 			<aside className={`sidebar ${sidebarOpen ? 'sidebar--open' : ''}`}>

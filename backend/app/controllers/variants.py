@@ -5,6 +5,7 @@ from app.database import get_db
 from app.dependencies import get_current_admin
 from app.services import variant_service
 from app.models.admin import Admin
+from app.models.variant import TestVariant
 
 router = APIRouter(prefix="/variants", tags=["variants"])
 
@@ -40,3 +41,10 @@ def resend_variant(variant_id: int, db: Session = Depends(get_db), admin: Admin 
     if not result:
         raise HTTPException(status_code=404, detail="Variant topilmadi")
     return result
+
+
+@router.delete("/clear")
+def clear_variants(db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+    count = db.query(TestVariant).delete()
+    db.commit()
+    return {"deleted": count}

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { IconCreditCard, IconEye, IconClock, IconCircleCheck, IconCircleX, IconPhoto } from '@tabler/icons-react';
+import { IconCreditCard, IconEye, IconClock, IconCircleCheck, IconCircleX, IconPhoto, IconTrash } from '@tabler/icons-react';
 import api from '../api';
-import { PageHeader, Button, Dialog, Badge, Card, CardBody, Textarea, Pagination } from '../components/ui';
+import { PageHeader, Button, Dialog, Badge, Card, CardBody, Textarea, Pagination, ConfirmDialog } from '../components/ui';
 import Table from '../components/ui/Table';
 
 function formatMoney(val: string): string {
@@ -35,6 +35,7 @@ export default function Payments() {
 	const [selected, setSelected] = useState<Payment | null>(null);
 	const [note, setNote] = useState('');
 	const [amountDisplay, setAmountDisplay] = useState('');
+	const [showClear, setShowClear] = useState(false);
 
 	const load = () => {
 		api.get(`/payments?status=${statusFilter}&page=${page}&per_page=10`).then((r) => {
@@ -103,6 +104,20 @@ export default function Payments() {
 		);
 	};
 
+	const clearPayments = async () => {
+		try {
+			await api.delete(`/payments/clear?status=${statusFilter}`);
+			toast.success("To'lovlar tozalandi");
+			setShowClear(false);
+			setPage(1);
+			load();
+		} catch {
+			toast.error('Xatolik');
+		}
+	};
+
+	const statusLabel = statusFilter === 'pending' ? 'kutilayotgan' : statusFilter === 'approved' ? 'tasdiqlangan' : 'rad etilgan';
+
 	const tabs = [
 		{ key: 'pending', icon: <IconClock size={16} />, label: 'Kutilmoqda' },
 		{ key: 'approved', icon: <IconCircleCheck size={16} />, label: 'Tasdiqlangan' },
@@ -131,6 +146,11 @@ export default function Payments() {
 								{t.icon} {t.label}
 							</Button>
 						))}
+						{total > 0 && (
+							<Button variant='danger' size='sm' onClick={() => setShowClear(true)}>
+								<IconTrash size={14} /> Tozalash
+							</Button>
+						)}
 					</>
 				}
 			/>
@@ -302,6 +322,13 @@ export default function Payments() {
 					</>
 				)}
 			</Dialog>
+
+			<ConfirmDialog
+				open={showClear}
+				onClose={() => setShowClear(false)}
+				onConfirm={clearPayments}
+				message={<>Barcha <strong>{total}</strong> ta {statusLabel} to'lov o'chiriladi. Bu amalni qaytarib bo'lmaydi.</>}
+			/>
 		</div>
 	);
 }

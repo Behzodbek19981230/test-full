@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import { IconFileText, IconPlus, IconEdit, IconTrash, IconCircleCheck, IconCircleX, IconKey } from '@tabler/icons-react'
 import api from '../api'
-import { PageHeader, Badge, Card, CardBody, Pagination } from '../components/ui'
+import { PageHeader, Button, Badge, Card, CardBody, Pagination, ConfirmDialog } from '../components/ui'
 import Table from '../components/ui/Table'
 
 interface Log {
@@ -22,16 +23,28 @@ export default function AuditLogs() {
   const [logs, setLogs] = useState<Log[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
+  const [showClear, setShowClear] = useState(false)
 
-  useEffect(() => {
+  const load = () => {
     api.get(`/audit-logs?page=${page}&per_page=50`).then(r => { setLogs(r.data.logs); setTotal(r.data.total) })
-  }, [page])
+  }
+
+  useEffect(() => { load() }, [page])
+
+  const clearAll = async () => {
+    await api.delete('/audit-logs/clear')
+    toast.success('Audit loglar tozalandi')
+    setShowClear(false)
+    setPage(1)
+    load()
+  }
 
   return (
     <div>
       <PageHeader
         icon={<IconFileText size={22} />} iconColor="var(--info)" iconBg="var(--info-50)" title="Audit Log"
         badge={<Badge variant="info">{total} yozuv</Badge>}
+        actions={total > 0 ? <Button variant="danger" size="sm" onClick={() => setShowClear(true)}><IconTrash size={14} /> Tozalash</Button> : undefined}
       />
 
       <Card>
@@ -56,6 +69,13 @@ export default function AuditLogs() {
         </CardBody>
         <Pagination page={page} totalPages={Math.ceil(total / 50)} onPageChange={setPage} />
       </Card>
+
+      <ConfirmDialog
+        open={showClear}
+        onClose={() => setShowClear(false)}
+        onConfirm={clearAll}
+        message={<>Barcha <strong>{total}</strong> ta audit log o'chiriladi. Bu amalni qaytarib bo'lmaydi.</>}
+      />
     </div>
   )
 }
