@@ -98,12 +98,52 @@ def reject(db: Session, payment_id: int, admin_id: int, note: str = "") -> dict 
     p.admin_id = admin_id
     p.admin_note = note or "To'lov rad etildi"
 
+    subject_name = p.subject.name if p.subject else "Test"
+    telegram_id = p.user.telegram_id if p.user else None
+
     notif = Notification(
         user_id=p.user_id, admin_id=admin_id, title="To'lov rad etildi",
-        message=f'"{p.subject.name}" fani uchun to\'lovingiz rad etildi. Sabab: {p.admin_note}',
+        message=f'"{subject_name}" fani uchun to\'lovingiz rad etildi. Sabab: {p.admin_note}',
         type="payment",
     )
     db.add(notif)
     db.commit()
     db.refresh(p)
+
+    if telegram_id:
+        threading.Thread(
+            target=_send_reject_message,
+            args=(telegram_id, subject_name, p.admin_note),
+            daemon=True,
+        ).start()
+
     return _to_dict(p)
+
+
+def _send_reject_message(telegram_id: int, subject_name: str, reason: str):
+    import asyncio
+    from telegram import Bot
+    from app.config import get_settings
+
+    token = get_settings().TELEGRAM_BOT_TOKEN
+    if not token:
+        return
+
+    async def send():
+        bot = Bot(token=token)
+        await bot.send_message(
+            chat_id=telegram_id,
+            text=(
+                f"❌ *To'lovingiz rad etildi*\n\n"
+                f"📚 *Fan:* {subject_name}\n"
+                f"📝 *Sabab:* {reason}\n\n"
+                f"Agar xatolik bo'lsa, qaytadan to'lov qiling.\n"
+                f"📚 /fanlar — Yangi test"
+            ),
+            parse_mode='Markdown',
+        )
+
+    try:
+        asyncio.run(send())
+    except Exception as e:
+        print(f"Telegram reject notification error: {e}")
