@@ -22,7 +22,10 @@ export const MathNode = Node.create({
   },
 
   parseHTML() {
-    return [{ tag: 'span[data-math]' }]
+    return [{
+      tag: 'span[data-math]',
+      getAttrs: (node: HTMLElement) => ({ latex: node.getAttribute('data-latex') || '' }),
+    }]
   },
 
   renderHTML({ HTMLAttributes }) {

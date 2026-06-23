@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.controllers import auth, subjects, topics, payments, variants, stats, users, audit, uploads, quiz, user_auth, materials
+from app.controllers import auth, subjects, topics, payments, variants, stats, users, audit, uploads, quiz, user_auth, materials, ai
 
 api_router = APIRouter(prefix="/api")
 
@@ -15,3 +15,4 @@ api_router.include_router(uploads.router)
 api_router.include_router(quiz.router)
 api_router.include_router(user_auth.router)
 api_router.include_router(materials.router)
+api_router.include_router(ai.router)

@@ -16,6 +16,9 @@ class Settings(BaseSettings):
 
     GOOGLE_CLIENT_ID: str = ""
 
+    GEMINI_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
+
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "admin123"
 
