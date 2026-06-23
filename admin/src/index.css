@@ -907,8 +907,8 @@ body {
 }
 
 .mobile-topbar-btn {
-	width: 36px;
-	height: 36px;
+	width: 40px;
+	height: 40px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -918,16 +918,20 @@ body {
 	color: var(--text-300);
 	cursor: pointer;
 	transition: all 0.15s;
+	-webkit-tap-highlight-color: transparent;
 }
 
-.mobile-topbar-btn:hover {
+.mobile-topbar-btn:active {
 	background: var(--bg-700);
 }
 
 .mobile-topbar-title {
-	font-size: 15px;
+	font-size: 16px;
 	font-weight: 700;
 	color: var(--text-100);
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
 }
 
 .sidebar-overlay {
@@ -1896,6 +1900,10 @@ body {
    RESPONSIVE — TABLET (≤ 1024px)
    ============================================================ */
 @media (max-width: 1024px) {
+	.layout {
+		flex-direction: column;
+	}
+
 	.main-content {
 		margin-left: 0;
 		padding: 16px;
@@ -1905,9 +1913,11 @@ body {
 
 	.mobile-topbar {
 		display: flex;
+		position: relative;
 	}
 
 	.sidebar {
+		width: 280px;
 		transform: translateX(-100%);
 		transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		z-index: 100;
@@ -1933,8 +1943,8 @@ body {
 		position: absolute;
 		top: 14px;
 		right: 14px;
-		width: 32px;
-		height: 32px;
+		width: 36px;
+		height: 36px;
 		align-items: center;
 		justify-content: center;
 		background: var(--bg-700);
@@ -1944,9 +1954,10 @@ body {
 		cursor: pointer;
 		z-index: 10;
 		transition: all 0.15s;
+		-webkit-tap-highlight-color: transparent;
 	}
 
-	.sidebar-close:hover {
+	.sidebar-close:active {
 		background: var(--bg-600);
 		color: var(--text-100);
 	}

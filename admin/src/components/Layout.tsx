@@ -28,6 +28,15 @@ export default function Layout() {
 	}, [location.pathname]);
 
 	useEffect(() => {
+		if (sidebarOpen) {
+			document.body.style.overflow = 'hidden';
+		} else {
+			document.body.style.overflow = '';
+		}
+		return () => { document.body.style.overflow = ''; };
+	}, [sidebarOpen]);
+
+	useEffect(() => {
 		const fetchCounts = () => {
 			api.get('/payments/pending/count')
 				.then((r) => setPendingCount(r.data.count))
@@ -83,58 +92,6 @@ export default function Layout() {
 		},
 	];
 
-	const sidebarContent = (
-		<>
-			<div className='sidebar-header'>
-				<div className='sidebar-logo'>
-					<img
-						src='/logo.png'
-						alt='Test Market'
-						style={{ width: 100, height: 80, borderRadius: 6, objectFit: 'cover' }}
-					/>
-				</div>
-			</div>
-
-			<nav className='sidebar-nav'>
-				{navItems.map((group) => (
-					<div key={group.section}>
-						<div className='sidebar-section'>{group.section}</div>
-						<ul>
-							{group.items.map((item) => (
-								<li key={item.to}>
-									<NavLink to={item.to} end={item.end}>
-										<item.icon size={20} className='nav-icon' />
-										{item.label}
-										{item.badge && item.badge > 0 && (
-											<span
-												className={`nav-badge ${item.badgeColor === 'danger' ? 'nav-badge--danger' : ''}`}
-											>
-												{item.badge}
-											</span>
-										)}
-									</NavLink>
-								</li>
-							))}
-						</ul>
-					</div>
-				))}
-			</nav>
-
-			<div className='sidebar-footer'>
-				<div className='sidebar-user'>
-					<div className='sidebar-user-avatar'>{admin?.full_name?.charAt(0) || 'A'}</div>
-					<div className='sidebar-user-info'>
-						<div className='sidebar-user-name'>{admin?.full_name}</div>
-						<div className='sidebar-user-role'>Administrator</div>
-					</div>
-					<button className='sidebar-logout' onClick={logout} title='Chiqish'>
-						<IconLogout size={18} />
-					</button>
-				</div>
-			</div>
-		</>
-	);
-
 	return (
 		<div className='layout'>
 			{/* Mobile topbar */}
@@ -142,6 +99,8 @@ export default function Layout() {
 				<button className='mobile-topbar-btn' onClick={() => setSidebarOpen(true)}>
 					<IconMenu2 size={22} />
 				</button>
+				<span className='mobile-topbar-title'>Test Market</span>
+				<div style={{ width: 36 }} />
 			</header>
 
 			{/* Mobile overlay */}
@@ -152,7 +111,53 @@ export default function Layout() {
 				<button className='sidebar-close' onClick={() => setSidebarOpen(false)}>
 					<IconX size={20} />
 				</button>
-				{sidebarContent}
+				<div className='sidebar-header'>
+					<div className='sidebar-logo'>
+						<img
+							src='/logo.png'
+							alt='Test Market'
+							style={{ width: 100, height: 80, borderRadius: 6, objectFit: 'cover' }}
+						/>
+					</div>
+				</div>
+
+				<nav className='sidebar-nav'>
+					{navItems.map((group) => (
+						<div key={group.section}>
+							<div className='sidebar-section'>{group.section}</div>
+							<ul>
+								{group.items.map((item) => (
+									<li key={item.to}>
+										<NavLink to={item.to} end={item.end}>
+											<item.icon size={20} className='nav-icon' />
+											{item.label}
+											{item.badge && item.badge > 0 && (
+												<span
+													className={`nav-badge ${item.badgeColor === 'danger' ? 'nav-badge--danger' : ''}`}
+												>
+													{item.badge}
+												</span>
+											)}
+										</NavLink>
+									</li>
+								))}
+							</ul>
+						</div>
+					))}
+				</nav>
+
+				<div className='sidebar-footer'>
+					<div className='sidebar-user'>
+						<div className='sidebar-user-avatar'>{admin?.full_name?.charAt(0) || 'A'}</div>
+						<div className='sidebar-user-info'>
+							<div className='sidebar-user-name'>{admin?.full_name}</div>
+							<div className='sidebar-user-role'>Administrator</div>
+						</div>
+						<button className='sidebar-logout' onClick={logout} title='Chiqish'>
+							<IconLogout size={18} />
+						</button>
+					</div>
+				</div>
 			</aside>
 
 			<main className='main-content'>

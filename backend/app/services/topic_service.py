@@ -13,6 +13,7 @@ def _to_dict(topic: Topic, db: Session, include_questions: bool = False) -> dict
         "description": topic.description,
         "order_num": topic.order_num,
         "is_active": topic.is_active,
+        "is_mixed": topic.is_mixed or False,
         "question_count": q_count or 0,
         "created_at": topic.created_at.isoformat() if topic.created_at else None,
     }

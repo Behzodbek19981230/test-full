@@ -6,6 +6,7 @@ class TopicCreate(BaseModel):
     subject_id: int
     name: str
     description: Optional[str] = ""
+    is_mixed: Optional[bool] = False
 
 
 class TopicUpdate(BaseModel):
@@ -13,6 +14,7 @@ class TopicUpdate(BaseModel):
     description: Optional[str] = None
     order_num: Optional[int] = None
     is_active: Optional[bool] = None
+    is_mixed: Optional[bool] = None
 
 
 class QuestionCreate(BaseModel):

@@ -13,6 +13,7 @@ class Topic(Base):
     description = Column(Text, nullable=True)
     order_num = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
+    is_mixed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     subject = relationship("Subject", back_populates="topics")

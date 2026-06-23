@@ -17,23 +17,43 @@ def generate_quiz(subject_id: int, count: int = 30, db: Session = Depends(get_db
     if not subject:
         raise HTTPException(status_code=404, detail="Fan topilmadi")
 
-    topic_ids = [t.id for t in db.query(Topic.id).filter(
+    topics = db.query(Topic).filter(
         Topic.subject_id == subject_id, Topic.is_active == True
-    ).all()]
+    ).all()
 
-    if not topic_ids:
+    if not topics:
         raise HTTPException(status_code=404, detail="Bu fanda mavzular topilmadi")
 
-    questions = db.query(Question).filter(
-        Question.topic_id.in_(topic_ids)
-    ).order_by(func.random()).limit(count).all()
+    has_mixed = any(t.is_mixed for t in topics)
+    non_mixed = [t for t in topics if not t.is_mixed]
 
-    if not questions:
+    all_questions = []
+
+    if has_mixed and len(non_mixed) > 1:
+        per_topic = max(1, count // len(non_mixed))
+        remainder = count - per_topic * len(non_mixed)
+
+        for i, t in enumerate(non_mixed):
+            t_count = per_topic + (1 if i < remainder else 0)
+            t_questions = db.query(Question).filter(
+                Question.topic_id == t.id
+            ).order_by(func.random()).limit(t_count).all()
+            all_questions.extend(t_questions)
+    else:
+        topic_ids = [t.id for t in topics]
+        all_questions = db.query(Question).filter(
+            Question.topic_id.in_(topic_ids)
+        ).order_by(func.random()).limit(count).all()
+
+    if not all_questions:
         raise HTTPException(status_code=404, detail="Bu fanda savollar topilmadi")
+
+    import random
+    random.shuffle(all_questions)
 
     return {
         "subject": {"id": subject.id, "name": subject.name, "icon": subject.icon},
-        "total": len(questions),
+        "total": len(all_questions),
         "questions": [
             {
                 "id": q.id,
@@ -43,7 +63,7 @@ def generate_quiz(subject_id: int, count: int = 30, db: Session = Depends(get_db
                 "option_c": q.option_c,
                 "option_d": q.option_d,
             }
-            for q in questions
+            for q in all_questions
         ],
     }
 
