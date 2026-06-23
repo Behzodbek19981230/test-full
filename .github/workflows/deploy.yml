@@ -23,8 +23,14 @@ jobs:
                   script: |
                       cd ${{ env.PROJECT_PATH }}
 
+                      # .env faylni himoyalash
+                      cp backend/.env /tmp/backend.env.bak 2>/dev/null || true
+
                       git fetch origin
                       git reset --hard origin/main
+
+                      # .env faylni qaytarish
+                      cp /tmp/backend.env.bak backend/.env 2>/dev/null || true
 
                       cd backend
 
