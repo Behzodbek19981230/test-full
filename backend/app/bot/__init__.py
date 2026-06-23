@@ -4,7 +4,7 @@ from telegram.ext import (
 )
 from app.bot.handlers import (
     start, subjects_menu, select_subject, handle_screenshot, cancel,
-    check_answers,
+    check_answers, admin_approve_callback, admin_reject_callback, admin_reject_reason,
 )
 from app.bot.states import States
 from app.config import get_settings
@@ -18,6 +18,21 @@ def create_bot():
 
     application = Application.builder().token(token).build()
 
+    admin_chat_id = get_settings().ADMIN_CHAT_ID
+
+    reject_conv = ConversationHandler(
+        entry_points=[
+            CallbackQueryHandler(admin_reject_callback, pattern=r'^pay_reject_\d+$'),
+        ],
+        states={
+            States.ADMIN_REJECT_REASON: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(admin_chat_id), admin_reject_reason),
+            ],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+        per_message=False,
+    )
+
     buy_conv = ConversationHandler(
         entry_points=[
             CommandHandler('start', start),
@@ -29,9 +44,12 @@ def create_bot():
         fallbacks=[CommandHandler('cancel', cancel)],
         per_message=False,
     )
+
+    application.add_handler(reject_conv)
     application.add_handler(CommandHandler('fanlar', subjects_menu))
     application.add_handler(buy_conv)
     application.add_handler(CallbackQueryHandler(subjects_menu, pattern='^subjects$'))
+    application.add_handler(CallbackQueryHandler(admin_approve_callback, pattern=r'^pay_approve_\d+$'))
     application.add_handler(MessageHandler(filters.Regex(r'^\d+:[A-Da-d]+$'), check_answers))
 
     return application

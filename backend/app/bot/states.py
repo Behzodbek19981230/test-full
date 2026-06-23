@@ -1,2 +1,3 @@
 class States:
     WAITING_SCREENSHOT = 1
+    ADMIN_REJECT_REASON = 2

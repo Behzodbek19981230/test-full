@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_PAYMENT_CARD: str = "8600-XXXX-XXXX-XXXX"
     TELEGRAM_CARD_HOLDER: str = "ISM FAMILIYA"
+    ADMIN_CHAT_ID: int = 1514800757
 
     GOOGLE_CLIENT_ID: str = ""
 

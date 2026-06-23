@@ -1059,6 +1059,17 @@ body {
 	color: var(--warning);
 }
 
+.nav-badge--danger {
+	background: var(--danger);
+	color: #fff;
+	animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+	0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+	50% { box-shadow: 0 0 0 4px rgba(220, 38, 38, 0); }
+}
+
 .sidebar-footer {
 	padding: 16px;
 	border-top: 1px solid var(--border);

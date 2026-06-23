@@ -183,6 +183,9 @@ async def handle_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
                              message=f"{user.full_name} — {ud['subject_name']}", type='payment')
         db.add(notif)
         db.commit()
+        db.refresh(payment)
+
+        await _notify_admin(context, payment, user, ud['subject_name'], os.path.join(upload_dir, filename))
     finally:
         db.close()
 
@@ -192,6 +195,155 @@ async def handle_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode='Markdown',
     )
     context.user_data.clear()
+    return ConversationHandler.END
+
+
+async def _notify_admin(context: ContextTypes.DEFAULT_TYPE, payment, user, subject_name: str, screenshot_path: str):
+    import os
+    settings = get_settings()
+    admin_chat_id = settings.ADMIN_CHAT_ID
+
+    text = (
+        f"💰 *Yangi to'lov #{payment.id}*\n\n"
+        f"👤 *Foydalanuvchi:* {user.full_name}\n"
+        f"📱 *Username:* @{user.username or '—'}\n"
+        f"🆔 *Telegram ID:* `{user.telegram_id}`\n\n"
+        f"📚 *Fan:* {subject_name}\n"
+        f"📝 *Savollar:* {payment.question_count} ta\n"
+        f"📅 *Sana:* {payment.created_at.strftime('%d.%m.%Y %H:%M')}\n"
+    )
+
+    keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("✅ Tasdiqlash", callback_data=f"pay_approve_{payment.id}"),
+            InlineKeyboardButton("❌ Rad etish", callback_data=f"pay_reject_{payment.id}"),
+        ]
+    ])
+
+    try:
+        if os.path.exists(screenshot_path):
+            with open(screenshot_path, 'rb') as photo:
+                await context.bot.send_photo(
+                    chat_id=admin_chat_id,
+                    photo=photo,
+                    caption=text,
+                    parse_mode='Markdown',
+                    reply_markup=keyboard,
+                )
+        else:
+            await context.bot.send_message(
+                chat_id=admin_chat_id,
+                text=text + "\n⚠️ _Screenshot topilmadi_",
+                parse_mode='Markdown',
+                reply_markup=keyboard,
+            )
+    except Exception as e:
+        print(f"Admin notification error: {e}")
+
+
+async def admin_approve_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from app.services import payment_service
+
+    query = update.callback_query
+    await query.answer()
+
+    payment_id = int(query.data.split('_')[2])
+
+    db = get_db()
+    try:
+        result = payment_service.approve(db, payment_id, admin_id=1, note="Telegram orqali tasdiqlandi", amount=5000)
+    finally:
+        db.close()
+
+    if not result:
+        await query.edit_message_caption(
+            caption=query.message.caption + "\n\n⚠️ *Bu to'lov allaqachon ko'rib chiqilgan.*",
+            parse_mode='Markdown',
+        ) if query.message.caption else await query.edit_message_text(
+            text="⚠️ Bu to'lov allaqachon ko'rib chiqilgan.",
+        )
+        return
+
+    original = query.message.caption or query.message.text or ""
+    new_text = original + "\n\n✅ *TASDIQLANDI*"
+    if query.message.caption:
+        await query.edit_message_caption(caption=new_text, parse_mode='Markdown')
+    else:
+        await query.edit_message_text(text=new_text, parse_mode='Markdown')
+
+
+async def admin_reject_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    payment_id = int(query.data.split('_')[2])
+    context.user_data['reject_payment_id'] = payment_id
+
+    original = query.message.caption or query.message.text or ""
+    new_text = original + "\n\n✏️ *Rad etish sababini yozing:*"
+    if query.message.caption:
+        await query.edit_message_caption(caption=new_text, parse_mode='Markdown')
+    else:
+        await query.edit_message_text(text=new_text, parse_mode='Markdown')
+
+    return States.ADMIN_REJECT_REASON
+
+
+async def admin_reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from app.models.user import User
+    from app.services import payment_service
+    from app.models.payment import Payment
+
+    reason = update.message.text.strip()
+    payment_id = context.user_data.get('reject_payment_id')
+
+    if not payment_id:
+        await update.message.reply_text("❌ To'lov topilmadi.")
+        return ConversationHandler.END
+
+    db = get_db()
+    try:
+        payment = db.query(Payment).filter(Payment.id == payment_id).first()
+        if not payment or payment.status != "pending":
+            await update.message.reply_text("⚠️ Bu to'lov allaqachon ko'rib chiqilgan.")
+            context.user_data.pop('reject_payment_id', None)
+            return ConversationHandler.END
+
+        user = payment.user
+        user_telegram_id = user.telegram_id if user else None
+        user_full_name = user.full_name if user else "Foydalanuvchi"
+        subject_name = payment.subject.name if payment.subject else "Test"
+
+        result = payment_service.reject(db, payment_id, admin_id=1, note=reason)
+    finally:
+        db.close()
+
+    if result:
+        await update.message.reply_text(
+            f"❌ *To'lov #{payment_id} rad etildi.*\n"
+            f"📝 Sabab: {reason}",
+            parse_mode='Markdown',
+        )
+
+        if user_telegram_id:
+            try:
+                await context.bot.send_message(
+                    chat_id=user_telegram_id,
+                    text=(
+                        f"❌ *To'lovingiz rad etildi*\n\n"
+                        f"📚 *Fan:* {subject_name}\n"
+                        f"📝 *Sabab:* {reason}\n\n"
+                        f"Agar xatolik bo'lsa, qaytadan to'lov qiling.\n"
+                        f"📚 /fanlar — Yangi test"
+                    ),
+                    parse_mode='Markdown',
+                )
+            except Exception as e:
+                print(f"User notification error: {e}")
+    else:
+        await update.message.reply_text("⚠️ Xatolik yuz berdi.")
+
+    context.user_data.pop('reject_payment_id', None)
     return ConversationHandler.END
 
 

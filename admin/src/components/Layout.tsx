@@ -19,6 +19,7 @@ import {
 export default function Layout() {
 	const { admin, logout } = useAuth();
 	const [pendingCount, setPendingCount] = useState(0);
+	const [unreadNotifs, setUnreadNotifs] = useState(0);
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const location = useLocation();
 
@@ -27,19 +28,22 @@ export default function Layout() {
 	}, [location.pathname]);
 
 	useEffect(() => {
-		const fetchPending = () => {
+		const fetchCounts = () => {
 			api.get('/payments/pending/count')
 				.then((r) => setPendingCount(r.data.count))
 				.catch(() => {});
+			api.get('/notifications?per_page=1')
+				.then((r) => setUnreadNotifs(r.data.unread_count || 0))
+				.catch(() => {});
 		};
-		fetchPending();
-		const interval = setInterval(fetchPending, 30000);
+		fetchCounts();
+		const interval = setInterval(fetchCounts, 30000);
 		return () => clearInterval(interval);
 	}, []);
 
 	const navItems: {
 		section: string;
-		items: { to: string; icon: typeof IconLayoutDashboard; label: string; end?: boolean; badge?: number }[];
+		items: { to: string; icon: typeof IconLayoutDashboard; label: string; end?: boolean; badge?: number; badgeColor?: 'warning' | 'danger' }[];
 	}[] = [
 		{
 			section: 'Asosiy',
@@ -60,7 +64,7 @@ export default function Layout() {
 			section: 'Boshqaruv',
 			items: [
 				{ to: '/users', icon: IconUsers, label: 'Foydalanuvchilar' },
-				{ to: '/notifications', icon: IconBell, label: 'Bildirishnomalar' },
+				{ to: '/notifications', icon: IconBell, label: 'Bildirishnomalar', badge: unreadNotifs || undefined, badgeColor: 'danger' },
 				{ to: '/audit', icon: IconFileText, label: 'Audit Log' },
 			],
 		},
@@ -89,7 +93,7 @@ export default function Layout() {
 										<item.icon size={20} className='nav-icon' />
 										{item.label}
 										{item.badge && item.badge > 0 && (
-											<span className='nav-badge'>{item.badge}</span>
+											<span className={`nav-badge ${item.badgeColor === 'danger' ? 'nav-badge--danger' : ''}`}>{item.badge}</span>
 										)}
 									</NavLink>
 								</li>
