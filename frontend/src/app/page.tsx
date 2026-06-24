@@ -7,6 +7,7 @@ import {
 	Stats,
 	Subjects,
 	MandatoryBlock,
+	ComingSoon,
 	HowItWorks,
 	Features,
 	SeoContent,
@@ -56,9 +57,6 @@ export default function Home() {
 			.then(setStats)
 			.catch(() => {});
 	}, []);
-	console.log(subjects);
-	console.log(mandatorySubjects);
-
 	return (
 		<>
 			<Navbar />
@@ -66,6 +64,7 @@ export default function Home() {
 			<Stats stats={stats} />
 			<Subjects subjects={subjects} />
 			<MandatoryBlock subjects={mandatorySubjects} />
+			<ComingSoon />
 			<HowItWorks />
 			<Features />
 			<SeoContent />

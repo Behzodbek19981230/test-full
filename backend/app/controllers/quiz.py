@@ -24,12 +24,12 @@ def generate_quiz(subject_id: int, count: int = 30, db: Session = Depends(get_db
     if not topics:
         raise HTTPException(status_code=404, detail="Bu fanda mavzular topilmadi")
 
-    has_mixed = any(t.is_mixed for t in topics)
+    mixed_topics = [t for t in topics if t.is_mixed]
     non_mixed = [t for t in topics if not t.is_mixed]
 
     all_questions = []
 
-    if has_mixed and len(non_mixed) > 1:
+    if non_mixed:
         per_topic = max(1, count // len(non_mixed))
         remainder = count - per_topic * len(non_mixed)
 
@@ -39,7 +39,17 @@ def generate_quiz(subject_id: int, count: int = 30, db: Session = Depends(get_db
                 Question.topic_id == t.id
             ).order_by(func.random()).limit(t_count).all()
             all_questions.extend(t_questions)
-    else:
+
+    if mixed_topics:
+        mixed_ids = [t.id for t in mixed_topics]
+        needed = count - len(all_questions)
+        if needed > 0:
+            mixed_questions = db.query(Question).filter(
+                Question.topic_id.in_(mixed_ids)
+            ).order_by(func.random()).limit(needed).all()
+            all_questions.extend(mixed_questions)
+
+    if not all_questions:
         topic_ids = [t.id for t in topics]
         all_questions = db.query(Question).filter(
             Question.topic_id.in_(topic_ids)
