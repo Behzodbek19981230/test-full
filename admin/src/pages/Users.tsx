@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { IconUsers, IconSearch, IconBan, IconCircleCheck } from '@tabler/icons-react'
 import api from '../api'
-import { PageHeader, Button, Badge, Card, CardBody, Input, Pagination } from '../components/ui'
+import { PageHeader, Button, Badge, Card, CardBody, Input, Pagination, PageLoader } from '../components/ui'
 import Table from '../components/ui/Table'
 
 interface User {
@@ -11,6 +11,7 @@ interface User {
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
@@ -18,12 +19,14 @@ export default function Users() {
   const load = () => {
     api.get(`/users?page=${page}&per_page=10&search=${search}`).then(r => {
       setUsers(r.data.users); setTotal(r.data.total)
-    })
+    }).finally(() => setLoading(false))
   }
 
   useEffect(() => { load() }, [page, search])
 
   const toggleActive = async (id: number) => { await api.put(`/users/${id}/toggle-active`); load() }
+
+  if (loading) return <PageLoader rows={8} />
 
   return (
     <div>

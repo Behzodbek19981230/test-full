@@ -15,6 +15,7 @@ import {
 	DropdownMenu,
 	IconPicker,
 	SubjectIcon,
+	PageLoader,
 } from '../components/ui';
 import Table from '../components/ui/Table';
 
@@ -33,27 +34,45 @@ interface Subject {
 
 export default function Subjects() {
 	const [subjects, setSubjects] = useState<Subject[]>([]);
+	const [loading, setLoading] = useState(true);
 	const [showModal, setShowModal] = useState(false);
 	const [editing, setEditing] = useState<Subject | null>(null);
 	const [form, setForm] = useState({
-		name: '', description: '', icon: '📚', price_per_question: 500,
-		is_mandatory: false, mandatory_question_count: 10,
+		name: '',
+		description: '',
+		icon: '📚',
+		price_per_question: 500,
+		is_mandatory: false,
+		mandatory_question_count: 10,
 	});
 
 	const navigate = useNavigate();
-	const load = () => api.get('/subjects/all').then((r) => setSubjects(r.data));
-	useEffect(() => { load(); }, []);
+	const load = () => api.get('/subjects/all').then((r) => setSubjects(r.data)).finally(() => setLoading(false));
+	useEffect(() => {
+		load();
+	}, []);
 
 	const openCreate = () => {
 		setEditing(null);
-		setForm({ name: '', description: '', icon: '📚', price_per_question: 500, is_mandatory: false, mandatory_question_count: 10 });
+		setForm({
+			name: '',
+			description: '',
+			icon: '📚',
+			price_per_question: 500,
+			is_mandatory: false,
+			mandatory_question_count: 10,
+		});
 		setShowModal(true);
 	};
 	const openEdit = (s: Subject) => {
 		setEditing(s);
 		setForm({
-			name: s.name, description: s.description || '', icon: s.icon, price_per_question: s.price_per_question,
-			is_mandatory: s.is_mandatory || false, mandatory_question_count: s.mandatory_question_count || 10,
+			name: s.name,
+			description: s.description || '',
+			icon: s.icon,
+			price_per_question: s.price_per_question,
+			is_mandatory: s.is_mandatory || false,
+			mandatory_question_count: s.mandatory_question_count || 10,
 		});
 		setShowModal(true);
 	};
@@ -83,9 +102,11 @@ export default function Subjects() {
 
 	const toggleMandatory = async (s: Subject) => {
 		await api.put(`/subjects/${s.id}`, { is_mandatory: !s.is_mandatory });
-		toast.success(s.is_mandatory ? "Majburiylikdan chiqarildi" : 'Majburiy fanga aylandi');
+		toast.success(s.is_mandatory ? 'Majburiylikdan chiqarildi' : 'Majburiy fanga aylandi');
 		load();
 	};
+
+	if (loading) return <PageLoader rows={6} />;
 
 	return (
 		<div>
@@ -120,7 +141,9 @@ export default function Subjects() {
 								),
 							},
 							{
-								key: 'name', header: 'Nomi', render: (s) => (
+								key: 'name',
+								header: 'Nomi',
+								render: (s) => (
 									<div>
 										<span className='td-main'>{s.name}</span>
 										{s.is_mandatory && (
@@ -139,13 +162,14 @@ export default function Subjects() {
 							{
 								key: 'stats',
 								header: 'Bazasi',
-								render: (s) => <><Badge variant='purple'>{s.topic_count} mavzu</Badge>{' '}<Badge variant='info'>{s.question_count} savol</Badge></>,
+								render: (s) => (
+									<>
+										<Badge variant='purple'>{s.topic_count} mavzu</Badge>{' '}
+										<Badge variant='info'>{s.question_count} savol</Badge>
+									</>
+								),
 							},
-							{
-								key: 'price',
-								header: 'Narxi',
-								render: (s) => <span style={{ fontWeight: 600, color: 'var(--warning)' }}>{s.price_per_question.toLocaleString()} so'm</span>,
-							},
+
 							{
 								key: 'status',
 								header: 'Holat',
@@ -242,7 +266,15 @@ export default function Subjects() {
 						onChange={(icon) => setForm({ ...form, icon })}
 					/>
 
-					<div style={{ marginTop: 14, padding: 14, background: 'var(--bg-900)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+					<div
+						style={{
+							marginTop: 14,
+							padding: 14,
+							background: 'var(--bg-900)',
+							borderRadius: 'var(--radius-lg)',
+							border: '1px solid var(--border)',
+						}}
+					>
 						<label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
 							<input
 								type='checkbox'
@@ -251,8 +283,12 @@ export default function Subjects() {
 								style={{ width: 18, height: 18, accentColor: 'var(--primary)' }}
 							/>
 							<div>
-								<div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-100)' }}>Majburiy fan</div>
-								<div style={{ fontSize: 12, color: 'var(--text-500)' }}>DTM majburiy fanlar blokiga kiradi</div>
+								<div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-100)' }}>
+									Majburiy fan
+								</div>
+								<div style={{ fontSize: 12, color: 'var(--text-500)' }}>
+									DTM majburiy fanlar blokiga kiradi
+								</div>
 							</div>
 						</label>
 						{form.is_mandatory && (

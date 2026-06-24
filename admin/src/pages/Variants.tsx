@@ -5,7 +5,7 @@ import {
   IconEye, IconCheck, IconX as IconXMark, IconTrash,
 } from '@tabler/icons-react'
 import api from '../api'
-import { PageHeader, Button, Badge, Card, CardBody, Pagination, ConfirmDialog } from '../components/ui'
+import { PageHeader, Button, Badge, Card, CardBody, Pagination, ConfirmDialog, PageLoader } from '../components/ui'
 import Dialog from '../components/ui/Dialog'
 import Table from '../components/ui/Table'
 
@@ -50,6 +50,7 @@ const STATUS_MAP: Record<string, { label: string; variant: 'warning' | 'success'
 
 export default function Variants() {
   const [variants, setVariants] = useState<Variant[]>([])
+  const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState('')
@@ -63,7 +64,7 @@ export default function Variants() {
     api.get(`/variants?${params}`).then(r => {
       setVariants(r.data.variants)
       setTotal(r.data.total)
-    })
+    }).finally(() => setLoading(false))
   }
 
   useEffect(() => { load() }, [page, statusFilter])
@@ -125,6 +126,8 @@ export default function Variants() {
     { key: 'failed', label: 'Yuborilmadi' },
     { key: 'checked', label: 'Tekshirildi' },
   ]
+
+  if (loading) return <PageLoader rows={6} />
 
   return (
     <div>

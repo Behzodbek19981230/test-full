@@ -6,7 +6,7 @@ import {
 	IconFile, IconFileTypePdf, IconPhoto, IconFileSpreadsheet,
 } from '@tabler/icons-react';
 import api from '../api';
-import { PageHeader, Button, Dialog, Input, Textarea, Card, CardBody, EmptyState, ConfirmDialog } from '../components/ui';
+import { PageHeader, Button, Dialog, Input, Textarea, Card, CardBody, EmptyState, ConfirmDialog, PageLoader } from '../components/ui';
 
 interface Material {
 	id: number;
@@ -45,6 +45,7 @@ export default function Materials() {
 	const { subjectId } = useParams();
 	const navigate = useNavigate();
 	const [materials, setMaterials] = useState<Material[]>([]);
+	const [loading, setLoading] = useState(true);
 	const [subject, setSubject] = useState<Subject | null>(null);
 	const [showUpload, setShowUpload] = useState(false);
 	const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -60,8 +61,10 @@ export default function Materials() {
 	};
 
 	useEffect(() => {
-		api.get(`/subjects/${subjectId}`).then((r) => setSubject(r.data));
-		load();
+		Promise.all([
+			api.get(`/subjects/${subjectId}`).then((r) => setSubject(r.data)),
+			load(),
+		]).finally(() => setLoading(false));
 	}, [subjectId]);
 
 	const handleUpload = async (e: React.FormEvent) => {
@@ -113,6 +116,8 @@ export default function Materials() {
 	const openFile = (m: Material) => {
 		window.open(`${API_BASE}/uploads/${m.file_path}`, '_blank');
 	};
+
+	if (loading) return <PageLoader rows={5} />;
 
 	return (
 		<div>

@@ -6,7 +6,7 @@ import {
   IconCheck, IconFileImport,
 } from '@tabler/icons-react'
 import api from '../../api'
-import { PageHeader, Button, Badge, Card, CardBody } from '../../components/ui'
+import { PageHeader, Button, Badge, Card, CardBody, PageLoader } from '../../components/ui'
 import katex from 'katex'
 
 interface Topic { id: number; name: string; subject_id: number }
@@ -39,12 +39,13 @@ export default function TestQuestions() {
 
   const [topic, setTopic] = useState<Topic | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     api.get(`/topics/${tid}`).then(r => {
       setTopic(r.data)
       setQuestions(r.data.questions)
-    })
+    }).finally(() => setLoading(false))
   }, [tid])
 
   const deleteQ = async (q: Question) => {
@@ -56,6 +57,8 @@ export default function TestQuestions() {
 
   const optionLabels = ['A', 'B', 'C', 'D'] as const
   const optionKeys = ['option_a', 'option_b', 'option_c', 'option_d'] as const
+
+  if (loading) return <PageLoader rows={5} />
 
   return (
     <div>

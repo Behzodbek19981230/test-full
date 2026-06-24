@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { IconFileText, IconPlus, IconEdit, IconTrash, IconCircleCheck, IconCircleX, IconKey } from '@tabler/icons-react'
 import api from '../api'
-import { PageHeader, Button, Badge, Card, CardBody, Pagination, ConfirmDialog } from '../components/ui'
+import { PageHeader, Button, Badge, Card, CardBody, Pagination, ConfirmDialog, PageLoader } from '../components/ui'
 import Table from '../components/ui/Table'
 
 interface Log {
@@ -21,12 +21,13 @@ const actionMeta: Record<string, { icon: React.ReactNode; variant: 'success' | '
 
 export default function AuditLogs() {
   const [logs, setLogs] = useState<Log[]>([])
+  const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [showClear, setShowClear] = useState(false)
 
   const load = () => {
-    api.get(`/audit-logs?page=${page}&per_page=50`).then(r => { setLogs(r.data.logs); setTotal(r.data.total) })
+    api.get(`/audit-logs?page=${page}&per_page=50`).then(r => { setLogs(r.data.logs); setTotal(r.data.total) }).finally(() => setLoading(false))
   }
 
   useEffect(() => { load() }, [page])
@@ -38,6 +39,8 @@ export default function AuditLogs() {
     setPage(1)
     load()
   }
+
+  if (loading) return <PageLoader rows={8} />
 
   return (
     <div>

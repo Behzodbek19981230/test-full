@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { IconFolder, IconChevronRight, IconBooks, IconStarFilled } from '@tabler/icons-react'
 import api from '../../api'
-import { PageHeader, Badge, Card, CardBody, SubjectIcon } from '../../components/ui'
+import { PageHeader, Badge, Card, CardBody, SubjectIcon, PageLoader } from '../../components/ui'
 
 interface Subject {
   id: number; name: string; icon: string; topic_count: number; question_count: number
@@ -11,9 +11,12 @@ interface Subject {
 
 export default function TestSubjects() {
   const [subjects, setSubjects] = useState<Subject[]>([])
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
-  useEffect(() => { api.get('/subjects/all').then(r => setSubjects(r.data)) }, [])
+  useEffect(() => { api.get('/subjects/all').then(r => setSubjects(r.data)).finally(() => setLoading(false)) }, [])
+
+  if (loading) return <PageLoader rows={4} />
 
   const active = subjects.filter(s => s.is_active && !s.is_mandatory)
   const mandatory = subjects.filter(s => s.is_active && s.is_mandatory)

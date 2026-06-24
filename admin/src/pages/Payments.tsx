@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { IconCreditCard, IconEye, IconClock, IconCircleCheck, IconCircleX, IconPhoto, IconTrash } from '@tabler/icons-react';
 import api from '../api';
-import { PageHeader, Button, Dialog, Badge, Card, CardBody, Textarea, Pagination, ConfirmDialog } from '../components/ui';
+import { PageHeader, Button, Dialog, Badge, Card, CardBody, Textarea, Pagination, ConfirmDialog, PageLoader } from '../components/ui';
 import Table from '../components/ui/Table';
 
 function formatMoney(val: string): string {
@@ -29,6 +29,7 @@ interface Payment {
 
 export default function Payments() {
 	const [payments, setPayments] = useState<Payment[]>([]);
+	const [loading, setLoading] = useState(true);
 	const [total, setTotal] = useState(0);
 	const [page, setPage] = useState(1);
 	const [statusFilter, setStatusFilter] = useState('pending');
@@ -41,7 +42,7 @@ export default function Payments() {
 		api.get(`/payments?status=${statusFilter}&page=${page}&per_page=10`).then((r) => {
 			setPayments(r.data.payments);
 			setTotal(r.data.total);
-		});
+		}).finally(() => setLoading(false));
 	};
 
 	useEffect(() => {
@@ -115,6 +116,8 @@ export default function Payments() {
 			toast.error('Xatolik');
 		}
 	};
+
+	if (loading) return <PageLoader rows={6} />;
 
 	const statusLabel = statusFilter === 'pending' ? 'kutilayotgan' : statusFilter === 'approved' ? 'tasdiqlangan' : 'rad etilgan';
 

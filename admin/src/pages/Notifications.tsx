@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { IconBell, IconCreditCard, IconClipboardCheck, IconSettings, IconInfoCircle, IconChecks, IconTrash } from '@tabler/icons-react'
 import api from '../api'
-import { PageHeader, Button, Badge, Card, CardBody, EmptyState, ConfirmDialog } from '../components/ui'
+import { PageHeader, Button, Badge, Card, CardBody, EmptyState, ConfirmDialog, PageLoader } from '../components/ui'
 
 interface Notification {
   id: number; title: string; message: string; type: string; is_read: boolean; created_at: string
@@ -17,13 +17,14 @@ const typeConfig: Record<string, { icon: React.ReactNode; color: string; bg: str
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
   const [unread, setUnread] = useState(0)
   const [showClear, setShowClear] = useState(false)
 
   const load = () => {
     api.get('/notifications?per_page=50').then(r => {
       setNotifications(r.data.notifications); setUnread(r.data.unread_count)
-    })
+    }).finally(() => setLoading(false))
   }
 
   useEffect(() => { load() }, [])
@@ -42,6 +43,8 @@ export default function Notifications() {
     setShowClear(false)
     load()
   }
+
+  if (loading) return <PageLoader rows={6} />
 
   return (
     <div>

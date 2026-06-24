@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { IconUsers, IconCash, IconClock, IconTrophy, IconChartBar, IconUserPlus, IconTrendingUp } from '@tabler/icons-react'
 import api from '../api'
-import { PageHeader, StatCard, Card, CardHeader, CardBody, SubjectIcon, Button } from '../components/ui'
+import { PageHeader, StatCard, Card, CardHeader, CardBody, SubjectIcon, Button, PageLoader } from '../components/ui'
 import Table from '../components/ui/Table'
 
 interface DashboardData {
@@ -47,7 +47,7 @@ export default function Dashboard() {
 
   useEffect(() => { api.get('/stats/dashboard').then(r => setData(r.data)).catch(() => {}) }, [])
 
-  if (!data) return <div className="ui-empty"><p>Yuklanmoqda...</p></div>
+  if (!data) return <PageLoader withStats withChart rows={4} />
 
   const fmtMoney = (n: number) => n.toLocaleString() + ' so\'m'
 

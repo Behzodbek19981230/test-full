@@ -7,7 +7,7 @@ import {
 } from '@tabler/icons-react'
 import api from '../../api'
 import {
-  PageHeader, Button, Dialog, Input, Textarea, Badge, Card, CardBody, SubjectIcon,
+  PageHeader, Button, Dialog, Input, Textarea, Badge, Card, CardBody, SubjectIcon, PageLoader,
 } from '../../components/ui'
 import Table from '../../components/ui/Table'
 
@@ -24,13 +24,16 @@ export default function TestTopics() {
 
   const [subject, setSubject] = useState<Subject | null>(null)
   const [topics, setTopics] = useState<Topic[]>([])
+  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Topic | null>(null)
   const [form, setForm] = useState({ name: '', description: '', is_mixed: false })
 
   useEffect(() => {
-    api.get(`/subjects/${sid}`).then(r => setSubject(r.data))
-    api.get(`/topics/all?subject_id=${sid}`).then(r => setTopics(r.data))
+    Promise.all([
+      api.get(`/subjects/${sid}`).then(r => setSubject(r.data)),
+      api.get(`/topics/all?subject_id=${sid}`).then(r => setTopics(r.data)),
+    ]).finally(() => setLoading(false))
   }, [sid])
 
   const reload = () => api.get(`/topics/all?subject_id=${sid}`).then(r => setTopics(r.data))
@@ -65,6 +68,8 @@ export default function TestTopics() {
     toast.success("Mavzu o'chirildi")
     reload()
   }
+
+  if (loading) return <PageLoader rows={6} />
 
   return (
     <div>
