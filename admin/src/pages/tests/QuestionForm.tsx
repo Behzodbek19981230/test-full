@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   IconArrowLeft, IconDeviceFloppy, IconPlus, IconCheck,
   IconSparkles, IconWand, IconRefresh, IconBulb, IconMath, IconMessageChatbot, IconSend, IconX,
+  IconEye, IconEyeOff,
 } from '@tabler/icons-react'
+import katex from 'katex'
 import api from '../../api'
 import { PageHeader, Button, Card, CardBody, PageLoader } from '../../components/ui'
 import PromptEditor from '../../components/ui/PromptEditor'
@@ -38,6 +40,7 @@ export default function QuestionForm() {
   const [aiLoading, setAiLoading] = useState<string | null>(null)
   const [showPrompt, setShowPrompt] = useState(false)
   const [promptResult, setPromptResult] = useState('')
+  const [showPreview, setShowPreview] = useState(false)
   const promptGetText = useRef<() => { text: string; image: string | null }>(() => ({ text: '', image: null }))
 
   useEffect(() => {
@@ -190,6 +193,30 @@ export default function QuestionForm() {
     setPromptResult('')
   }
 
+  const renderMarkdownLatex = useCallback((text: string) => {
+    let html = text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      // block LaTeX $$...$$
+      .replace(/\$\$([\s\S]*?)\$\$/g, (_, tex) => {
+        try { return `<div style="text-align:center;margin:12px 0">${katex.renderToString(tex.trim(), { throwOnError: false, displayMode: true })}</div>` }
+        catch { return `<code>${tex}</code>` }
+      })
+      // inline LaTeX $...$
+      .replace(/\$([^\$\n]+?)\$/g, (_, tex) => {
+        try { return katex.renderToString(tex.trim(), { throwOnError: false, displayMode: false }) }
+        catch { return `<code>${tex}</code>` }
+      })
+      // markdown
+      .replace(/^### \*\*(.*?)\*\*$/gm, '<h3 style="font-size:15px;font-weight:700;margin:16px 0 8px;color:var(--text-100)">$1</h3>')
+      .replace(/^### (.*)$/gm, '<h3 style="font-size:15px;font-weight:700;margin:16px 0 8px;color:var(--text-100)">$1</h3>')
+      .replace(/^#### \*\*(.*?)\*\*$/gm, '<h4 style="font-size:14px;font-weight:700;margin:12px 0 6px;color:var(--text-200)">$1</h4>')
+      .replace(/^#### (.*)$/gm, '<h4 style="font-size:14px;font-weight:700;margin:12px 0 6px;color:var(--text-200)">$1</h4>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^- (.*)$/gm, '<div style="padding-left:16px">• $1</div>')
+      .replace(/\n/g, '<br>')
+    return html
+  }, [])
+
   const handleAiGenerateQuestion = async () => {
     const ctx = [subject?.name, topic?.name].filter(Boolean).join(' — ')
     const result = await callAi('generate_question', '', ctx || 'Umumiy')
@@ -341,16 +368,45 @@ export default function QuestionForm() {
 
             {promptResult && (
               <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-600)', marginBottom: 6 }}>
-                  Natija
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-600)' }}>
+                    Natija
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPreview(p => !p)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      padding: '3px 8px', fontSize: 11, fontWeight: 600,
+                      background: showPreview ? 'var(--primary-50)' : 'none',
+                      border: '1px solid var(--border)', borderRadius: 6,
+                      color: showPreview ? 'var(--primary)' : 'var(--text-500)',
+                      cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                    }}
+                  >
+                    {showPreview ? <IconEyeOff size={12} /> : <IconEye size={12} />}
+                    {showPreview ? 'Kod' : 'Ko\'rish'}
+                  </button>
                 </div>
-                <div style={{
-                  padding: '12px 14px', background: 'var(--bg-900)', border: '1px solid var(--border)',
-                  borderRadius: 8, fontSize: 13, lineHeight: 1.7, color: 'var(--text-200)',
-                  whiteSpace: 'pre-wrap', maxHeight: 300, overflowY: 'auto',
-                }}>
-                  {promptResult}
-                </div>
+                {showPreview ? (
+                  <div
+                    style={{
+                      padding: '14px 16px', background: 'var(--bg-900)', border: '1px solid var(--border)',
+                      borderRadius: 8, fontSize: 14, lineHeight: 1.8, color: 'var(--text-200)',
+                      maxHeight: 400, overflowY: 'auto',
+                    }}
+                    dangerouslySetInnerHTML={{ __html: renderMarkdownLatex(promptResult) }}
+                  />
+                ) : (
+                  <div style={{
+                    padding: '12px 14px', background: 'var(--bg-900)', border: '1px solid var(--border)',
+                    borderRadius: 8, fontSize: 13, lineHeight: 1.7, color: 'var(--text-200)',
+                    whiteSpace: 'pre-wrap', maxHeight: 300, overflowY: 'auto',
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  }}>
+                    {promptResult}
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 8 }}>
                   <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(promptResult); toast.success('Nusxa olindi') }}>
                     Nusxa olish
