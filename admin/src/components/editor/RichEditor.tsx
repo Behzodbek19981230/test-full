@@ -5,7 +5,7 @@ import Subscript from '@tiptap/extension-subscript'
 import Superscript from '@tiptap/extension-superscript'
 import Placeholder from '@tiptap/extension-placeholder'
 import TextAlign from '@tiptap/extension-text-align'
-import { useRef, useState, useCallback } from 'react'
+import { memo, useRef, useState, useCallback, useEffect } from 'react'
 import {
   IconBold, IconItalic, IconUnderline, IconSubscript, IconSuperscript,
   IconList, IconListNumbers, IconAlignLeft, IconAlignCenter,
@@ -23,11 +23,16 @@ interface RichEditorProps {
   minHeight?: number
 }
 
-export default function RichEditor({ label, value, onChange, placeholder = 'Matn kiriting...', minHeight = 120 }: RichEditorProps) {
+export default memo(function RichEditor({ label, value, onChange, placeholder = 'Matn kiriting...', minHeight = 120 }: RichEditorProps) {
   const [showFormula, setShowFormula] = useState(false)
   const [editingLatex, setEditingLatex] = useState('')
   const editingPos = useRef<number | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const onChangeRef = useRef(onChange)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const skipNextUpdate = useRef(false)
+
+  onChangeRef.current = onChange
 
   const editor = useEditor({
     extensions: [
@@ -43,9 +48,31 @@ export default function RichEditor({ label, value, onChange, placeholder = 'Matn
     ],
     content: value,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => {
+        skipNextUpdate.current = true
+        onChangeRef.current(editor.getHTML())
+      }, 150)
     },
   })
+
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return
+    if (skipNextUpdate.current) {
+      skipNextUpdate.current = false
+      return
+    }
+    const current = editor.getHTML()
+    if (value !== current) {
+      editor.commands.setContent(value, false)
+    }
+  }, [value, editor])
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
 
   const handleImageUpload = useCallback(async (file: File) => {
     if (!editor) return
@@ -238,4 +265,4 @@ export default function RichEditor({ label, value, onChange, placeholder = 'Matn
       />
     </div>
   )
-}
+})
