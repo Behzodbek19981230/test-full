@@ -25,6 +25,8 @@ interface RichEditorProps {
 
 export default function RichEditor({ label, value, onChange, placeholder = 'Matn kiriting...', minHeight = 120 }: RichEditorProps) {
   const [showFormula, setShowFormula] = useState(false)
+  const [editingLatex, setEditingLatex] = useState('')
+  const editingPos = useRef<number | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const editor = useEditor({
@@ -93,6 +95,42 @@ export default function RichEditor({ label, value, onChange, placeholder = 'Matn
       }
     }
   }, [handleImageUpload])
+
+  const handleMathClick = useCallback((e: React.MouseEvent) => {
+    if (!editor) return
+    const target = (e.target as HTMLElement).closest('.math-node, .math-block-node') as HTMLElement | null
+    if (!target) return
+
+    const latex = target.getAttribute('data-latex') || ''
+    if (!latex) return
+
+    const pos = editor.view.posAtDOM(target, 0)
+    if (pos == null) return
+
+    editingPos.current = pos
+    setEditingLatex(latex)
+    setShowFormula(true)
+  }, [editor])
+
+  const handleFormulaInsert = useCallback((latex: string) => {
+    if (!editor) return
+    if (editingPos.current != null) {
+      const pos = editingPos.current
+      const node = editor.state.doc.nodeAt(pos)
+      if (node && (node.type.name === 'math' || node.type.name === 'mathBlock')) {
+        editor.chain().focus()
+          .setNodeSelection(pos)
+          .deleteSelection()
+          .insertContent({ type: node.type.name, attrs: { latex } })
+          .run()
+      } else {
+        editor.chain().focus().insertMath(latex).run()
+      }
+      editingPos.current = null
+    } else {
+      editor.chain().focus().insertMath(latex).run()
+    }
+  }, [editor])
 
   if (!editor) return null
 
@@ -164,7 +202,7 @@ export default function RichEditor({ label, value, onChange, placeholder = 'Matn
 
           <Divider />
 
-          <ToolBtn title="Formula qo'shish" onClick={() => setShowFormula(true)}>
+          <ToolBtn title="Formula qo'shish" onClick={() => { editingPos.current = null; setEditingLatex(''); setShowFormula(true) }}>
             <IconMath size={16} />
           </ToolBtn>
           <ToolBtn title="Rasm qo'shish" onClick={() => fileRef.current?.click()}>
@@ -184,6 +222,7 @@ export default function RichEditor({ label, value, onChange, placeholder = 'Matn
           onDrop={handleDrop}
           onDragOver={e => e.preventDefault()}
           onPaste={handlePaste}
+          onClick={handleMathClick}
         >
           <EditorContent editor={editor} />
         </div>
@@ -193,10 +232,9 @@ export default function RichEditor({ label, value, onChange, placeholder = 'Matn
 
       <FormulaDialog
         open={showFormula}
-        onClose={() => setShowFormula(false)}
-        onInsert={(latex) => {
-          editor.chain().focus().insertMath(latex).run()
-        }}
+        onClose={() => { setShowFormula(false); editingPos.current = null; setEditingLatex('') }}
+        onInsert={handleFormulaInsert}
+        initialLatex={editingLatex}
       />
     </div>
   )

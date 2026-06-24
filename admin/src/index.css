@@ -2165,6 +2165,10 @@ body {
 }
 
 .page-loader {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-height: calc(100vh - 120px);
 	animation: fadeInUp 0.3s ease;
 }
 
@@ -2239,6 +2243,22 @@ body {
 
 .page-loader__table-row:last-child {
 	border-bottom: none;
+}
+
+.page-loader__card {
+	background: var(--bg-800);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-xl);
+	padding: 20px;
+	margin-bottom: 12px;
+}
+
+.page-loader__option-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 10px;
+	animation: fadeInUp 0.3s ease both;
 }
 
 .page-loader__spinner {

@@ -6,7 +6,7 @@ import {
   IconSparkles, IconWand, IconRefresh, IconBulb, IconMath, IconMessageChatbot, IconSend, IconX,
 } from '@tabler/icons-react'
 import api from '../../api'
-import { PageHeader, Button, Card, CardBody } from '../../components/ui'
+import { PageHeader, Button, Card, CardBody, PageLoader } from '../../components/ui'
 import PromptEditor from '../../components/ui/PromptEditor'
 import { RichEditor } from '../../components/editor'
 
@@ -267,7 +267,7 @@ export default function QuestionForm() {
     { key: 'D', field: 'option_d' as const },
   ]
 
-  if (!loaded) return <div className="ui-empty"><p>Yuklanmoqda...</p></div>
+  if (!loaded) return <PageLoader variant="question" />
 
   return (
     <div className="qf-page">
