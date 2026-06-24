@@ -453,7 +453,10 @@ const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
 export default function FormulaDialog({ open, onClose, onInsert, initialLatex = '' }: FormulaDialogProps) {
   const [latex, setLatex] = useState(initialLatex)
   const [tab, setTab] = useState<Tab>('math')
-  const [drawerWidth, setDrawerWidth] = useState(420)
+  const [drawerWidth, setDrawerWidth] = useState(() => {
+    const saved = localStorage.getItem('fd-width')
+    return saved ? Math.max(320, Math.min(Number(saved), 1200)) : 420
+  })
   const previewRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -484,6 +487,8 @@ export default function FormulaDialog({ open, onClose, onInsert, initialLatex = 
       document.removeEventListener('mouseup', onUp)
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
+      const el = drawerRef.current
+      if (el) localStorage.setItem('fd-width', String(el.offsetWidth))
     }
     document.body.style.cursor = 'ew-resize'
     document.body.style.userSelect = 'none'
