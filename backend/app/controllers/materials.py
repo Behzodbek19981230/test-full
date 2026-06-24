@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_admin
 from app.models.material import Material
-from app.models.admin import Admin
+from app.models.user import User
 from app.config import get_settings
 import os
 import uuid
@@ -30,7 +30,7 @@ def _to_dict(m: Material) -> dict:
 
 
 @router.get("/{subject_id}")
-def get_materials(subject_id: int, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def get_materials(subject_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     materials = db.query(Material).filter(Material.subject_id == subject_id).order_by(Material.created_at.desc()).all()
     return [_to_dict(m) for m in materials]
 
@@ -42,7 +42,7 @@ async def upload_material(
     description: str = Form(""),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    admin: Admin = Depends(get_current_admin),
+    admin: User = Depends(get_current_admin),
 ):
     ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else ""
     if ext not in ALLOWED_EXTENSIONS:
@@ -88,7 +88,7 @@ async def upload_material(
 
 
 @router.delete("/{subject_id}/{material_id}")
-def delete_material(subject_id: int, material_id: int, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def delete_material(subject_id: int, material_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     m = db.query(Material).filter(Material.id == material_id, Material.subject_id == subject_id).first()
     if not m:
         raise HTTPException(status_code=404, detail="Material topilmadi")

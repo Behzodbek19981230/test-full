@@ -2266,3 +2266,170 @@ body {
 		grid-template-columns: 1fr;
 	}
 }
+
+/* ============================================================
+   HOME / WELCOME PAGE
+   ============================================================ */
+.home-page {
+	animation: fadeInUp 0.4s ease;
+}
+
+.home-banner {
+	position: relative;
+	border-radius: var(--radius-xl);
+	overflow: hidden;
+	margin-bottom: 24px;
+	padding: 48px 36px;
+}
+
+.home-banner__bg {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(135deg, var(--primary) 0%, #2da5b2 50%, #1a7f8a 100%);
+	z-index: 0;
+}
+
+.home-banner__bg::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(circle at 20% 50%, rgba(255,255,255,0.12) 0%, transparent 50%),
+		radial-gradient(circle at 80% 30%, rgba(255,255,255,0.08) 0%, transparent 40%);
+}
+
+.home-banner__bg::after {
+	content: '';
+	position: absolute;
+	top: -50%;
+	right: -20%;
+	width: 500px;
+	height: 500px;
+	border-radius: 50%;
+	background: rgba(255,255,255,0.04);
+}
+
+.home-banner__content {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+
+.home-banner__icon {
+	width: 72px;
+	height: 72px;
+	border-radius: 18px;
+	background: rgba(255,255,255,0.15);
+	backdrop-filter: blur(8px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 20px;
+	border: 1px solid rgba(255,255,255,0.2);
+}
+
+.home-banner__icon img {
+	width: 48px;
+	height: 48px;
+	border-radius: 10px;
+	object-fit: contain;
+}
+
+.home-banner__title {
+	font-size: 28px;
+	font-weight: 800;
+	color: #fff;
+	margin-bottom: 8px;
+	letter-spacing: -0.5px;
+}
+
+.home-banner__subtitle {
+	font-size: 15px;
+	color: rgba(255,255,255,0.8);
+	max-width: 400px;
+	line-height: 1.6;
+}
+
+.home-shortcuts {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 12px;
+}
+
+.home-shortcut {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 18px 20px;
+	background: var(--bg-800);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-xl);
+	cursor: pointer;
+	transition: all 0.2s;
+	text-align: left;
+	width: 100%;
+}
+
+.home-shortcut:hover {
+	border-color: var(--primary);
+	box-shadow: 0 4px 16px rgba(26,127,138,0.1);
+	transform: translateY(-2px);
+}
+
+.home-shortcut__icon {
+	width: 48px;
+	height: 48px;
+	border-radius: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	transition: transform 0.2s;
+}
+
+.home-shortcut:hover .home-shortcut__icon {
+	transform: scale(1.08);
+}
+
+.home-shortcut__info {
+	flex: 1;
+	min-width: 0;
+}
+
+.home-shortcut__info h3 {
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--text-100);
+	margin-bottom: 2px;
+}
+
+.home-shortcut__info p {
+	font-size: 13px;
+	color: var(--text-500);
+}
+
+.home-shortcut__arrow {
+	color: var(--text-600);
+	flex-shrink: 0;
+	transition: all 0.2s;
+}
+
+.home-shortcut:hover .home-shortcut__arrow {
+	color: var(--primary);
+	transform: translateX(3px);
+}
+
+@media (max-width: 600px) {
+	.home-banner {
+		padding: 32px 20px;
+	}
+	.home-banner__title {
+		font-size: 22px;
+	}
+	.home-shortcuts {
+		grid-template-columns: 1fr;
+	}
+}

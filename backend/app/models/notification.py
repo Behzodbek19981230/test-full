@@ -8,7 +8,7 @@ class Notification(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    admin_id = Column(Integer, ForeignKey("admins.id"), nullable=True)
+    admin_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     title = Column(String(200), nullable=False)
     message = Column(Text, nullable=False)
     type = Column(String(50), default="info")

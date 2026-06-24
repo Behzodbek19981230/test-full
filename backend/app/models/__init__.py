@@ -1,5 +1,4 @@
 from app.models.user import User
-from app.models.admin import Admin
 from app.models.subject import Subject
 from app.models.topic import Topic
 from app.models.question import Question
@@ -11,7 +10,7 @@ from app.models.variant import TestVariant
 from app.models.material import Material
 
 __all__ = [
-    "User", "Admin", "Subject", "Topic", "Question",
+    "User", "Subject", "Topic", "Question",
     "Payment", "TestAttempt", "AttemptAnswer",
     "Notification", "AuditLog", "TestVariant", "Material",
 ]

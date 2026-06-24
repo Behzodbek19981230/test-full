@@ -4,13 +4,13 @@ from app.database import get_db
 from app.dependencies import get_current_admin
 from app.models.audit_log import AuditLog
 from app.models.notification import Notification
-from app.models.admin import Admin
+from app.models.user import User
 
 router = APIRouter(tags=["audit"])
 
 
 @router.get("/audit-logs")
-def get_audit_logs(page: int = 1, per_page: int = 50, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def get_audit_logs(page: int = 1, per_page: int = 50, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     total = db.query(AuditLog).count()
     logs = db.query(AuditLog).order_by(AuditLog.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
 
@@ -29,7 +29,7 @@ def get_audit_logs(page: int = 1, per_page: int = 50, db: Session = Depends(get_
 
 
 @router.get("/notifications")
-def get_notifications(page: int = 1, per_page: int = 20, unread_only: bool = False, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def get_notifications(page: int = 1, per_page: int = 20, unread_only: bool = False, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     query = db.query(Notification).filter(Notification.admin_id.isnot(None))
     if unread_only:
         query = query.filter(Notification.is_read == False)
@@ -50,7 +50,7 @@ def get_notifications(page: int = 1, per_page: int = 20, unread_only: bool = Fal
 
 
 @router.put("/notifications/{notification_id}/read")
-def mark_read(notification_id: int, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def mark_read(notification_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     n = db.query(Notification).filter(Notification.id == notification_id).first()
     if n:
         n.is_read = True
@@ -59,21 +59,21 @@ def mark_read(notification_id: int, db: Session = Depends(get_db), admin: Admin 
 
 
 @router.put("/notifications/read-all")
-def mark_all_read(db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def mark_all_read(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     db.query(Notification).filter(Notification.admin_id.isnot(None), Notification.is_read == False).update({"is_read": True})
     db.commit()
     return {"message": "Barcha bildirishnomalar o'qildi"}
 
 
 @router.delete("/notifications/clear")
-def clear_notifications(db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def clear_notifications(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     count = db.query(Notification).filter(Notification.admin_id.isnot(None)).delete()
     db.commit()
     return {"deleted": count}
 
 
 @router.delete("/audit-logs/clear")
-def clear_audit_logs(db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def clear_audit_logs(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     count = db.query(AuditLog).delete()
     db.commit()
     return {"deleted": count}

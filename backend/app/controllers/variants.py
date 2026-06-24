@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_admin
 from app.services import variant_service
-from app.models.admin import Admin
+from app.models.user import User
 from app.models.variant import TestVariant
 
 router = APIRouter(prefix="/variants", tags=["variants"])
@@ -15,12 +15,12 @@ class StatusUpdate(BaseModel):
 
 
 @router.get("")
-def get_variants(status: str = None, page: int = 1, per_page: int = 20, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def get_variants(status: str = None, page: int = 1, per_page: int = 20, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     return variant_service.get_variants(db, status, page, per_page)
 
 
 @router.get("/{variant_id}")
-def get_variant_detail(variant_id: int, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def get_variant_detail(variant_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     result = variant_service.get_detail(db, variant_id)
     if not result:
         raise HTTPException(status_code=404, detail="Variant topilmadi")
@@ -28,7 +28,7 @@ def get_variant_detail(variant_id: int, db: Session = Depends(get_db), admin: Ad
 
 
 @router.put("/{variant_id}/status")
-def update_variant_status(variant_id: int, body: StatusUpdate, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def update_variant_status(variant_id: int, body: StatusUpdate, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     result = variant_service.update_status(db, variant_id, body.status)
     if not result:
         raise HTTPException(status_code=404, detail="Variant topilmadi")
@@ -36,7 +36,7 @@ def update_variant_status(variant_id: int, body: StatusUpdate, db: Session = Dep
 
 
 @router.post("/{variant_id}/resend")
-def resend_variant(variant_id: int, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def resend_variant(variant_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     result = variant_service.resend(db, variant_id)
     if not result:
         raise HTTPException(status_code=404, detail="Variant topilmadi")
@@ -44,7 +44,7 @@ def resend_variant(variant_id: int, db: Session = Depends(get_db), admin: Admin 
 
 
 @router.delete("/clear")
-def clear_variants(db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def clear_variants(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     count = db.query(TestVariant).delete()
     db.commit()
     return {"deleted": count}

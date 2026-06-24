@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useEffect, useState } from 'react';
 import api from '../api';
 import {
-	IconLayoutDashboard,
+	IconHome,
+	IconChartBar,
 	IconCreditCard,
 	IconBooks,
 	IconClipboardCheck,
@@ -50,21 +51,32 @@ export default function Layout() {
 		return () => clearInterval(interval);
 	}, []);
 
-	const navItems: {
+	const isAdmin = admin?.role === 'admin' || admin?.role === 'superadmin';
+
+	const allNavItems: {
 		section: string;
+		adminOnly?: boolean;
 		items: {
 			to: string;
-			icon: typeof IconLayoutDashboard;
+			icon: typeof IconHome;
 			label: string;
 			end?: boolean;
 			badge?: number;
 			badgeColor?: 'warning' | 'danger';
+			adminOnly?: boolean;
 		}[];
 	}[] = [
 		{
-			section: 'Asosiy',
+			section: '',
 			items: [
-				{ to: '/', icon: IconLayoutDashboard, label: 'Dashboard', end: true },
+				{ to: '/', icon: IconHome, label: 'Bosh sahifa', end: true },
+			],
+		},
+		{
+			section: 'Asosiy',
+			adminOnly: true,
+			items: [
+				{ to: '/dashboard', icon: IconChartBar, label: 'Dashboard' },
 				{ to: '/payments', icon: IconCreditCard, label: "To'lovlar", badge: pendingCount || undefined },
 				{ to: '/variants', icon: IconSend, label: 'Variantlar' },
 			],
@@ -78,8 +90,10 @@ export default function Layout() {
 		},
 		{
 			section: 'Boshqaruv',
+			adminOnly: true,
 			items: [
 				{ to: '/users', icon: IconUsers, label: 'Foydalanuvchilar' },
+				{ to: '/admin-users', icon: IconUsers, label: 'Admin foydalanuvchilar' },
 				{
 					to: '/notifications',
 					icon: IconBell,
@@ -91,6 +105,13 @@ export default function Layout() {
 			],
 		},
 	];
+
+	const navItems = allNavItems
+		.filter(g => !g.adminOnly || isAdmin)
+		.map(g => ({
+			...g,
+			items: g.items.filter(i => !i.adminOnly || isAdmin),
+		}));
 
 	return (
 		<div className='layout'>
@@ -122,9 +143,9 @@ export default function Layout() {
 				</div>
 
 				<nav className='sidebar-nav'>
-					{navItems.map((group) => (
-						<div key={group.section}>
-							<div className='sidebar-section'>{group.section}</div>
+					{navItems.map((group, gi) => (
+						<div key={group.section || gi}>
+							{group.section && <div className='sidebar-section'>{group.section}</div>}
 							<ul>
 								{group.items.map((item) => (
 									<li key={item.to}>
@@ -151,7 +172,7 @@ export default function Layout() {
 						<div className='sidebar-user-avatar'>{admin?.full_name?.charAt(0) || 'A'}</div>
 						<div className='sidebar-user-info'>
 							<div className='sidebar-user-name'>{admin?.full_name}</div>
-							<div className='sidebar-user-role'>Administrator</div>
+							<div className='sidebar-user-role'>{admin?.role === 'teacher' ? 'O\'qituvchi' : 'Administrator'}</div>
 						</div>
 						<button className='sidebar-logout' onClick={logout} title='Chiqish'>
 							<IconLogout size={18} />

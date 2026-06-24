@@ -11,6 +11,8 @@ class User(Base):
     google_id = Column(String(100), unique=True, nullable=True, index=True)
     email = Column(String(200), unique=True, nullable=True, index=True)
     avatar = Column(String(500), nullable=True)
+    login = Column(String(100), unique=True, nullable=True, index=True)
+    password_hash = Column(String(256), nullable=True)
     username = Column(String(100), nullable=True)
     full_name = Column(String(200), nullable=False)
     phone = Column(String(20), nullable=True)

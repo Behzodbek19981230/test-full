@@ -4,24 +4,24 @@ from app.database import get_db
 from app.dependencies import get_current_admin
 from app.schemas.payment import PaymentAction
 from app.services import payment_service, audit_service
-from app.models.admin import Admin
+from app.models.user import User
 from app.models.payment import Payment
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 
 @router.get("")
-def get_payments(status: str = None, page: int = 1, per_page: int = 20, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def get_payments(status: str = None, page: int = 1, per_page: int = 20, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     return payment_service.get_payments(db, status, page, per_page)
 
 
 @router.get("/pending/count")
-def pending_count(db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def pending_count(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     return {"count": payment_service.get_pending_count(db)}
 
 
 @router.put("/{payment_id}/approve")
-def approve_payment(payment_id: int, body: PaymentAction, request: Request, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def approve_payment(payment_id: int, body: PaymentAction, request: Request, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     try:
         result = payment_service.approve(db, payment_id, admin.id, body.note, body.amount)
     except Exception as e:
@@ -33,7 +33,7 @@ def approve_payment(payment_id: int, body: PaymentAction, request: Request, db: 
 
 
 @router.put("/{payment_id}/reject")
-def reject_payment(payment_id: int, body: PaymentAction, request: Request, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def reject_payment(payment_id: int, body: PaymentAction, request: Request, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     result = payment_service.reject(db, payment_id, admin.id, body.note)
     if not result:
         raise HTTPException(status_code=400, detail="Bu to'lov allaqachon ko'rib chiqilgan")
@@ -42,7 +42,7 @@ def reject_payment(payment_id: int, body: PaymentAction, request: Request, db: S
 
 
 @router.delete("/clear")
-def clear_payments(status: str = None, db: Session = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+def clear_payments(status: str = None, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     query = db.query(Payment)
     if status:
         query = query.filter(Payment.status == status)

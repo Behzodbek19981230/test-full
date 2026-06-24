@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from app.dependencies import get_current_admin
-from app.models.admin import Admin
+from app.models.user import User
 from app.config import get_settings
 import requests
 
@@ -73,7 +73,7 @@ def _call_gemini(api_key: str, prompt: str) -> str:
 
 
 @router.post("/assist")
-def ai_assist(body: AiRequest, admin: Admin = Depends(get_current_admin)):
+def ai_assist(body: AiRequest, admin: User = Depends(get_current_admin)):
     settings = get_settings()
 
     prompt_template = PROMPTS.get(body.action)
