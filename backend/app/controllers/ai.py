@@ -12,6 +12,7 @@ class AiRequest(BaseModel):
     text: str
     action: str
     context: str = ""
+    image: str | None = None
 
 
 PROMPTS = {
@@ -37,17 +38,33 @@ PROMPTS = {
 }
 
 
-def _call_groq(api_key: str, prompt: str) -> str:
+def _parse_image_base64(image_data: str) -> tuple[str, str]:
+    if image_data.startswith("data:"):
+        header, b64 = image_data.split(",", 1)
+        mime = header.split(":")[1].split(";")[0]
+        return mime, b64
+    return "image/jpeg", image_data
+
+
+def _call_groq(api_key: str, prompt: str, image: str | None = None) -> str:
+    content: list[dict] = []
+    if image:
+        mime, b64 = _parse_image_base64(image)
+        content.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}})
+    content.append({"type": "text", "text": prompt})
+
+    model = "meta-llama/llama-4-scout-17b-16e-instruct" if image else "llama-3.3-70b-versatile"
+
     resp = requests.post(
         "https://api.groq.com/openai/v1/chat/completions",
         headers={"Authorization": f"Bearer {api_key}"},
         json={
-            "model": "llama-3.3-70b-versatile",
-            "messages": [{"role": "user", "content": prompt}],
+            "model": model,
+            "messages": [{"role": "user", "content": content}],
             "temperature": 0.7,
             "max_tokens": 2048,
         },
-        timeout=30,
+        timeout=60,
     )
     data = resp.json()
     if resp.status_code != 200:
@@ -56,14 +73,20 @@ def _call_groq(api_key: str, prompt: str) -> str:
     return data["choices"][0]["message"]["content"].strip()
 
 
-def _call_gemini(api_key: str, prompt: str) -> str:
+def _call_gemini(api_key: str, prompt: str, image: str | None = None) -> str:
+    parts: list[dict] = []
+    if image:
+        mime, b64 = _parse_image_base64(image)
+        parts.append({"inline_data": {"mime_type": mime, "data": b64}})
+    parts.append({"text": prompt})
+
     resp = requests.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}",
         json={
-            "contents": [{"parts": [{"text": prompt}]}],
+            "contents": [{"parts": parts}],
             "generationConfig": {"temperature": 0.7, "maxOutputTokens": 2048},
         },
-        timeout=30,
+        timeout=60,
     )
     data = resp.json()
     if resp.status_code != 200:
@@ -76,17 +99,21 @@ def _call_gemini(api_key: str, prompt: str) -> str:
 def ai_assist(body: AiRequest, admin: User = Depends(get_current_admin)):
     settings = get_settings()
 
-    prompt_template = PROMPTS.get(body.action)
-    if not prompt_template:
-        raise HTTPException(status_code=400, detail=f"Noma'lum amal: {body.action}")
+    if body.action == "custom_prompt":
+        prompt = body.text
+    else:
+        prompt_template = PROMPTS.get(body.action)
+        if not prompt_template:
+            raise HTTPException(status_code=400, detail=f"Noma'lum amal: {body.action}")
+        prompt = prompt_template.format(text=body.text, context=body.context)
 
-    prompt = prompt_template.format(text=body.text, context=body.context)
+    image = body.image if body.action == "custom_prompt" else None
 
     try:
         if settings.GROQ_API_KEY:
-            result = _call_groq(settings.GROQ_API_KEY, prompt)
+            result = _call_groq(settings.GROQ_API_KEY, prompt, image)
         elif settings.GEMINI_API_KEY:
-            result = _call_gemini(settings.GEMINI_API_KEY, prompt)
+            result = _call_gemini(settings.GEMINI_API_KEY, prompt, image)
         else:
             raise HTTPException(status_code=500, detail="GROQ_API_KEY yoki GEMINI_API_KEY sozlanmagan")
 

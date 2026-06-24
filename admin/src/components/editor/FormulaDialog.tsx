@@ -419,8 +419,11 @@ const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
 export default function FormulaDialog({ open, onClose, onInsert, initialLatex = '' }: FormulaDialogProps) {
   const [latex, setLatex] = useState(initialLatex)
   const [tab, setTab] = useState<Tab>('math')
+  const [drawerWidth, setDrawerWidth] = useState(420)
   const previewRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
+  const resizing = useRef(false)
 
   useEffect(() => {
     if (open) {
@@ -428,6 +431,31 @@ export default function FormulaDialog({ open, onClose, onInsert, initialLatex = 
       setTimeout(() => inputRef.current?.focus(), 300)
     }
   }, [open, initialLatex])
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    resizing.current = true
+    const startX = e.clientX
+    const startWidth = drawerWidth
+
+    const onMove = (ev: MouseEvent) => {
+      if (!resizing.current) return
+      const delta = startX - ev.clientX
+      const newWidth = Math.min(Math.max(startWidth + delta, 320), window.innerWidth * 0.9)
+      setDrawerWidth(newWidth)
+    }
+    const onUp = () => {
+      resizing.current = false
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    document.body.style.cursor = 'ew-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }
 
   useEffect(() => {
     if (previewRef.current && latex.trim()) {
@@ -469,7 +497,8 @@ export default function FormulaDialog({ open, onClose, onInsert, initialLatex = 
   return (
     <>
       <div className={`fd-overlay ${open ? 'fd-overlay--open' : ''}`} onClick={onClose} />
-      <div className={`fd-drawer ${open ? 'fd-drawer--open' : ''}`}>
+      <div ref={drawerRef} className={`fd-drawer ${open ? 'fd-drawer--open' : ''}`} style={{ width: drawerWidth }}>
+        <div className="fd-resize-handle" onMouseDown={handleResizeStart} />
         <div className="fd-header">
           <div className="fd-header__title">
             <IconMath size={20} />

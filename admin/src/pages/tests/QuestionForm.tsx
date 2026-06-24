@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   IconArrowLeft, IconDeviceFloppy, IconPlus, IconCheck,
-  IconSparkles, IconWand, IconRefresh, IconBulb, IconMath,
+  IconSparkles, IconWand, IconRefresh, IconBulb, IconMath, IconMessageChatbot, IconSend, IconX,
 } from '@tabler/icons-react'
 import api from '../../api'
 import { PageHeader, Button, Card, CardBody } from '../../components/ui'
+import PromptEditor from '../../components/ui/PromptEditor'
 import { RichEditor } from '../../components/editor'
 
 interface TopicInfo { id: number; name: string }
@@ -35,6 +36,9 @@ export default function QuestionForm() {
   const [saving, setSaving] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [aiLoading, setAiLoading] = useState<string | null>(null)
+  const [showPrompt, setShowPrompt] = useState(false)
+  const [promptResult, setPromptResult] = useState('')
+  const promptGetText = useRef<() => { text: string; image: string | null }>(() => ({ text: '', image: null }))
 
   useEffect(() => {
     api.get(`/subjects/${sid}`).then(r => setSubject(r.data)).catch(() => {})
@@ -132,6 +136,58 @@ export default function QuestionForm() {
     } else {
       toast.error('Variantlarni ajratib bo\'lmadi')
     }
+  }
+
+  const handleCustomPrompt = async () => {
+    const { text, image } = promptGetText.current()
+    if (!text && !image) { toast.error('Prompt yozing yoki rasm yuklang'); return }
+    setPromptResult('')
+    setAiLoading('custom_prompt')
+    try {
+      const res = await api.post('/ai/assist', {
+        action: 'custom_prompt',
+        text: text || 'Rasmni tahlil qil va test savoli yarat. Format: Savol: ...\nA) ...\nB) ...\nC) ...\nD) ...\nTo\'g\'ri javob: A/B/C/D',
+        context: '',
+        image: image || undefined,
+      })
+      setPromptResult(res.data.result)
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'AI xatolik berdi')
+    } finally {
+      setAiLoading(null)
+    }
+  }
+
+  const applyPromptResult = () => {
+    if (!promptResult) return
+    const lines = promptResult.split('\n').filter(l => l.trim())
+    let qText = '', a = '', b = '', c = '', d = '', correct = 'A'
+    const qLines: string[] = []
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (/^A\)/.test(trimmed)) a = trimmed.replace(/^A\)\s*/, '')
+      else if (/^B\)/.test(trimmed)) b = trimmed.replace(/^B\)\s*/, '')
+      else if (/^C\)/.test(trimmed)) c = trimmed.replace(/^C\)\s*/, '')
+      else if (/^D\)/.test(trimmed)) d = trimmed.replace(/^D\)\s*/, '')
+      else if (/to['']?g['']?ri/i.test(trimmed)) {
+        const match = trimmed.match(/[ABCD]/)
+        if (match) correct = match[0]
+      } else if (!a) {
+        qLines.push(trimmed.replace(/^savol:\s*/i, ''))
+      }
+    }
+    qText = qLines.join(' ')
+    if (a && b && c && d) {
+      updateForm({ question_text: qText || form.question_text, option_a: a, option_b: b, option_c: c, option_d: d, correct_option: correct })
+    } else if (qText) {
+      updateForm({ ...form, question_text: qText })
+    } else {
+      updateForm({ ...form, question_text: promptResult })
+    }
+    toast.success('Natija qo\'yildi')
+    setShowPrompt(false)
+    setPromptText('')
+    setPromptResult('')
   }
 
   const handleAiGenerateQuestion = async () => {
@@ -249,7 +305,65 @@ export default function QuestionForm() {
           <IconSparkles size={15} style={{ color: 'var(--warning)' }} />
           {aiLoading === 'generate_options' ? 'Yaratilmoqda...' : 'AI: Variantlar yaratish'}
         </Button>
+        <Button variant="ghost" size="sm" onClick={() => setShowPrompt(!showPrompt)} disabled={!!aiLoading}>
+          <IconMessageChatbot size={15} style={{ color: '#8b5cf6' }} />
+          AI: Prompt
+        </Button>
       </div>
+
+      {showPrompt && (
+        <Card>
+          <div style={{ padding: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: 'var(--text-100)' }}>
+                <IconMessageChatbot size={18} style={{ color: '#8b5cf6' }} />
+                AI ga prompt yozing
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowPrompt(false); setPromptResult('') }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-500)', padding: 4 }}
+              >
+                <IconX size={16} />
+              </button>
+            </div>
+            <PromptEditor
+              placeholder="Prompt yozing, rasm paste yoki drop qiling... (Ctrl+Enter yuborish)"
+              getText={promptGetText}
+              onCtrlEnter={handleCustomPrompt}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+              <Button variant="primary" size="sm" onClick={handleCustomPrompt} disabled={!!aiLoading}>
+                <IconSend size={14} />
+                {aiLoading === 'custom_prompt' ? 'Yuborilmoqda...' : 'Yuborish'}
+              </Button>
+            </div>
+
+            {promptResult && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-600)', marginBottom: 6 }}>
+                  Natija
+                </div>
+                <div style={{
+                  padding: '12px 14px', background: 'var(--bg-900)', border: '1px solid var(--border)',
+                  borderRadius: 8, fontSize: 13, lineHeight: 1.7, color: 'var(--text-200)',
+                  whiteSpace: 'pre-wrap', maxHeight: 300, overflowY: 'auto',
+                }}>
+                  {promptResult}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 8 }}>
+                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(promptResult); toast.success('Nusxa olindi') }}>
+                    Nusxa olish
+                  </Button>
+                  <Button variant="primary" size="sm" onClick={applyPromptResult}>
+                    Savolga qo'yish
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* Savol matni */}
       <Card>
