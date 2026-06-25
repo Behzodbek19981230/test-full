@@ -144,10 +144,18 @@ async def subjects_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(text)
             return
 
-        paid = [s for s in subjects if not s.is_free]
-        free = [s for s in subjects if s.is_free]
+        mandatory = [s for s in subjects if s.is_mandatory]
+        paid = [s for s in subjects if not s.is_free and not s.is_mandatory]
+        free = [s for s in subjects if s.is_free and not s.is_mandatory]
 
         keyboard = []
+        for s in mandatory:
+            icon = s.icon if s.icon and not s.icon.startswith(('<', '/', 'h')) else '📚'
+            keyboard.append([InlineKeyboardButton(
+                f"{icon} {s.name} 📌 Majburiy",
+                callback_data=f'buy_{s.id}'
+            )])
+
         for s in paid:
             icon = s.icon if s.icon and not s.icon.startswith(('<', '/', 'h')) else '📚'
             keyboard.append([InlineKeyboardButton(

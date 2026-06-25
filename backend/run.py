@@ -17,6 +17,11 @@ async def main():
     if bot_app:
         print("Telegram bot ishga tushdi!")
         await bot_app.initialize()
+        await bot_app.bot.set_my_commands([
+            ("start", "Botni ishga tushirish"),
+            ("fanlar", "Fanlar ro'yxati"),
+            ("cancel", "Bekor qilish"),
+        ])
         await bot_app.start()
         await bot_app.updater.start_polling(drop_pending_updates=True)
 
