@@ -71,20 +71,23 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 subject = db.query(Subject).filter(Subject.id == subject_id, Subject.is_active == True).first()
                 if subject:
+                    qcount = (subject.mandatory_question_count or 10) if subject.is_mandatory else 30
                     subj_data = {
                         'id': subject.id, 'name': subject.name,
                         'is_free': subject.is_free or False,
+                        'question_count': qcount,
                     }
             finally:
                 db.close()
 
             if subj_data and subj_data['is_free']:
+                qcount = subj_data['question_count']
                 await update.message.reply_text(
-                    f"📚 *{subj_data['name']}* — 30 ta savol\n\n"
+                    f"📚 *{subj_data['name']}* — {qcount} ta savol\n\n"
                     f"✅ Tekin fan — *bepul!*\n⏳ Test tayyorlanmoqda...",
                     parse_mode='Markdown',
                 )
-                _start_free_generation(user_id, update.effective_user.id, subj_data['id'], subj_data['name'], 30)
+                _start_free_generation(user_id, update.effective_user.id, subj_data['id'], subj_data['name'], qcount)
                 context.user_data.clear()
                 return ConversationHandler.END
 
@@ -103,7 +106,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 holder = settings.TELEGRAM_CARD_HOLDER
 
                 text = (
-                    f"📚 *{subject.name}* — 30 ta savol\n\n"
+                    f"📚 *{subj_data['name']}* — {subj_data['question_count']} ta savol\n\n"
                     f" Narxi: 5000 so'm\n\n"
                     f"💳 Karta raqami:\n`{card}`\n"
                     f"👤 {holder}\n\n"
@@ -119,7 +122,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"👋 *Salom, {full_name}!*\n"
         f"Test Market platformasiga xush kelibsiz!\n\n"
-        "Fanni tanlang, to'lov chekini yuboring — 30 savollik test linki yuboriladi!\n\n"
+        "Fanni tanlang — test linki yuboriladi!\n\n"
         "📚 /fanlar — Boshlash",
         parse_mode='Markdown', reply_markup=InlineKeyboardMarkup(keyboard),
     )
@@ -184,22 +187,25 @@ async def select_subject(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text("❌ Fan topilmadi")
             return ConversationHandler.END
 
+        qcount = (subject.mandatory_question_count or 10) if subject.is_mandatory else 30
+
         if subject.is_free:
             user = db.query(User).filter(User.telegram_id == update.effective_user.id).first()
             user_id = user.id if user else get_or_create_user(update.effective_user)
             subj_name = subject.name
             subj_id = subject.id
             await query.edit_message_text(
-                f"📚 *{subj_name}* — 30 ta savol\n\n"
+                f"📚 *{subj_name}* — {qcount} ta savol\n\n"
                 f"✅ Tekin fan — *bepul!*\n⏳ Test tayyorlanmoqda...",
                 parse_mode='Markdown',
             )
-            _start_free_generation(user_id, update.effective_user.id, subj_id, subj_name, 30)
+            _start_free_generation(user_id, update.effective_user.id, subj_id, subj_name, qcount)
             context.user_data.clear()
             return ConversationHandler.END
 
         context.user_data['subject_id'] = subject_id
         context.user_data['subject_name'] = subject.name
+        context.user_data['question_count'] = qcount
     finally:
         db.close()
 
@@ -208,7 +214,7 @@ async def select_subject(update: Update, context: ContextTypes.DEFAULT_TYPE):
     holder = settings.TELEGRAM_CARD_HOLDER
 
     text = (
-        f"📚 *{context.user_data['subject_name']}* — 30 ta savol\n\n"
+        f"📚 *{context.user_data['subject_name']}* — {qcount} ta savol\n\n"
         f" Narxi: 5000 so'm\n\n"
         f"💳 Karta raqami:\n`{card}`\n"
         f"👤 {holder}\n\n"
@@ -247,7 +253,7 @@ async def handle_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Avval /start yuboring.")
             return ConversationHandler.END
 
-        payment = Payment(user_id=user.id, subject_id=ud['subject_id'], question_count=30,
+        payment = Payment(user_id=user.id, subject_id=ud['subject_id'], question_count=ud.get('question_count', 30),
                           mode='mixed', amount=0, screenshot_file_id=filename, status='pending')
         db.add(payment)
         notif = Notification(admin_id=1, title="Yangi to'lov",
