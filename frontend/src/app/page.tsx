@@ -14,6 +14,7 @@ import {
 	CTA,
 	Footer,
 } from '@/components/sections';
+import ChatWidget from '@/components/ChatWidget';
 
 interface Subject {
 	id: number;
@@ -70,6 +71,7 @@ export default function Home() {
 			<SeoContent />
 			<CTA />
 			<Footer />
+			<ChatWidget />
 		</>
 	);
 }
