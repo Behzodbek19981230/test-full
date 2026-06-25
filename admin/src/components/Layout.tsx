@@ -15,6 +15,7 @@ import {
 	IconSend,
 	IconMenu2,
 	IconX,
+	IconSettings,
 } from '@tabler/icons-react';
 
 export default function Layout() {
@@ -102,6 +103,7 @@ export default function Layout() {
 					badgeColor: 'danger',
 				},
 				{ to: '/audit', icon: IconFileText, label: 'Audit Log' },
+				{ to: '/settings', icon: IconSettings, label: 'Sozlamalar' },
 			],
 		},
 	];

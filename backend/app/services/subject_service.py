@@ -20,6 +20,7 @@ def _enrich(subject: Subject, db: Session) -> dict:
         "icon": subject.icon,
         "price_per_question": subject.price_per_question,
         "is_active": subject.is_active,
+        "is_free": subject.is_free or False,
         "is_mandatory": subject.is_mandatory or False,
         "mandatory_question_count": subject.mandatory_question_count or 10,
         "topic_count": len(topics),

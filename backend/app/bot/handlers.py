@@ -73,19 +73,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if subject:
                     subj_data = {
                         'id': subject.id, 'name': subject.name,
-                        'is_mandatory': subject.is_mandatory or False,
-                        'q_count': subject.mandatory_question_count or 10,
+                        'is_free': subject.is_free or False,
                     }
             finally:
                 db.close()
 
-            if subj_data and subj_data['is_mandatory']:
+            if subj_data and subj_data['is_free']:
                 await update.message.reply_text(
-                    f"📚 *{subj_data['name']}* — {subj_data['q_count']} ta savol\n\n"
-                    f"✅ Majburiy fan — *bepul!*\n⏳ Test tayyorlanmoqda...",
+                    f"📚 *{subj_data['name']}* — 30 ta savol\n\n"
+                    f"✅ Tekin fan — *bepul!*\n⏳ Test tayyorlanmoqda...",
                     parse_mode='Markdown',
                 )
-                _start_free_generation(user_id, update.effective_user.id, subj_data['id'], subj_data['name'], subj_data['q_count'])
+                _start_free_generation(user_id, update.effective_user.id, subj_data['id'], subj_data['name'], 30)
                 context.user_data.clear()
                 return ConversationHandler.END
 
@@ -142,24 +141,23 @@ async def subjects_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(text)
             return
 
-        regular = [s for s in subjects if not s.is_mandatory]
-        mandatory = [s for s in subjects if s.is_mandatory]
+        paid = [s for s in subjects if not s.is_free]
+        free = [s for s in subjects if s.is_free]
 
         keyboard = []
-        for s in regular:
+        for s in paid:
             icon = s.icon if s.icon and not s.icon.startswith(('<', '/', 'h')) else '📚'
             keyboard.append([InlineKeyboardButton(
                 f"{icon} {s.name}",
                 callback_data=f'buy_{s.id}'
             )])
 
-        if mandatory:
-            for s in mandatory:
-                icon = s.icon if s.icon and not s.icon.startswith(('<', '/', 'h')) else '📚'
-                keyboard.append([InlineKeyboardButton(
-                    f"{icon} {s.name} ✅ Bepul",
-                    callback_data=f'buy_{s.id}'
-                )])
+        for s in free:
+            icon = s.icon if s.icon and not s.icon.startswith(('<', '/', 'h')) else '📚'
+            keyboard.append([InlineKeyboardButton(
+                f"{icon} {s.name} ✅ Bepul",
+                callback_data=f'buy_{s.id}'
+            )])
 
         text = "📚 *Fanni tanlang:*"
         if update.callback_query:
@@ -186,18 +184,17 @@ async def select_subject(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text("❌ Fan topilmadi")
             return ConversationHandler.END
 
-        if subject.is_mandatory:
+        if subject.is_free:
             user = db.query(User).filter(User.telegram_id == update.effective_user.id).first()
             user_id = user.id if user else get_or_create_user(update.effective_user)
-            q_count = subject.mandatory_question_count or 10
             subj_name = subject.name
             subj_id = subject.id
             await query.edit_message_text(
-                f"📚 *{subj_name}* — {q_count} ta savol\n\n"
-                f"✅ Majburiy fan — *bepul!*\n⏳ Test tayyorlanmoqda...",
+                f"📚 *{subj_name}* — 30 ta savol\n\n"
+                f"✅ Tekin fan — *bepul!*\n⏳ Test tayyorlanmoqda...",
                 parse_mode='Markdown',
             )
-            _start_free_generation(user_id, update.effective_user.id, subj_id, subj_name, q_count)
+            _start_free_generation(user_id, update.effective_user.id, subj_id, subj_name, 30)
             context.user_data.clear()
             return ConversationHandler.END
 

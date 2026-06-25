@@ -13,6 +13,7 @@ import AdminUsers from './pages/AdminUsers'
 import AuditLogs from './pages/AuditLogs'
 import Notifications from './pages/Notifications'
 import Materials from './pages/Materials'
+import Settings from './pages/Settings'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth()
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="audit" element={<AdminOnly><AuditLogs /></AdminOnly>} />
         <Route path="notifications" element={<AdminOnly><Notifications /></AdminOnly>} />
         <Route path="materials/:subjectId" element={<Materials />} />
+        <Route path="settings" element={<AdminOnly><Settings /></AdminOnly>} />
       </Route>
     </Routes>
   )

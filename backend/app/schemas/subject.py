@@ -7,6 +7,7 @@ class SubjectCreate(BaseModel):
     description: Optional[str] = ""
     icon: Optional[str] = "📚"
     price_per_question: Optional[int] = 500
+    is_free: Optional[bool] = False
     is_mandatory: Optional[bool] = False
     mandatory_question_count: Optional[int] = 10
 
@@ -17,6 +18,7 @@ class SubjectUpdate(BaseModel):
     icon: Optional[str] = None
     price_per_question: Optional[int] = None
     is_active: Optional[bool] = None
+    is_free: Optional[bool] = None
     is_mandatory: Optional[bool] = None
     mandatory_question_count: Optional[int] = None
 
