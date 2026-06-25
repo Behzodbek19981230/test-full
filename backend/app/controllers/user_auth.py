@@ -1,10 +1,12 @@
-"""Public user authentication: Google OAuth + Telegram Login."""
+"""Public user authentication: Google OAuth, Telegram Login, Phone+Password."""
 
 import hashlib
 import hmac
+import re
+import bcrypt
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from app.database import get_db
@@ -13,6 +15,14 @@ from app.models.user import User
 from app.config import get_settings
 
 router = APIRouter(prefix="/user-auth", tags=["user-auth"])
+
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode(), hashed.encode())
 
 
 class GoogleLoginRequest(BaseModel):
@@ -27,6 +37,38 @@ class TelegramLoginRequest(BaseModel):
     photo_url: str | None = None
     auth_date: int
     hash: str
+
+
+class PhoneRegisterRequest(BaseModel):
+    first_name: str
+    last_name: str
+    phone: str
+    password: str
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        cleaned = re.sub(r"[\s\-\(\)]", "", v)
+        if not re.match(r"^\+?\d{9,15}$", cleaned):
+            raise ValueError("Telefon raqam noto'g'ri formatda")
+        return cleaned
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("Parol kamida 6 ta belgidan iborat bo'lishi kerak")
+        return v
+
+
+class PhoneLoginRequest(BaseModel):
+    phone: str
+    password: str
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        return re.sub(r"[\s\-\(\)]", "", v)
 
 
 def _user_response(user: User, token: str) -> dict:
@@ -130,6 +172,41 @@ def telegram_login(body: TelegramLoginRequest, db: Session = Depends(get_db)):
         db.add(user)
         db.commit()
         db.refresh(user)
+
+    token = create_user_token(user.id)
+    return _user_response(user, token)
+
+
+@router.post("/register")
+def phone_register(body: PhoneRegisterRequest, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.phone == body.phone).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Bu telefon raqam allaqachon ro'yxatdan o'tgan")
+
+    user = User(
+        full_name=f"{body.first_name} {body.last_name}".strip(),
+        phone=body.phone,
+        password_hash=hash_password(body.password),
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    token = create_user_token(user.id)
+    return _user_response(user, token)
+
+
+@router.post("/login")
+def phone_login(body: PhoneLoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.phone == body.phone).first()
+    if not user or not user.password_hash:
+        raise HTTPException(status_code=401, detail="Telefon raqam yoki parol noto'g'ri")
+
+    if not verify_password(body.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Telefon raqam yoki parol noto'g'ri")
+
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Hisob faol emas")
 
     token = create_user_token(user.id)
     return _user_response(user, token)

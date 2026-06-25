@@ -261,6 +261,11 @@ export default memo(function RichEditor({ label, value, onChange, placeholder = 
         open={showFormula}
         onClose={() => { setShowFormula(false); editingPos.current = null; setEditingLatex('') }}
         onInsert={handleFormulaInsert}
+        onInsertImage={(dataUrl) => {
+          if (editor) {
+            editor.chain().focus().setResizableImage({ src: dataUrl, width: 500 }).run()
+          }
+        }}
         initialLatex={editingLatex}
       />
     </div>

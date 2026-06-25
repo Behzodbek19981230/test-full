@@ -451,3 +451,182 @@
   border-top: 1px solid var(--border);
   flex-shrink: 0;
 }
+
+/* ===== Graph Editor ===== */
+.fd-graph-fns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.fd-graph-fn-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fd-graph-fn-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid rgba(0,0,0,0.1);
+}
+
+.fd-graph-fn-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-400);
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.fd-graph-fn-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-900);
+  color: var(--text-100);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.fd-graph-fn-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-50);
+}
+
+.fd-graph-fn-input::placeholder {
+  color: var(--text-600);
+}
+
+.fd-graph-fn-del {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-500);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.fd-graph-fn-del:hover {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.fd-graph-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-500);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fd-graph-add-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(26, 127, 138, 0.05);
+}
+
+.fd-graph-ranges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.fd-graph-range-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fd-graph-range-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-400);
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.fd-graph-range-input {
+  width: 70px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-900);
+  color: var(--text-100);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+
+.fd-graph-range-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-50);
+}
+
+.fd-graph-range-input::-webkit-inner-spin-button,
+.fd-graph-range-input::-webkit-outer-spin-button {
+  opacity: 0.5;
+}
+
+.fd-graph-range-sep {
+  font-size: 12px;
+  color: var(--text-600);
+}
+
+.fd-graph-toggles {
+  display: flex;
+  gap: 16px;
+  margin-top: 2px;
+}
+
+.fd-graph-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-400);
+  cursor: pointer;
+  user-select: none;
+}
+
+.fd-graph-toggle input[type="checkbox"] {
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.fd-graph-canvas-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.fd-graph-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

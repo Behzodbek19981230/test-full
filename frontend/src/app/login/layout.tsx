@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Tizimga kirish',
-  description: "Test Market platformasiga Google yoki Telegram orqali kiring. DTM va attestatsiya testlarini ishlash uchun ro'yxatdan o'ting.",
+  description: "Test Market platformasiga kiring yoki ro'yxatdan o'ting. Telefon raqam, Google yoki Telegram orqali kirish mumkin.",
   robots: { index: false, follow: false },
 }
 
