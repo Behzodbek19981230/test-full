@@ -66,6 +66,8 @@ const TEMPLATES: Record<Tab, string[]> = {
     'C_n^k',
     'A_n^k',
     'n!',
+    '\\text{EKUB}(a, b)',
+    '\\text{EKUK}(a, b)',
     'a \\cdot b',
     '\\vec{a} \\times \\vec{b}',
     '\\angle ABC',

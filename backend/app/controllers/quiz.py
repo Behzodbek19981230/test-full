@@ -1,14 +1,36 @@
 """Public quiz endpoint — generates random test for a subject."""
 
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from jose import JWTError, jwt as jose_jwt
 from app.database import get_db
+from app.config import get_settings
 from app.models.question import Question
 from app.models.topic import Topic
 from app.models.subject import Subject
+from app.models.attempt import TestAttempt, AttemptAnswer
+from app.models.user import User
+
+optional_auth = HTTPBearer(auto_error=False)
 
 router = APIRouter(prefix="/quiz", tags=["quiz"])
+
+
+def _resolve_user(credentials: HTTPAuthorizationCredentials | None, db: Session) -> User | None:
+    if not credentials:
+        return None
+    settings = get_settings()
+    try:
+        payload = jose_jwt.decode(credentials.credentials, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        if payload.get("type") != "user":
+            return None
+        user_id = int(payload.get("sub"))
+    except (JWTError, ValueError, TypeError):
+        return None
+    return db.query(User).filter(User.id == user_id, User.is_active == True).first()
 
 
 @router.get("/{subject_id}/generate")
@@ -132,7 +154,7 @@ def generate_mandatory_quiz(db: Session = Depends(get_db)):
 
 
 @router.post("/{subject_id}/check")
-def check_quiz(subject_id: int, body: dict, db: Session = Depends(get_db)):
+def check_quiz(subject_id: int, body: dict, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials | None = Depends(optional_auth)):
     """Check answers. Body: {"answers": {"question_id": "A", ...}}"""
     answers = body.get("answers", {})
     if not answers:
@@ -144,6 +166,7 @@ def check_quiz(subject_id: int, body: dict, db: Session = Depends(get_db)):
 
     results = []
     correct_count = 0
+    attempt_answers = []
 
     for qid_str, user_answer in answers.items():
         qid = int(qid_str)
@@ -164,9 +187,26 @@ def check_quiz(subject_id: int, body: dict, db: Session = Depends(get_db)):
             "user_answer": user_answer.upper(),
             "is_correct": is_correct,
         })
+        attempt_answers.append({"question_id": qid, "selected_option": user_answer.upper(), "is_correct": is_correct})
 
     total = len(results)
     score = round((correct_count / total) * 100) if total > 0 else 0
+
+    user = _resolve_user(credentials, db)
+    if user and subject_id > 0:
+        attempt = TestAttempt(
+            user_id=user.id,
+            subject_id=subject_id,
+            total_questions=total,
+            correct_answers=correct_count,
+            score=score,
+            finished_at=datetime.now(timezone.utc),
+        )
+        db.add(attempt)
+        db.flush()
+        for aa in attempt_answers:
+            db.add(AttemptAnswer(attempt_id=attempt.id, **aa))
+        db.commit()
 
     return {
         "total": total,

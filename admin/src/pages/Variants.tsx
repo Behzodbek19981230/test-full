@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   IconFileText, IconClock, IconCircleCheck, IconCircleX, IconSend, IconRefresh,
-  IconEye, IconCheck, IconX as IconXMark, IconTrash,
+  IconEye, IconCheck, IconX as IconXMark, IconTrash, IconDeviceDesktop,
 } from '@tabler/icons-react'
 import api from '../api'
 import { PageHeader, Button, Badge, Card, CardBody, Pagination, ConfirmDialog, PageLoader } from '../components/ui'
@@ -25,6 +25,17 @@ interface Variant {
   checked_at: string | null
 }
 
+interface Attempt {
+  id: number
+  user: { full_name: string; username: string; telegram_id: number | null; email: string | null } | null
+  subject_name: string
+  total_questions: number
+  correct_answers: number
+  score: number
+  started_at: string
+  finished_at: string | null
+}
+
 interface QuestionDetail {
   num: number
   question_text: string
@@ -41,6 +52,12 @@ interface VariantDetail extends Variant {
   questions: QuestionDetail[]
 }
 
+interface AttemptDetail extends Attempt {
+  questions: QuestionDetail[]
+}
+
+type MainTab = 'bot' | 'online'
+
 const STATUS_MAP: Record<string, { label: string; variant: 'warning' | 'success' | 'danger' | 'info'; icon: typeof IconClock }> = {
   pending: { label: 'Kutilmoqda', variant: 'warning', icon: IconClock },
   sent: { label: 'Yuborildi', variant: 'success', icon: IconSend },
@@ -48,26 +65,88 @@ const STATUS_MAP: Record<string, { label: string; variant: 'warning' | 'success'
   checked: { label: 'Tekshirildi', variant: 'info', icon: IconCircleCheck },
 }
 
+function QuestionsTable({ questions }: { questions: QuestionDetail[] }) {
+  if (questions.length === 0) {
+    return <p style={{ textAlign: 'center', padding: 20, color: 'var(--text-400)' }}>Savollar ma'lumoti mavjud emas</p>
+  }
+  return (
+    <div style={{ maxHeight: 450, overflowY: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <thead>
+          <tr style={{ borderBottom: '2px solid var(--border)' }}>
+            <th style={{ padding: '8px 10px', textAlign: 'left', width: 40 }}>#</th>
+            <th style={{ padding: '8px 10px', textAlign: 'left' }}>Savol</th>
+            <th style={{ padding: '8px 10px', textAlign: 'center', width: 80 }}>To'g'ri</th>
+            <th style={{ padding: '8px 10px', textAlign: 'center', width: 80 }}>Javob</th>
+            <th style={{ padding: '8px 10px', textAlign: 'center', width: 50 }}></th>
+          </tr>
+        </thead>
+        <tbody>
+          {questions.map(q => (
+            <tr key={q.num} style={{ borderBottom: '1px solid var(--border)', background: q.is_correct === false ? 'rgba(239,68,68,0.04)' : undefined }}>
+              <td style={{ padding: '8px 10px', fontWeight: 600 }}>{q.num}</td>
+              <td style={{ padding: '8px 10px', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {q.question_text.replace(/<[^>]+>/g, '').substring(0, 80)}
+                {q.question_text.length > 80 ? '...' : ''}
+              </td>
+              <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 700, color: 'var(--success)' }}>
+                {q.correct_option}
+              </td>
+              <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 700, color: q.is_correct ? 'var(--success)' : q.user_answer ? 'var(--danger)' : 'var(--text-300)' }}>
+                {q.user_answer || '—'}
+              </td>
+              <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                {q.is_correct === true && <IconCheck size={16} style={{ color: 'var(--success)' }} />}
+                {q.is_correct === false && <IconXMark size={16} style={{ color: 'var(--danger)' }} />}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 export default function Variants() {
+  const [mainTab, setMainTab] = useState<MainTab>('bot')
+
+  // Bot variants state
   const [variants, setVariants] = useState<Variant[]>([])
-  const [loading, setLoading] = useState(true)
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
+  const [vLoading, setVLoading] = useState(true)
+  const [vTotal, setVTotal] = useState(0)
+  const [vPage, setVPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState('')
   const [detail, setDetail] = useState<VariantDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [showClear, setShowClear] = useState(false)
 
-  const load = () => {
-    const params = new URLSearchParams({ page: String(page), per_page: '10' })
+  // Online attempts state
+  const [attempts, setAttempts] = useState<Attempt[]>([])
+  const [aLoading, setALoading] = useState(true)
+  const [aTotal, setATotal] = useState(0)
+  const [aPage, setAPage] = useState(1)
+  const [aDetail, setADetail] = useState<AttemptDetail | null>(null)
+  const [aDetailLoading, setADetailLoading] = useState(false)
+  const [showAClear, setShowAClear] = useState(false)
+
+  const loadVariants = () => {
+    const params = new URLSearchParams({ page: String(vPage), per_page: '10' })
     if (statusFilter) params.set('status', statusFilter)
     api.get(`/variants?${params}`).then(r => {
       setVariants(r.data.variants)
-      setTotal(r.data.total)
-    }).finally(() => setLoading(false))
+      setVTotal(r.data.total)
+    }).finally(() => setVLoading(false))
   }
 
-  useEffect(() => { load() }, [page, statusFilter])
+  const loadAttempts = () => {
+    api.get(`/attempts?page=${aPage}&per_page=10`).then(r => {
+      setAttempts(r.data.attempts)
+      setATotal(r.data.total)
+    }).finally(() => setALoading(false))
+  }
+
+  useEffect(() => { loadVariants() }, [vPage, statusFilter])
+  useEffect(() => { if (mainTab === 'online') loadAttempts() }, [aPage, mainTab])
 
   const openDetail = async (id: number) => {
     setDetailLoading(true)
@@ -81,13 +160,37 @@ export default function Variants() {
     }
   }
 
+  const openAttemptDetail = async (id: number) => {
+    setADetailLoading(true)
+    try {
+      const r = await api.get(`/attempts/${id}`)
+      setADetail(r.data)
+    } catch {
+      toast.error('Ma\'lumotlarni yuklashda xatolik')
+    } finally {
+      setADetailLoading(false)
+    }
+  }
+
   const clearAll = async () => {
     try {
       await api.delete('/variants/clear')
       toast.success('Variantlar tozalandi')
       setShowClear(false)
-      setPage(1)
-      load()
+      setVPage(1)
+      loadVariants()
+    } catch {
+      toast.error('Xatolik')
+    }
+  }
+
+  const clearAttempts = async () => {
+    try {
+      await api.delete('/attempts/clear')
+      toast.success('Online testlar tozalandi')
+      setShowAClear(false)
+      setAPage(1)
+      loadAttempts()
     } catch {
       toast.error('Xatolik')
     }
@@ -97,17 +200,7 @@ export default function Variants() {
     try {
       await api.post(`/variants/${id}/resend`)
       toast.success('Qayta yuborish boshlandi')
-      setTimeout(load, 2000)
-    } catch {
-      toast.error('Xatolik')
-    }
-  }
-
-  const updateStatus = async (id: number, status: string) => {
-    try {
-      await api.put(`/variants/${id}/status`, { status })
-      toast.success('Status yangilandi')
-      load()
+      setTimeout(loadVariants, 2000)
     } catch {
       toast.error('Xatolik')
     }
@@ -119,7 +212,7 @@ export default function Variants() {
     return <Badge variant={cfg.variant}><Icon size={13} /> {cfg.label}</Badge>
   }
 
-  const tabs = [
+  const botStatusTabs = [
     { key: '', label: 'Barchasi' },
     { key: 'pending', label: 'Kutilmoqda' },
     { key: 'sent', label: 'Yuborildi' },
@@ -127,6 +220,7 @@ export default function Variants() {
     { key: 'checked', label: 'Tekshirildi' },
   ]
 
+  const loading = mainTab === 'bot' ? vLoading : aLoading
   if (loading) return <PageLoader rows={6} />
 
   return (
@@ -137,84 +231,142 @@ export default function Variants() {
         iconBg="var(--primary-50)"
         title="Variantlar"
         actions={<>
-          {tabs.map(t => (
-            <Button key={t.key} variant={statusFilter === t.key ? 'primary' : 'ghost'} size="sm"
-              onClick={() => { setStatusFilter(t.key); setPage(1) }}>
-              {t.label}
-            </Button>
-          ))}
-          {total > 0 && <Button variant="danger" size="sm" onClick={() => setShowClear(true)}><IconTrash size={14} /> Tozalash</Button>}
+          <Button variant={mainTab === 'bot' ? 'primary' : 'ghost'} size="sm" onClick={() => setMainTab('bot')}>
+            <IconSend size={15} /> Bot testlar
+          </Button>
+          <Button variant={mainTab === 'online' ? 'primary' : 'ghost'} size="sm" onClick={() => setMainTab('online')}>
+            <IconDeviceDesktop size={15} /> Online testlar
+          </Button>
         </>}
       />
 
-      <Card>
-        <CardBody flush>
-          <Table
-            keyField="id"
-            data={variants}
-            emptyIcon={<IconFileText size={40} />}
-            emptyText="Variantlar topilmadi"
-            columns={[
-              { key: 'id', header: 'ID', width: 70, render: v => <strong>#{v.id}</strong> },
-              { key: 'user', header: 'Foydalanuvchi', render: v => (
-                <>
-                  <div className="td-main">{v.user?.full_name || '—'}</div>
-                  <div className="td-sub">@{v.user?.username || 'noma\'lum'}</div>
-                </>
-              )},
-              { key: 'subject', header: 'Fan', render: v => v.subject_name },
-              { key: 'count', header: 'Savollar', width: 90, render: v => `${v.question_count} ta` },
-              { key: 'status', header: 'Holat', render: v => (
-                <div>
-                  {statusBadge(v.status)}
-                  {v.status === 'checked' && v.score !== null && (
-                    <div className="td-sub" style={{ marginTop: 4, fontSize: 12, fontWeight: 600, color: v.score >= 60 ? 'var(--success)' : 'var(--danger)' }}>
-                      {v.correct_count}/{v.question_count} ({v.score}%)
+      {mainTab === 'bot' && (
+        <>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+            {botStatusTabs.map(t => (
+              <Button key={t.key} variant={statusFilter === t.key ? 'primary' : 'ghost'} size="sm"
+                onClick={() => { setStatusFilter(t.key); setVPage(1) }}>
+                {t.label}
+              </Button>
+            ))}
+            {vTotal > 0 && <Button variant="danger" size="sm" onClick={() => setShowClear(true)}><IconTrash size={14} /> Tozalash</Button>}
+          </div>
+
+          <Card>
+            <CardBody flush>
+              <Table
+                keyField="id"
+                data={variants}
+                emptyIcon={<IconFileText size={40} />}
+                emptyText="Variantlar topilmadi"
+                columns={[
+                  { key: 'id', header: 'ID', width: 70, render: v => <strong>#{v.id}</strong> },
+                  { key: 'user', header: 'Foydalanuvchi', render: v => (
+                    <>
+                      <div className="td-main">{v.user?.full_name || '—'}</div>
+                      <div className="td-sub">@{v.user?.username || 'noma\'lum'}</div>
+                    </>
+                  )},
+                  { key: 'subject', header: 'Fan', render: v => v.subject_name },
+                  { key: 'count', header: 'Savollar', width: 90, render: v => `${v.question_count} ta` },
+                  { key: 'status', header: 'Holat', render: v => (
+                    <div>
+                      {statusBadge(v.status)}
+                      {v.status === 'checked' && v.score !== null && (
+                        <div className="td-sub" style={{ marginTop: 4, fontSize: 12, fontWeight: 600, color: v.score >= 60 ? 'var(--success)' : 'var(--danger)' }}>
+                          {v.correct_count}/{v.question_count} ({v.score}%)
+                        </div>
+                      )}
+                      {v.status === 'failed' && v.error_log && (
+                        <div className="td-sub" style={{ color: 'var(--danger)', marginTop: 4, fontSize: 11, maxWidth: 200, wordBreak: 'break-word' }}>
+                          {v.error_log}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {v.status === 'failed' && v.error_log && (
-                    <div className="td-sub" style={{ color: 'var(--danger)', marginTop: 4, fontSize: 11, maxWidth: 200, wordBreak: 'break-word' }}>
-                      {v.error_log}
+                  )},
+                  { key: 'date', header: 'Yaratilgan', render: v => (
+                    <span style={{ fontSize: 13, color: 'var(--text-500)' }}>
+                      {new Date(v.created_at).toLocaleString('uz-UZ')}
+                    </span>
+                  )},
+                  { key: 'sent', header: 'Yuborilgan', render: v => (
+                    <span style={{ fontSize: 13, color: 'var(--text-500)' }}>
+                      {v.sent_at ? new Date(v.sent_at).toLocaleString('uz-UZ') : '—'}
+                    </span>
+                  )},
+                  { key: 'actions', header: '', width: 200, render: v => (
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      {(v.status === 'sent' || v.status === 'checked') && (
+                        <Button variant="ghost" size="sm" onClick={() => openDetail(v.id)}>
+                          <IconEye size={14} /> Ko'rish
+                        </Button>
+                      )}
+                      {(v.status === 'failed' || v.status === 'pending') && (
+                        <Button variant="ghost" size="sm" onClick={() => resend(v.id)}>
+                          <IconRefresh size={14} /> Qayta
+                        </Button>
+                      )}
                     </div>
-                  )}
-                </div>
-              )},
-              { key: 'date', header: 'Yaratilgan', render: v => (
-                <span style={{ fontSize: 13, color: 'var(--text-500)' }}>
-                  {new Date(v.created_at).toLocaleString('uz-UZ')}
-                </span>
-              )},
-              { key: 'sent', header: 'Yuborilgan', render: v => (
-                <span style={{ fontSize: 13, color: 'var(--text-500)' }}>
-                  {v.sent_at ? new Date(v.sent_at).toLocaleString('uz-UZ') : '—'}
-                </span>
-              )},
-              { key: 'actions', header: '', width: 200, render: v => (
-                <div style={{ display: 'flex', gap: 4 }}>
-                  {(v.status === 'sent' || v.status === 'checked') && (
-                    <Button variant="ghost" size="sm" onClick={() => openDetail(v.id)}>
+                  )},
+                ]}
+              />
+            </CardBody>
+            <Pagination page={vPage} totalPages={Math.ceil(vTotal / 10)} onPageChange={setVPage} />
+          </Card>
+        </>
+      )}
+
+      {mainTab === 'online' && (
+        <>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+            {aTotal > 0 && <Button variant="danger" size="sm" onClick={() => setShowAClear(true)}><IconTrash size={14} /> Tozalash</Button>}
+          </div>
+
+          <Card>
+            <CardBody flush>
+              <Table
+                keyField="id"
+                data={attempts}
+                emptyIcon={<IconDeviceDesktop size={40} />}
+                emptyText="Online testlar topilmadi"
+                columns={[
+                  { key: 'id', header: 'ID', width: 70, render: a => <strong>#{a.id}</strong> },
+                  { key: 'user', header: 'Foydalanuvchi', render: a => (
+                    <>
+                      <div className="td-main">{a.user?.full_name || '—'}</div>
+                      <div className="td-sub">{a.user?.email || (a.user?.username ? `@${a.user.username}` : '—')}</div>
+                    </>
+                  )},
+                  { key: 'subject', header: 'Fan', render: a => a.subject_name },
+                  { key: 'count', header: 'Savollar', width: 90, render: a => `${a.total_questions} ta` },
+                  { key: 'result', header: 'Natija', render: a => (
+                    <div style={{ fontWeight: 600, color: a.score >= 60 ? 'var(--success)' : 'var(--danger)' }}>
+                      {a.correct_answers}/{a.total_questions} ({a.score}%)
+                    </div>
+                  )},
+                  { key: 'date', header: 'Sana', render: a => (
+                    <span style={{ fontSize: 13, color: 'var(--text-500)' }}>
+                      {a.finished_at ? new Date(a.finished_at).toLocaleString('uz-UZ') : new Date(a.started_at).toLocaleString('uz-UZ')}
+                    </span>
+                  )},
+                  { key: 'actions', header: '', width: 120, render: a => (
+                    <Button variant="ghost" size="sm" onClick={() => openAttemptDetail(a.id)}>
                       <IconEye size={14} /> Ko'rish
                     </Button>
-                  )}
-                  {(v.status === 'failed' || v.status === 'pending') && (
-                    <Button variant="ghost" size="sm" onClick={() => resend(v.id)}>
-                      <IconRefresh size={14} /> Qayta
-                    </Button>
-                  )}
-                </div>
-              )},
-            ]}
-          />
-        </CardBody>
-        <Pagination page={page} totalPages={Math.ceil(total / 10)} onPageChange={setPage} />
-      </Card>
+                  )},
+                ]}
+              />
+            </CardBody>
+            <Pagination page={aPage} totalPages={Math.ceil(aTotal / 10)} onPageChange={setAPage} />
+          </Card>
+        </>
+      )}
 
-      {/* Variant detail dialog */}
+      {/* Bot variant detail dialog */}
       <Dialog open={!!detail || detailLoading} onClose={() => setDetail(null)} title={detail ? `Variant #${detail.id}` : 'Yuklanmoqda...'} size="lg">
         {detailLoading && !detail && <p style={{ textAlign: 'center', padding: 20, color: 'var(--text-400)' }}>Yuklanmoqda...</p>}
         {detail && (
           <div>
-            {/* Info header */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20, padding: 16, background: 'var(--bg-50)', borderRadius: 12 }}>
               <div>
                 <div style={{ fontSize: 12, color: 'var(--text-400)', marginBottom: 2 }}>Foydalanuvchi</div>
@@ -244,48 +396,40 @@ export default function Variants() {
                 </div>
               )}
             </div>
+            <QuestionsTable questions={detail.questions} />
+          </div>
+        )}
+      </Dialog>
 
-            {/* Questions table */}
-            {detail.questions.length > 0 ? (
-              <div style={{ maxHeight: 450, overflowY: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                      <th style={{ padding: '8px 10px', textAlign: 'left', width: 40 }}>#</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'left' }}>Savol</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'center', width: 80 }}>To'g'ri</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'center', width: 80 }}>Javob</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'center', width: 50 }}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detail.questions.map(q => (
-                      <tr key={q.num} style={{ borderBottom: '1px solid var(--border)', background: q.is_correct === false ? 'rgba(239,68,68,0.04)' : undefined }}>
-                        <td style={{ padding: '8px 10px', fontWeight: 600 }}>{q.num}</td>
-                        <td style={{ padding: '8px 10px', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {q.question_text.replace(/<[^>]+>/g, '').substring(0, 80)}
-                          {q.question_text.length > 80 ? '...' : ''}
-                        </td>
-                        <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 700, color: 'var(--success)' }}>
-                          {q.correct_option}
-                        </td>
-                        <td style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 700, color: q.is_correct ? 'var(--success)' : q.user_answer ? 'var(--danger)' : 'var(--text-300)' }}>
-                          {q.user_answer || '—'}
-                        </td>
-                        <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                          {q.is_correct === true && <IconCheck size={16} style={{ color: 'var(--success)' }} />}
-                          {q.is_correct === false && <IconXMark size={16} style={{ color: 'var(--danger)' }} />}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+      {/* Online attempt detail dialog */}
+      <Dialog open={!!aDetail || aDetailLoading} onClose={() => setADetail(null)} title={aDetail ? `Online test #${aDetail.id}` : 'Yuklanmoqda...'} size="lg">
+        {aDetailLoading && !aDetail && <p style={{ textAlign: 'center', padding: 20, color: 'var(--text-400)' }}>Yuklanmoqda...</p>}
+        {aDetail && (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20, padding: 16, background: 'var(--bg-50)', borderRadius: 12 }}>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--text-400)', marginBottom: 2 }}>Foydalanuvchi</div>
+                <div style={{ fontWeight: 600 }}>{aDetail.user?.full_name || '—'}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-400)' }}>{aDetail.user?.email || (aDetail.user?.username ? `@${aDetail.user.username}` : '—')}</div>
               </div>
-            ) : (
-              <p style={{ textAlign: 'center', padding: 20, color: 'var(--text-400)' }}>
-                {detail.status === 'sent' ? 'Foydalanuvchi hali javob yubormagan' : 'Savollar ma\'lumoti mavjud emas'}
-              </p>
-            )}
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--text-400)', marginBottom: 2 }}>Fan</div>
+                <div style={{ fontWeight: 600 }}>{aDetail.subject_name}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--text-400)', marginBottom: 2 }}>Natija</div>
+                <div style={{ fontWeight: 700, fontSize: 18, color: aDetail.score >= 60 ? 'var(--success)' : 'var(--danger)' }}>
+                  {aDetail.correct_answers}/{aDetail.total_questions} ({aDetail.score}%)
+                </div>
+              </div>
+              {aDetail.finished_at && (
+                <div>
+                  <div style={{ fontSize: 12, color: 'var(--text-400)', marginBottom: 2 }}>Yakunlangan</div>
+                  <div style={{ fontSize: 13 }}>{new Date(aDetail.finished_at).toLocaleString('uz-UZ')}</div>
+                </div>
+              )}
+            </div>
+            <QuestionsTable questions={aDetail.questions} />
           </div>
         )}
       </Dialog>
@@ -294,7 +438,13 @@ export default function Variants() {
         open={showClear}
         onClose={() => setShowClear(false)}
         onConfirm={clearAll}
-        message={<>Barcha <strong>{total}</strong> ta variant o'chiriladi. Bu amalni qaytarib bo'lmaydi.</>}
+        message={<>Barcha <strong>{vTotal}</strong> ta variant o'chiriladi. Bu amalni qaytarib bo'lmaydi.</>}
+      />
+      <ConfirmDialog
+        open={showAClear}
+        onClose={() => setShowAClear(false)}
+        onConfirm={clearAttempts}
+        message={<>Barcha <strong>{aTotal}</strong> ta online test o'chiriladi. Bu amalni qaytarib bo'lmaydi.</>}
       />
     </div>
   )

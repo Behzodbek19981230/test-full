@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 import MathHTML from '@/components/MathRenderer';
 
 interface Subject {
@@ -48,6 +49,8 @@ const TOTAL_TIME = 45 * 60; // 45 daqiqa
 
 export default function QuizPage() {
 	const params = useParams();
+	const router = useRouter();
+	const { user, loading: authLoading } = useAuth();
 	const subjectId = params.subjectId as string;
 
 	const [phase, setPhase] = useState<Phase>('loading');
@@ -60,6 +63,12 @@ export default function QuizPage() {
 	const [currentQ, setCurrentQ] = useState(0);
 
 	const isMandatory = subjectId === 'mandatory';
+
+	useEffect(() => {
+		if (!authLoading && !user) {
+			router.push(`/login?redirect=quiz&subject=${subjectId}`);
+		}
+	}, [authLoading, user]);
 
 	// Load quiz
 	useEffect(() => {
@@ -105,9 +114,12 @@ export default function QuizPage() {
 		setChecking(true);
 		try {
 			const checkId = isMandatory ? '0' : subjectId;
+			const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+			const token = localStorage.getItem('user_token');
+			if (token) headers['Authorization'] = `Bearer ${token}`;
 			const res = await fetch(`/api/quiz/${checkId}/check`, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers,
 				body: JSON.stringify({ answers }),
 			});
 			const data = await res.json();
