@@ -39,6 +39,9 @@ def generate_quiz(subject_id: int, count: int = 30, db: Session = Depends(get_db
     if not subject:
         raise HTTPException(status_code=404, detail="Fan topilmadi")
 
+    if subject.is_mandatory:
+        count = subject.mandatory_question_count or 10
+
     topics = db.query(Topic).filter(
         Topic.subject_id == subject_id, Topic.is_active == True
     ).all()
