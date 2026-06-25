@@ -536,7 +536,7 @@ export default function FormulaDialog({ open, onClose, onInsert, initialLatex = 
   return (
     <>
       <div className={`fd-overlay ${open ? 'fd-overlay--open' : ''}`} onClick={onClose} />
-      <div ref={drawerRef} className={`fd-drawer ${open ? 'fd-drawer--open' : ''}`} style={{ width: drawerWidth }}>
+      <div ref={drawerRef} className={`fd-drawer ${open ? 'fd-drawer--open' : ''}`} style={window.innerWidth > 480 ? { width: drawerWidth } : undefined}>
         <div className="fd-resize-handle" onMouseDown={handleResizeStart} />
         <div className="fd-header">
           <div className="fd-header__title">
