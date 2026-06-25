@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import MathHTML from '@/components/MathRenderer';
@@ -50,6 +50,7 @@ const TOTAL_TIME = 45 * 60; // 45 daqiqa
 export default function QuizPage() {
 	const params = useParams();
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { user, loading: authLoading } = useAuth();
 	const subjectId = params.subjectId as string;
 
@@ -72,9 +73,10 @@ export default function QuizPage() {
 
 	// Load quiz
 	useEffect(() => {
+		const count = searchParams.get('count') || '30';
 		const url = isMandatory
 			? '/api/quiz/mandatory/generate'
-			: `/api/quiz/${subjectId}/generate?count=30`;
+			: `/api/quiz/${subjectId}/generate?count=${count}`;
 
 		fetch(url)
 			.then((r) => {

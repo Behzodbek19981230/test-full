@@ -118,7 +118,7 @@ export default function MandatoryBlock({ subjects }: { subjects: Subject[] }) {
 							<button
 								onClick={() => {
 									setSelected(null);
-									router.push(`/quiz/${selected.id}`);
+									router.push(`/quiz/${selected.id}?count=${selected.mandatory_question_count}`);
 								}}
 								className='w-full flex items-center gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-slate-50 hover:border-primary/30 hover:bg-primary/[0.04] transition-all group text-left active:scale-[0.98]'
 							>
