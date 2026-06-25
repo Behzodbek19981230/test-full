@@ -682,6 +682,11 @@ body {
   color: white;
   border-bottom-right-radius: 4px;
 }
+.cw-bubble--admin {
+  background: linear-gradient(135deg, #d4842a, #e6a04e);
+  color: white;
+  border-bottom-left-radius: 4px;
+}
 
 .cw-typing {
   display: flex;
@@ -754,6 +759,7 @@ body {
   }
   .cw-messages { max-height: none; flex: 1; }
   .cw-toggle { bottom: 16px; right: 16px; }
+  .cw-toggle--open { display: none; }
 }
 
 /* Mobile responsive */

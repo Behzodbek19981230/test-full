@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface Message {
-	role: 'bot' | 'user';
+	role: 'bot' | 'user' | 'admin';
 	text: string;
 }
 
@@ -16,8 +16,20 @@ export default function ChatWidget() {
 	]);
 	const [input, setInput] = useState('');
 	const [loading, setLoading] = useState(false);
+	const [escalated, setEscalated] = useState(false);
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
+	const sessionKey = useRef('');
+
+	useEffect(() => {
+		const key = 'chat_session_key';
+		let val = localStorage.getItem(key);
+		if (!val) {
+			val = crypto.randomUUID();
+			localStorage.setItem(key, val);
+		}
+		sessionKey.current = val;
+	}, []);
 
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -26,6 +38,29 @@ export default function ChatWidget() {
 	useEffect(() => {
 		if (open) inputRef.current?.focus();
 	}, [open]);
+
+	const syncMessages = useCallback(() => {
+		fetch(`/api/chat/messages?session_key=${sessionKey.current}`)
+			.then((r) => r.json())
+			.then((data) => {
+				if (data.messages && data.messages.length > 0) {
+					setMessages([
+						{ role: 'bot', text: GREETING },
+						...data.messages.map((m: { role: string; text: string }) => ({
+							role: m.role as Message['role'],
+							text: m.text,
+						})),
+					]);
+				}
+			})
+			.catch(() => {});
+	}, []);
+
+	useEffect(() => {
+		if (!open || !escalated) return;
+		const interval = setInterval(syncMessages, 5000);
+		return () => clearInterval(interval);
+	}, [open, escalated, syncMessages]);
 
 	const send = async () => {
 		const text = input.trim();
@@ -39,12 +74,13 @@ export default function ChatWidget() {
 			const res = await fetch('/api/chat/send', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ message: text }),
+				body: JSON.stringify({ message: text, session_key: sessionKey.current }),
 			});
 			const data = await res.json();
+			if (data.escalated) setEscalated(true);
 			setMessages((prev) => [
 				...prev,
-				{ role: 'bot', text: data.reply || 'Kechirasiz, xatolik yuz berdi.' },
+				{ role: data.escalated ? 'bot' : 'bot', text: data.reply || 'Kechirasiz, xatolik yuz berdi.' },
 			]);
 		} catch {
 			setMessages((prev) => [
@@ -58,7 +94,6 @@ export default function ChatWidget() {
 
 	return (
 		<>
-			{/* Chat window */}
 			{open && (
 				<div className='cw-window'>
 					<div className='cw-header'>
@@ -70,7 +105,9 @@ export default function ChatWidget() {
 							</div>
 							<div>
 								<div className='cw-header__title'>Test Market Yordam</div>
-								<div className='cw-header__status'>Online</div>
+								<div className='cw-header__status'>
+									{escalated ? 'Admin javobini kutmoqda...' : 'Online'}
+								</div>
 							</div>
 						</div>
 						<button className='cw-header__close' onClick={() => setOpen(false)}>
@@ -83,8 +120,13 @@ export default function ChatWidget() {
 
 					<div className='cw-messages'>
 						{messages.map((m, i) => (
-							<div key={i} className={`cw-msg cw-msg--${m.role}`}>
-								<div className={`cw-bubble cw-bubble--${m.role}`}>
+							<div key={i} className={`cw-msg cw-msg--${m.role === 'admin' ? 'bot' : m.role}`}>
+								<div className={`cw-bubble cw-bubble--${m.role === 'admin' ? 'admin' : m.role}`}>
+									{m.role === 'admin' && (
+										<div style={{ fontSize: 11, fontWeight: 600, marginBottom: 4, opacity: 0.85 }}>
+											👤 Operator
+										</div>
+									)}
 									{m.text.split('\n').map((line, j) => (
 										<span key={j}>
 											{line}
@@ -125,7 +167,6 @@ export default function ChatWidget() {
 				</div>
 			)}
 
-			{/* Toggle button */}
 			<button className={`cw-toggle ${open ? 'cw-toggle--open' : ''}`} onClick={() => setOpen(!open)}>
 				{open ? (
 					<svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>

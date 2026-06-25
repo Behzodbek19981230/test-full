@@ -16,12 +16,14 @@ import {
 	IconMenu2,
 	IconX,
 	IconSettings,
+	IconMessageCircle,
 } from '@tabler/icons-react';
 
 export default function Layout() {
 	const { admin, logout } = useAuth();
 	const [pendingCount, setPendingCount] = useState(0);
 	const [unreadNotifs, setUnreadNotifs] = useState(0);
+	const [unreadChats, setUnreadChats] = useState(0);
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const location = useLocation();
 
@@ -45,6 +47,9 @@ export default function Layout() {
 				.catch(() => {});
 			api.get('/notifications?per_page=1')
 				.then((r) => setUnreadNotifs(r.data.unread_count || 0))
+				.catch(() => {});
+			api.get('/chat/unread-count')
+				.then((r) => setUnreadChats(r.data.count || 0))
 				.catch(() => {});
 		};
 		fetchCounts();
@@ -102,6 +107,7 @@ export default function Layout() {
 					badge: unreadNotifs || undefined,
 					badgeColor: 'danger',
 				},
+				{ to: '/chats', icon: IconMessageCircle, label: 'Chat xabarlar', badge: unreadChats || undefined, badgeColor: 'danger' as const },
 				{ to: '/audit', icon: IconFileText, label: 'Audit Log' },
 				{ to: '/settings', icon: IconSettings, label: 'Sozlamalar' },
 			],

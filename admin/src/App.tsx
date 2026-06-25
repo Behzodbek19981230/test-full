@@ -14,6 +14,7 @@ import AuditLogs from './pages/AuditLogs'
 import Notifications from './pages/Notifications'
 import Materials from './pages/Materials'
 import Settings from './pages/Settings'
+import Chats from './pages/Chats'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth()
@@ -50,6 +51,7 @@ export default function App() {
         <Route path="notifications" element={<AdminOnly><Notifications /></AdminOnly>} />
         <Route path="materials/:subjectId" element={<Materials />} />
         <Route path="settings" element={<AdminOnly><Settings /></AdminOnly>} />
+        <Route path="chats" element={<AdminOnly><Chats /></AdminOnly>} />
       </Route>
     </Routes>
   )

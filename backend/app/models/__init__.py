@@ -8,9 +8,11 @@ from app.models.notification import Notification
 from app.models.audit_log import AuditLog
 from app.models.variant import TestVariant
 from app.models.material import Material
+from app.models.chat import ChatSession, ChatMessage
 
 __all__ = [
     "User", "Subject", "Topic", "Question",
     "Payment", "TestAttempt", "AttemptAnswer",
     "Notification", "AuditLog", "TestVariant", "Material",
+    "ChatSession", "ChatMessage",
 ]
