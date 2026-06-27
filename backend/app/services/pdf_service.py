@@ -578,7 +578,7 @@ def generate_and_send(variant_id: int, telegram_id: int, subject_name: str, subj
         variant.question_ids = ",".join(str(q.id) for q in selected)
         db.commit()
 
-        sys.stdout.write(f"Variant #{variant_id}: {count} ta savol tanlandi, HTML generatsiya qilinmoqda...")
+        sys.stdout.write(f"Variant #{variant_id}: {len(selected)} ta savol tanlandi, HTML generatsiya qilinmoqda...")
 
         html_path = _generate_html(selected, subject_name, variant_id)
 
