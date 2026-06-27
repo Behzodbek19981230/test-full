@@ -33,6 +33,50 @@ def _resolve_user(credentials: HTTPAuthorizationCredentials | None, db: Session)
     return db.query(User).filter(User.id == user_id, User.is_active == True).first()
 
 
+def _pick_one_per_topic(non_mixed_topics, mixed_topics, count: int, db: Session):
+    """Har mavzudan faqat 1 ta savol oladi, yetishmasa aralash mavzudan to'ldiradi."""
+    import random as _rnd
+
+    all_questions = []
+    used_question_ids = set()
+
+    shuffled = list(non_mixed_topics)
+    _rnd.shuffle(shuffled)
+
+    for t in shuffled:
+        if len(all_questions) >= count:
+            break
+        q = db.query(Question).filter(
+            Question.topic_id == t.id
+        ).order_by(func.random()).limit(1).first()
+        if q:
+            all_questions.append(q)
+            used_question_ids.add(q.id)
+
+    if len(all_questions) < count and mixed_topics:
+        mixed_ids = [t.id for t in mixed_topics]
+        needed = count - len(all_questions)
+        mixed_q = db.query(Question).filter(
+            Question.topic_id.in_(mixed_ids),
+            ~Question.id.in_(used_question_ids) if used_question_ids else True
+        ).order_by(func.random()).limit(needed).all()
+        all_questions.extend(mixed_q)
+
+    if len(all_questions) < count:
+        all_topic_ids = [t.id for t in non_mixed_topics] + [t.id for t in mixed_topics]
+        if all_topic_ids:
+            needed = count - len(all_questions)
+            existing_ids = {q.id for q in all_questions}
+            extra = db.query(Question).filter(
+                Question.topic_id.in_(all_topic_ids),
+                ~Question.id.in_(existing_ids) if existing_ids else True
+            ).order_by(func.random()).limit(needed).all()
+            all_questions.extend(extra)
+
+    _rnd.shuffle(all_questions)
+    return all_questions
+
+
 @router.get("/{subject_id}/generate")
 def generate_quiz(subject_id: int, count: int = 30, db: Session = Depends(get_db)):
     subject = db.query(Subject).filter(Subject.id == subject_id, Subject.is_active == True).first()
@@ -52,39 +96,42 @@ def generate_quiz(subject_id: int, count: int = 30, db: Session = Depends(get_db
     mixed_topics = [t for t in topics if t.is_mixed]
     non_mixed = [t for t in topics if not t.is_mixed]
 
-    all_questions = []
+    if subject.is_mandatory:
+        all_questions = _pick_one_per_topic(non_mixed, mixed_topics, count, db)
+    else:
+        all_questions = []
 
-    if non_mixed:
-        per_topic = max(1, count // len(non_mixed))
-        remainder = count - per_topic * len(non_mixed)
+        if non_mixed:
+            per_topic = max(1, count // len(non_mixed))
+            remainder = count - per_topic * len(non_mixed)
 
-        for i, t in enumerate(non_mixed):
-            t_count = per_topic + (1 if i < remainder else 0)
-            t_questions = db.query(Question).filter(
-                Question.topic_id == t.id
-            ).order_by(func.random()).limit(t_count).all()
-            all_questions.extend(t_questions)
+            for i, t in enumerate(non_mixed):
+                t_count = per_topic + (1 if i < remainder else 0)
+                t_questions = db.query(Question).filter(
+                    Question.topic_id == t.id
+                ).order_by(func.random()).limit(t_count).all()
+                all_questions.extend(t_questions)
 
-    if mixed_topics:
-        mixed_ids = [t.id for t in mixed_topics]
-        needed = count - len(all_questions)
-        if needed > 0:
-            mixed_questions = db.query(Question).filter(
-                Question.topic_id.in_(mixed_ids)
-            ).order_by(func.random()).limit(needed).all()
-            all_questions.extend(mixed_questions)
+        if mixed_topics:
+            mixed_ids = [t.id for t in mixed_topics]
+            needed = count - len(all_questions)
+            if needed > 0:
+                mixed_questions = db.query(Question).filter(
+                    Question.topic_id.in_(mixed_ids)
+                ).order_by(func.random()).limit(needed).all()
+                all_questions.extend(mixed_questions)
 
-    if not all_questions:
-        topic_ids = [t.id for t in topics]
-        all_questions = db.query(Question).filter(
-            Question.topic_id.in_(topic_ids)
-        ).order_by(func.random()).limit(count).all()
+        if not all_questions:
+            topic_ids = [t.id for t in topics]
+            all_questions = db.query(Question).filter(
+                Question.topic_id.in_(topic_ids)
+            ).order_by(func.random()).limit(count).all()
+
+        import random
+        random.shuffle(all_questions)
 
     if not all_questions:
         raise HTTPException(status_code=404, detail="Bu fanda savollar topilmadi")
-
-    import random
-    random.shuffle(all_questions)
 
     return {
         "subject": {"id": subject.id, "name": subject.name, "icon": subject.icon},
@@ -117,23 +164,25 @@ def generate_mandatory_quiz(db: Session = Depends(get_db)):
 
     for subj in mandatory_subjects:
         count = subj.mandatory_question_count or 10
-        topic_ids = [t.id for t in db.query(Topic.id).filter(
-            Topic.subject_id == subj.id, Topic.is_active == True
-        ).all()]
 
-        if not topic_ids:
+        topics = db.query(Topic).filter(
+            Topic.subject_id == subj.id, Topic.is_active == True
+        ).all()
+
+        if not topics:
             continue
 
-        questions = db.query(Question).filter(
-            Question.topic_id.in_(topic_ids)
-        ).order_by(func.random()).limit(count).all()
+        mixed_topics = [t for t in topics if t.is_mixed]
+        non_mixed = [t for t in topics if not t.is_mixed]
+
+        subj_questions = _pick_one_per_topic(non_mixed, mixed_topics, count, db)
 
         subjects_info.append({
             "id": subj.id, "name": subj.name, "icon": subj.icon,
-            "question_count": len(questions),
+            "question_count": len(subj_questions),
         })
 
-        for q in questions:
+        for q in subj_questions:
             all_questions.append({
                 "id": q.id,
                 "subject_id": subj.id,

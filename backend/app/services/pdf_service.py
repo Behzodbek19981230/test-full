@@ -13,6 +13,7 @@ from fpdf import FPDF
 from app.config import get_settings
 from app.database import SessionLocal
 from app.models.question import Question
+from app.models.subject import Subject
 from app.models.topic import Topic
 from app.models.variant import TestVariant
 
@@ -510,20 +511,70 @@ def generate_and_send(variant_id: int, telegram_id: int, subject_name: str, subj
 
         sys.stdout.write(f"Variant #{variant_id}: Savollar tanlanmoqda ({subject_name}, {question_count} ta)")
 
-        questions = (
-            db.query(Question)
-            .join(Topic)
-            .filter(Topic.subject_id == subject_id, Topic.is_active == True)
-            .all()
-        )
-        if not questions:
+        subject = db.query(Subject).filter(Subject.id == subject_id).first()
+
+        topics = db.query(Topic).filter(
+            Topic.subject_id == subject_id, Topic.is_active == True
+        ).all()
+
+        if not topics:
             variant.status = "failed"
-            variant.error_log = "Bu fanda savollar topilmadi"
+            variant.error_log = "Bu fanda mavzular topilmadi"
             db.commit()
             return
 
-        count = min(question_count, len(questions))
-        selected = random.sample(questions, count)
+        if subject and subject.is_mandatory:
+            from sqlalchemy import func as sa_func
+            mixed_topics = [t for t in topics if t.is_mixed]
+            non_mixed = [t for t in topics if not t.is_mixed]
+            selected = []
+            used_ids = set()
+
+            random.shuffle(non_mixed)
+            for t in non_mixed:
+                if len(selected) >= question_count:
+                    break
+                q = db.query(Question).filter(
+                    Question.topic_id == t.id
+                ).order_by(sa_func.random()).first()
+                if q:
+                    selected.append(q)
+                    used_ids.add(q.id)
+
+            if len(selected) < question_count and mixed_topics:
+                mixed_ids = [t.id for t in mixed_topics]
+                needed = question_count - len(selected)
+                extra = db.query(Question).filter(
+                    Question.topic_id.in_(mixed_ids),
+                    ~Question.id.in_(used_ids) if used_ids else True
+                ).order_by(sa_func.random()).limit(needed).all()
+                selected.extend(extra)
+                used_ids.update(q.id for q in extra)
+
+            if len(selected) < question_count:
+                all_topic_ids = [t.id for t in topics]
+                needed = question_count - len(selected)
+                extra = db.query(Question).filter(
+                    Question.topic_id.in_(all_topic_ids),
+                    ~Question.id.in_(used_ids) if used_ids else True
+                ).order_by(sa_func.random()).limit(needed).all()
+                selected.extend(extra)
+
+            random.shuffle(selected)
+        else:
+            questions = (
+                db.query(Question)
+                .join(Topic)
+                .filter(Topic.subject_id == subject_id, Topic.is_active == True)
+                .all()
+            )
+            if not questions:
+                variant.status = "failed"
+                variant.error_log = "Bu fanda savollar topilmadi"
+                db.commit()
+                return
+            count = min(question_count, len(questions))
+            selected = random.sample(questions, count)
         variant.question_ids = ",".join(str(q.id) for q in selected)
         db.commit()
 
