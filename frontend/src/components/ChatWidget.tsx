@@ -9,6 +9,17 @@ interface Message {
 
 const GREETING = 'Assalomu alaykum! 👋\nTest Market platformasiga xush kelibsiz. Savol yoki takliflaringiz bo\'lsa, bemalol yozing!';
 
+function generateSessionKey(): string {
+	if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+		return crypto.randomUUID();
+	}
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+		const r = (Math.random() * 16) | 0;
+		const v = c === 'x' ? r : (r & 0x3) | 0x8;
+		return v.toString(16);
+	});
+}
+
 export default function ChatWidget() {
 	const [open, setOpen] = useState(false);
 	const [messages, setMessages] = useState<Message[]>([
@@ -25,7 +36,7 @@ export default function ChatWidget() {
 		const key = 'chat_session_key';
 		let val = localStorage.getItem(key);
 		if (!val) {
-			val = crypto.randomUUID();
+			val = generateSessionKey();
 			localStorage.setItem(key, val);
 		}
 		sessionKey.current = val;
