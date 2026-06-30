@@ -6,6 +6,7 @@ import { IconBooks, IconBrandTelegram, IconDeviceDesktop, IconX, IconArrowRight 
 import { Container, SubjectIcon } from '../ui';
 import { useAuth } from '@/context/AuthContext';
 import { useInView } from '@/hooks/useInView';
+import { buildSubjectSlug } from '@/lib/slug';
 
 const BOT_NAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME || '';
 
@@ -39,13 +40,13 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
 	const { ref: headerRef, inView: headerInView } = useInView(0.2);
 	const { ref: gridRef, inView: gridInView } = useInView(0.1);
 
-	const handleOnlineClick = (subjectId: number) => {
+	const handleOnlineClick = (subject: Subject) => {
 		setSelected(null);
 		if (!user) {
-			router.push(`/login?redirect=quiz&subject=${subjectId}`);
+			router.push(`/login?redirect=quiz&subject=${subject.id}`);
 			return;
 		}
-		router.push(`/quiz/${subjectId}`);
+		router.push(`/quiz/${buildSubjectSlug(subject.id, subject.name)}`);
 	};
 
 	const handleBotClick = (subjectId: number) => {
@@ -151,7 +152,7 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
 							</p>
 
 							<button
-								onClick={() => handleOnlineClick(selected.id)}
+								onClick={() => handleOnlineClick(selected)}
 								className='w-full flex items-center gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-slate-50 hover:border-primary/30 hover:bg-primary/[0.04] transition-all group text-left active:scale-[0.98]'
 							>
 								<div className='w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary-light group-hover:scale-110 transition-transform'>

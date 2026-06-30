@@ -6,7 +6,7 @@ const SITE_URL = 'https://test-market.uz';
 const SITE_NAME = 'Test Market';
 const TITLE = 'Test Market — DTM va Attestatsiyaga Tayyorlanish Platformasi';
 const DESCRIPTION =
-	"Abituriyent, o'qituvchi va o'quvchilar uchun DTM va attestatsiyaga tayyorlanish platformasi. Bepul majburiy fanlar testlari, barcha fanlar bo'yicha sinov testlari, real vaqtda natijalar va Telegram bot orqali qulay tayyorlanish.";
+	"Abituriyent va o'quvchilar uchun DTM tayyorlanish platformasi. Bepul majburiy fanlar testlari, barcha fanlar testlari va real vaqtda natijalar.";
 
 export const metadata: Metadata = {
 	metadataBase: new URL(SITE_URL),

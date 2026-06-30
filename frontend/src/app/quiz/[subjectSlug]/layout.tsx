@@ -1,17 +1,19 @@
 import type { Metadata } from 'next'
+import { extractSubjectId } from '@/lib/slug'
 
 interface Props {
-  params: Promise<{ subjectId: string }>
+  params: Promise<{ subjectSlug: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { subjectId } = await params
+  const { subjectSlug } = await params
+  const subjectId = extractSubjectId(subjectSlug)
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
   let subjectName = 'Test'
   try {
     const subjects = await fetch(`${apiUrl}/api/subjects`, { next: { revalidate: 3600 } }).then(r => r.json())
-    const subject = subjects.find((s: { id: number; name: string }) => String(s.id) === subjectId)
+    const subject = subjects.find((s: { id: number; name: string }) => s.id === subjectId)
     if (subject) subjectName = subject.name
   } catch {}
 

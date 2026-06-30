@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import MathHTML from '@/components/MathRenderer';
+import { extractSubjectId } from '@/lib/slug';
 
 interface Subject {
 	id: number;
@@ -52,7 +53,8 @@ export default function QuizPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { user, loading: authLoading } = useAuth();
-	const subjectId = params.subjectId as string;
+	const subjectSlug = params.subjectSlug as string;
+	const subjectId = extractSubjectId(subjectSlug);
 
 	const [phase, setPhase] = useState<Phase>('loading');
 	const [subject, setSubject] = useState<Subject | null>(null);
@@ -63,11 +65,11 @@ export default function QuizPage() {
 	const [checking, setChecking] = useState(false);
 	const [currentQ, setCurrentQ] = useState(0);
 
-	const isMandatory = subjectId === 'mandatory';
+	const isMandatory = subjectSlug === 'mandatory';
 
 	useEffect(() => {
 		if (!authLoading && !user) {
-			router.push(`/login?redirect=quiz&subject=${subjectId}`);
+			router.push(`/login?redirect=quiz&subject=${subjectSlug}`);
 		}
 	}, [authLoading, user]);
 
@@ -89,7 +91,7 @@ export default function QuizPage() {
 				setPhase('quiz');
 			})
 			.catch(() => setPhase('loading'));
-	}, [subjectId]);
+	}, [subjectSlug]);
 
 	// Timer
 	useEffect(() => {
@@ -132,7 +134,7 @@ export default function QuizPage() {
 		} finally {
 			setChecking(false);
 		}
-	}, [answers, subjectId, checking]);
+	}, [answers, isMandatory, subjectId, checking]);
 
 	const formatTime = (seconds: number) => {
 		const m = Math.floor(seconds / 60);
