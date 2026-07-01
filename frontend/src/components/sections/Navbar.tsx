@@ -92,20 +92,12 @@ export default function Navbar() {
 									</button>
 								</div>
 							) : (
-								<>
-									<Link
-										href='/login?mode=register'
-										className='hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/5 transition-all'
-									>
-										Ro&apos;yxatdan o&apos;tish
-									</Link>
-									<Link
-										href='/login'
-										className='flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all'
-									>
-										<IconLogin size={16} /> Kirish
-									</Link>
-								</>
+								<Link
+									href='/login'
+									className='flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all'
+								>
+									<IconLogin size={16} /> Kirish
+								</Link>
 							))}
 						<button className='md:hidden text-slate-700 p-1.5' onClick={() => setOpen(!open)}>
 							{open ? <IconX size={22} /> : <IconMenu2 size={22} />}
@@ -128,15 +120,6 @@ export default function Navbar() {
 								{l.label}
 							</a>
 						))}
-						{!user && (
-							<Link
-								href='/login?mode=register'
-								onClick={() => setOpen(false)}
-								className='px-4 py-3 rounded-xl text-[15px] font-semibold text-primary hover:bg-primary/5 transition-all'
-							>
-								Ro&apos;yxatdan o&apos;tish
-							</Link>
-						)}
 					</div>
 				</div>
 			</Container>

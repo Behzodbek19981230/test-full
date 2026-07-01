@@ -1,4 +1,4 @@
-"""Public user authentication: Google OAuth, Telegram Login, Phone+Password."""
+"""Public user authentication: Google OAuth, Telegram Login, Phone (passwordless)."""
 
 import hashlib
 import hmac
@@ -21,10 +21,6 @@ def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
-def verify_password(password: str, hashed: str) -> bool:
-    return bcrypt.checkpw(password.encode(), hashed.encode())
-
-
 class GoogleLoginRequest(BaseModel):
     credential: str
 
@@ -39,11 +35,8 @@ class TelegramLoginRequest(BaseModel):
     hash: str
 
 
-class PhoneRegisterRequest(BaseModel):
-    first_name: str
-    last_name: str
+class PhoneLoginRequest(BaseModel):
     phone: str
-    password: str
 
     @field_validator("phone")
     @classmethod
@@ -52,23 +45,6 @@ class PhoneRegisterRequest(BaseModel):
         if not re.match(r"^\+?\d{9,15}$", cleaned):
             raise ValueError("Telefon raqam noto'g'ri formatda")
         return cleaned
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, v: str) -> str:
-        if len(v) < 6:
-            raise ValueError("Parol kamida 6 ta belgidan iborat bo'lishi kerak")
-        return v
-
-
-class PhoneLoginRequest(BaseModel):
-    phone: str
-    password: str
-
-    @field_validator("phone")
-    @classmethod
-    def validate_phone(cls, v: str) -> str:
-        return re.sub(r"[\s\-\(\)]", "", v)
 
 
 def _user_response(user: User, token: str) -> dict:
@@ -177,36 +153,24 @@ def telegram_login(body: TelegramLoginRequest, db: Session = Depends(get_db)):
     return _user_response(user, token)
 
 
-@router.post("/register")
-def phone_register(body: PhoneRegisterRequest, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.phone == body.phone).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Bu telefon raqam allaqachon ro'yxatdan o'tgan")
-
-    user = User(
-        full_name=f"{body.first_name} {body.last_name}".strip(),
-        phone=body.phone,
-        password_hash=hash_password(body.password),
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    token = create_user_token(user.id)
-    return _user_response(user, token)
-
-
 @router.post("/login")
 def phone_login(body: PhoneLoginRequest, db: Session = Depends(get_db)):
+    """Find-or-create login by phone number only, no password required."""
+    settings = get_settings()
     user = db.query(User).filter(User.phone == body.phone).first()
-    if not user or not user.password_hash:
-        raise HTTPException(status_code=401, detail="Telefon raqam yoki parol noto'g'ri")
 
-    if not verify_password(body.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Telefon raqam yoki parol noto'g'ri")
-
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="Hisob faol emas")
+    if user:
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Hisob faol emas")
+    else:
+        user = User(
+            full_name="Foydalanuvchi",
+            phone=body.phone,
+            password_hash=hash_password(settings.DEFAULT_USER_PASSWORD),
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
     token = create_user_token(user.id)
     return _user_response(user, token)

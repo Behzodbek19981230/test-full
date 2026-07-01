@@ -42,10 +42,6 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
 
 	const handleOnlineClick = (subject: Subject) => {
 		setSelected(null);
-		if (!user) {
-			router.push(`/login?redirect=quiz&subject=${subject.id}`);
-			return;
-		}
 		router.push(`/quiz/${buildSubjectSlug(subject.id, subject.name)}`);
 	};
 
@@ -161,7 +157,7 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
 								<div className='flex-1'>
 									<h4 className='text-[14px] sm:text-[15px] font-bold text-slate-900'>Online test</h4>
 									<p className='text-[12px] sm:text-[13px] text-slate-500'>
-										{user ? '30 ta savol · 45 daqiqa · Natija shu yerda' : 'Avval tizimga kiring'}
+										30 ta savol · 45 daqiqa · Natija shu yerda
 									</p>
 								</div>
 								<span className='text-slate-400 group-hover:text-primary-light transition-colors'>

@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
 import MathHTML from '@/components/MathRenderer';
 import { extractSubjectId } from '@/lib/slug';
 
@@ -50,9 +49,7 @@ const TOTAL_TIME = 45 * 60; // 45 daqiqa
 
 export default function QuizPage() {
 	const params = useParams();
-	const router = useRouter();
 	const searchParams = useSearchParams();
-	const { user, loading: authLoading } = useAuth();
 	const subjectSlug = params.subjectSlug as string;
 	const subjectId = extractSubjectId(subjectSlug);
 
@@ -66,12 +63,6 @@ export default function QuizPage() {
 	const [currentQ, setCurrentQ] = useState(0);
 
 	const isMandatory = subjectSlug === 'mandatory';
-
-	useEffect(() => {
-		if (!authLoading && !user) {
-			router.push(`/login?redirect=quiz&subject=${subjectSlug}`);
-		}
-	}, [authLoading, user]);
 
 	// Load quiz
 	useEffect(() => {

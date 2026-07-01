@@ -17,8 +17,7 @@ interface AuthCtx {
   loading: boolean
   loginWithGoogle: (credential: string) => Promise<void>
   loginWithTelegram: (data: Record<string, unknown>) => Promise<void>
-  loginWithPhone: (phone: string, password: string) => Promise<void>
-  register: (data: { first_name: string; last_name: string; phone: string; password: string }) => Promise<void>
+  loginWithPhone: (phone: string) => Promise<void>
   logout: () => void
 }
 
@@ -77,31 +76,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user)
   }, [])
 
-  const loginWithPhone = useCallback(async (phone: string, password: string) => {
+  const loginWithPhone = useCallback(async (phone: string) => {
     const res = await fetch('/api/user-auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, password }),
+      body: JSON.stringify({ phone }),
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       throw new Error(err.detail || 'Login failed')
-    }
-    const data = await res.json()
-    localStorage.setItem('user_token', data.token)
-    setToken(data.token)
-    setUser(data.user)
-  }, [])
-
-  const register = useCallback(async (regData: { first_name: string; last_name: string; phone: string; password: string }) => {
-    const res = await fetch('/api/user-auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(regData),
-    })
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error(err.detail || 'Registration failed')
     }
     const data = await res.json()
     localStorage.setItem('user_token', data.token)
@@ -116,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, loginWithGoogle, loginWithTelegram, loginWithPhone, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, loginWithGoogle, loginWithTelegram, loginWithPhone, logout }}>
       {children}
     </AuthContext.Provider>
   )
