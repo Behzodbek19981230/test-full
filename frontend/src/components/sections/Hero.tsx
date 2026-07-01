@@ -1,12 +1,51 @@
 'use client';
 
-import { IconArrowRight, IconClock, IconFileText, IconCheck } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
+import {
+	IconArrowRight,
+	IconClock,
+	IconFileText,
+	IconCheck,
+	IconShieldCheck,
+	IconChevronDown,
+	IconSparkles,
+} from '@tabler/icons-react';
 import { LinkButton, Container } from '../ui';
 import { useInView } from '@/hooks/useInView';
 
-export default function Hero() {
+const FALLBACK_SUBJECTS = ['Matematika', 'Fizika', 'Kimyo', 'Tarix', 'Ingliz tili'];
+
+interface Props {
+	totalUsers?: number;
+	subjectNames?: string[];
+}
+
+export default function Hero({ totalUsers, subjectNames }: Props) {
 	const { ref, inView } = useInView(0.1);
 	const v = inView ? 'in-view' : '';
+	const usersLabel = totalUsers && totalUsers > 0 ? totalUsers.toLocaleString() : '500';
+
+	const names = subjectNames && subjectNames.length > 0 ? subjectNames : FALLBACK_SUBJECTS;
+	const [nameIndex, setNameIndex] = useState(0);
+	const [nameVisible, setNameVisible] = useState(true);
+
+	useEffect(() => {
+		const timer = setInterval(() => {
+			setNameVisible(false);
+			setTimeout(() => {
+				setNameIndex((i) => (i + 1) % names.length);
+				setNameVisible(true);
+			}, 250);
+		}, 2200);
+		return () => clearInterval(timer);
+	}, [names.length]);
+
+	const [showScrollCue, setShowScrollCue] = useState(true);
+	useEffect(() => {
+		const onScroll = () => setShowScrollCue(window.scrollY < 80);
+		window.addEventListener('scroll', onScroll, { passive: true });
+		return () => window.removeEventListener('scroll', onScroll);
+	}, []);
 
 	return (
 		<section className='min-h-[calc(100dvh)] flex items-center relative pt-[60px] sm:pt-[72px] overflow-hidden bg-white'>
@@ -17,12 +56,24 @@ export default function Hero() {
 				<div className='absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]' />
 			</div>
 
-			<Container className='relative z-10 py-10 sm:py-0'>
+			<Container className='relative z-10 py-0 '>
 				<div ref={ref} className='grid lg:grid-cols-2 gap-10 lg:gap-20 items-center'>
 					{/* Left */}
 					<div>
+						<div
+							className={`animate-on-scroll anim-fade-up max-w-full inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/20 mb-4 sm:mb-5 ${v}`}
+							style={{ animationDuration: '0.8s', animationDelay: '0s' }}
+						>
+							<IconSparkles size={14} className='text-primary shrink-0' />
+							<span
+								className={`text-[12px] sm:text-[13px] font-semibold text-primary whitespace-nowrap overflow-hidden text-ellipsis max-w-[240px] sm:max-w-[360px] transition-opacity duration-300 ${nameVisible ? 'opacity-100' : 'opacity-0'}`}
+							>
+								{names[nameIndex]} testlarini hoziroq yeching
+							</span>
+						</div>
+
 						<h1
-							className={`animate-on-scroll anim-fade-up text-[32px] sm:text-[42px] lg:text-[58px] font-black leading-[1.12] sm:leading-[1.08] tracking-[-1px] sm:tracking-[-1.5px] text-slate-900 mb-4 sm:mb-5 ${v}`}
+							className={`animate-on-scroll anim-fade-up text-[25px] sm:text-[42px] lg:text-[58px] font-black leading-[1.12] sm:leading-[1.08] tracking-[-1px] sm:tracking-[-1.5px] text-slate-900 mb-4 sm:mb-5 ${v}`}
 							style={{ animationDuration: '0.8s', animationDelay: '0.1s' }}
 						>
 							DTM va Attestatsiyaga
@@ -36,18 +87,21 @@ export default function Hero() {
 							className={`animate-on-scroll anim-fade-up text-[15px] sm:text-[17px] text-slate-600 leading-relaxed mb-7 sm:mb-9 max-w-[480px] ${v}`}
 							style={{ animationDuration: '0.8s', animationDelay: '0.25s' }}
 						>
-							Test Market — DTM va attestatsiyaga mukammal tayyorlanish uchun yaratilgan platforma.
-							Abituriyent, o&apos;qituvchi va o&apos;quvchilar uchun barcha fanlar bo&apos;yicha sinov
-							testlarini ishlang, natijangizni real vaqtda tekshiring va bilimingizni mustahkamlang.
+							Test Market — Abituriyent, o&apos;qituvchi va o&apos;quvchilar uchun barcha fanlar
+							bo&apos;yicha sinov testlarini ishlang, natijangizni real vaqtda tekshiring va bilimingizni
+							mustahkamlang.
 						</p>
 
 						<div
 							className={`animate-on-scroll anim-fade-up flex flex-col sm:flex-row gap-3 mb-8 sm:mb-12 ${v}`}
 							style={{ animationDuration: '0.8s', animationDelay: '0.4s' }}
 						>
-							<LinkButton href='#majburiy' size='lg'>
-								Bepul test ishlash <IconArrowRight size={18} />
-							</LinkButton>
+							<div className='relative inline-flex'>
+								<div className='absolute -inset-1.5 rounded-2xl bg-primary/40 blur-lg animate-pulse -z-10' />
+								<LinkButton href='#majburiy' size='lg'>
+									Bepul test ishlash <IconArrowRight size={18} />
+								</LinkButton>
+							</div>
 							<LinkButton href='#fanlar' variant='secondary' size='lg'>
 								Testlarni ko&apos;rish <IconArrowRight size={18} />
 							</LinkButton>
@@ -76,17 +130,32 @@ export default function Hero() {
 								))}
 							</div>
 							<p className='text-[12px] sm:text-[13px] text-slate-500'>
-								<strong className='text-slate-800 font-semibold'>500+</strong> foydalanuvchi ishonch
-								bildirgan
+								<strong className='text-slate-800 font-semibold'>{usersLabel}+</strong> foydalanuvchi
+								ishonch bildirgan
 							</p>
+						</div>
+
+						<div
+							className={`animate-on-scroll anim-fade-up flex items-center gap-1.5 mt-4 sm:mt-5 text-[12px] sm:text-[13px] text-slate-500 ${v}`}
+							style={{ animationDuration: '0.8s', animationDelay: '0.65s' }}
+						>
+							<IconShieldCheck size={16} className='text-success shrink-0' />
+							DTM va Attestatsiya rasmiy formatida tuzilgan testlar
 						</div>
 					</div>
 
-					{/* Right — Mock card */}
+					{/* Right — Mock card (desktop only) */}
 					<div className='hidden lg:flex justify-center' style={{ perspective: 1000 }}>
 						<div
-							className={`hero-card w-full max-w-[400px] bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xl ${v ? 'hero-card--visible' : ''}`}
+							className={`hero-card relative w-full max-w-[320px] sm:max-w-[400px] bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xl ${v ? 'hero-card--visible' : ''}`}
 						>
+							<div className='hidden sm:flex absolute -right-4 -top-4 z-10 items-center gap-1.5 pl-2.5 pr-3 py-2 bg-white rounded-2xl border border-slate-200 shadow-lg animate-[float2_6s_ease-in-out_infinite]'>
+								<div className='w-6 h-6 rounded-full bg-success/10 flex items-center justify-center text-success'>
+									<IconCheck size={14} />
+								</div>
+								<span className='text-[12px] font-bold text-slate-700'>Jonli natija</span>
+							</div>
+
 							<div className='px-6 py-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between'>
 								<div className='flex items-center gap-3'>
 									<div className='w-[42px] h-[42px] rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white'>
@@ -150,6 +219,13 @@ export default function Hero() {
 					</div>
 				</div>
 			</Container>
+
+			<div
+				className={`lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-0.5 text-slate-400 transition-opacity duration-300 ${showScrollCue ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+			>
+				<span className='text-[11px] font-medium'>Pastga suring</span>
+				<IconChevronDown size={16} className='animate-bounce' />
+			</div>
 		</section>
 	);
 }

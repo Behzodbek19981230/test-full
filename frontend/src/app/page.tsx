@@ -11,6 +11,7 @@ import {
 	HowItWorks,
 	Features,
 	SeoContent,
+	FAQ,
 	CTA,
 	Footer,
 } from '@/components/sections';
@@ -61,15 +62,19 @@ export default function Home() {
 	return (
 		<>
 			<Navbar />
-			<Hero />
+			<Hero
+				totalUsers={stats.total_users}
+				subjectNames={[...mandatorySubjects, ...subjects].map((s) => s.name)}
+			/>
 			<Stats stats={stats} />
 			<Subjects subjects={subjects} />
 			<MandatoryBlock subjects={mandatorySubjects} />
 			<ComingSoon />
 			<HowItWorks />
 			<Features />
-			<SeoContent />
+			<FAQ />
 			<CTA />
+			<SeoContent />
 			<Footer />
 			<ChatWidget />
 		</>

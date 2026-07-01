@@ -1,24 +1,33 @@
 'use client';
 
+import { useState } from 'react';
+import { IconChevronDown } from '@tabler/icons-react';
 import { Container } from '../ui';
 import { useInView } from '@/hooks/useInView';
 
 export default function SeoContent() {
 	const { ref, inView } = useInView(0.2);
+	const [expanded, setExpanded] = useState(false);
 
 	return (
-		<section className='py-16 sm:py-24 bg-white'>
+		<section className='py-10 sm:py-14 bg-white'>
 			<Container>
 				<div
 					ref={ref}
 					className={`animate-on-scroll anim-fade-up max-w-3xl mx-auto ${inView ? 'in-view' : ''}`}
 					style={{ animationDuration: '0.7s' }}
 				>
-					<h2 className='text-[22px] sm:text-[28px] font-extrabold text-slate-900 mb-6 text-center tracking-tight'>
+					<h2 className='text-[16px] sm:text-[18px] font-bold text-slate-500 mb-4 text-center tracking-tight'>
 						DTM va Attestatsiyaga Mukammal Tayyorlanish Platformasi
 					</h2>
 
-					<div className='space-y-4 text-[15px] sm:text-base text-slate-600 leading-relaxed'>
+					<div
+						className={`relative overflow-hidden transition-[max-height] duration-500 ${expanded ? 'max-h-[1200px]' : 'max-h-[90px]'}`}
+					>
+						{!expanded && (
+							<div className='absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white to-transparent' />
+						)}
+						<div className='space-y-4 text-[13px] sm:text-sm text-slate-400 leading-relaxed'>
 						<p>
 							Test Market — O&apos;zbekistondagi abituriyentlar, o&apos;qituvchilar va o&apos;quvchilar uchun
 							maxsus yaratilgan DTM va attestatsiyaga tayyorlanish platformasi. Platformamiz orqali siz barcha
@@ -45,7 +54,16 @@ export default function SeoContent() {
 							mavjud. Professional testlar yordamida o&apos;z bilim darajangizni baholang va imtihonga ishonch
 							bilan kiring. Test Market bilan tayyorlanish oson, qulay va samarali.
 						</p>
+						</div>
 					</div>
+
+					<button
+						onClick={() => setExpanded((e) => !e)}
+						className='flex items-center gap-1.5 mx-auto mt-3 text-[12px] sm:text-[13px] font-semibold text-primary hover:text-primary-dark transition-colors'
+					>
+						{expanded ? 'Yopish' : "Ko'proq o'qish"}
+						<IconChevronDown size={14} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
+					</button>
 				</div>
 			</Container>
 		</section>

@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { IconMenu2, IconX, IconLogin, IconLogout } from '@tabler/icons-react';
+import { IconMenu2, IconX, IconLogin, IconLogout, IconBrandTelegram } from '@tabler/icons-react';
 import { Container } from '../ui';
 import { useAuth } from '@/context/AuthContext';
+
+const BOT_URL = `https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME}`;
 
 const links = [
 	{ href: '#fanlar', label: 'Fanlar' },
@@ -12,6 +14,7 @@ const links = [
 	{ href: '#gmat-gre', label: 'GMAT & GRE' },
 	{ href: '#qanday', label: 'Qanday ishlaydi' },
 	{ href: '#imkoniyatlar', label: 'Imkoniyatlar' },
+	{ href: '#faq', label: 'Savollar' },
 ];
 
 export default function Navbar() {
@@ -63,6 +66,14 @@ export default function Navbar() {
 					</ul>
 
 					<div className='flex items-center gap-2 sm:gap-3'>
+						<a
+							href={BOT_URL}
+							target='_blank'
+							rel='noopener noreferrer'
+							className='hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-[#2AABEE] bg-[#2AABEE]/10 hover:bg-[#2AABEE]/15 transition-all'
+						>
+							<IconBrandTelegram size={16} /> Bot
+						</a>
 						{!loading &&
 							(user ? (
 								<div className='flex items-center gap-2 sm:gap-3'>
@@ -120,6 +131,15 @@ export default function Navbar() {
 								{l.label}
 							</a>
 						))}
+						<a
+							href={BOT_URL}
+							target='_blank'
+							rel='noopener noreferrer'
+							onClick={() => setOpen(false)}
+							className='flex items-center gap-2 px-4 py-3 rounded-xl text-[15px] font-medium text-[#2AABEE] hover:bg-[#2AABEE]/10 transition-all'
+						>
+							<IconBrandTelegram size={18} /> Telegram Bot
+						</a>
 					</div>
 				</div>
 			</Container>

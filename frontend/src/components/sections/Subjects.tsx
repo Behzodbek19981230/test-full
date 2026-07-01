@@ -29,6 +29,7 @@ interface Subject {
 	icon: string;
 	price_per_question: number;
 	question_count: number;
+	topic_count?: number;
 	description: string;
 	is_mandatory?: boolean;
 }
@@ -90,11 +91,22 @@ export default function Subjects({ subjects }: { subjects: Subject[] }) {
 								<SubjectIcon icon={s.icon} size={28} />
 							</div>
 							<div className='flex-1 min-w-0'>
-								<h3 className='text-[14px] sm:text-[15px] font-bold text-slate-900 mb-0.5 truncate'>
-									{s.name}
-								</h3>
+								<div className='flex items-center gap-1.5 mb-0.5'>
+									<h3 className='text-[14px] sm:text-[15px] font-bold text-slate-900 truncate'>
+										{s.name}
+									</h3>
+									{s.price_per_question === 0 && (
+										<span className='shrink-0 px-1.5 py-0.5 rounded-md bg-success/10 text-success text-[10px] font-bold uppercase tracking-wide'>
+											Bepul
+										</span>
+									)}
+								</div>
 								<p className='text-[12px] sm:text-[13px] text-slate-500 line-clamp-1'>
 									{s.description}
+								</p>
+								<p className='text-[11px] sm:text-[12px] text-slate-400 mt-1'>
+									{s.topic_count ? `${s.topic_count} mavzu · ` : ''}
+									{s.question_count} ta savol
 								</p>
 							</div>
 							<div className='w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/60 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-white transition-all shrink-0'>

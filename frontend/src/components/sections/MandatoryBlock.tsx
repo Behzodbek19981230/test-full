@@ -14,6 +14,7 @@ interface Subject {
 	name: string;
 	icon: string;
 	mandatory_question_count: number;
+	topic_count?: number;
 }
 
 const CARD_COLORS = [
@@ -64,8 +65,14 @@ export default function MandatoryBlock({ subjects }: { subjects: Subject[] }) {
 								<SubjectIcon icon={s.icon} size={28} />
 							</div>
 							<div className='flex-1 min-w-0'>
-								<h3 className='text-[14px] sm:text-[15px] font-bold text-slate-900 mb-0.5'>{s.name}</h3>
+								<div className='flex items-center gap-1.5 mb-0.5'>
+									<h3 className='text-[14px] sm:text-[15px] font-bold text-slate-900'>{s.name}</h3>
+									<span className='shrink-0 px-1.5 py-0.5 rounded-md bg-success/10 text-success text-[10px] font-bold uppercase tracking-wide'>
+										Bepul
+									</span>
+								</div>
 								<p className='text-[12px] sm:text-[13px] text-slate-500'>
+									{s.topic_count ? `${s.topic_count} mavzu · ` : ''}
 									{s.mandatory_question_count} ta savol
 								</p>
 							</div>

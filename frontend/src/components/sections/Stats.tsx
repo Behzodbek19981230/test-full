@@ -67,18 +67,15 @@ export default function Stats({ stats }: Props) {
 	const { ref, inView } = useInView(0.3);
 
 	return (
-		<section className='py-10 sm:py-16 border-y border-slate-200 bg-white'>
+		<section className='py-10 sm:py-16 bg-slate-50'>
 			<Container>
-				<div ref={ref} className='grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-0'>
+				<div ref={ref} className='grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4'>
 					{items.map((s, i) => (
 						<div
 							key={i}
-							className={`animate-on-scroll anim-fade-up text-center py-4 sm:py-6 relative ${inView ? 'in-view' : ''}`}
+							className={`animate-on-scroll anim-fade-up text-center py-6 sm:py-8 rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20 ${inView ? 'in-view' : ''}`}
 							style={{ animationDuration: '0.7s', animationDelay: `${i * 0.12}s` }}
 						>
-							{i < items.length - 1 && (
-								<div className='hidden lg:block absolute right-0 top-[20%] h-[60%] w-px bg-slate-200' />
-							)}
 							<div
 								className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3 ${s.color}`}
 							>
