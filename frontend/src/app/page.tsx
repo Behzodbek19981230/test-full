@@ -66,7 +66,7 @@ export default function Home() {
 				totalUsers={stats.total_users}
 				subjectNames={[...mandatorySubjects, ...subjects].map((s) => s.name)}
 			/>
-			<Stats stats={stats} />
+			{/* <Stats stats={stats} /> */}
 			<Subjects subjects={subjects} />
 			<MandatoryBlock subjects={mandatorySubjects} />
 			<ComingSoon />
