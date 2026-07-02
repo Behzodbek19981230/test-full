@@ -23,7 +23,7 @@ interface Props {
 export default function Hero({ totalUsers, subjectNames }: Props) {
 	const { ref, inView } = useInView(0.1);
 	const v = inView ? 'in-view' : '';
-	const usersLabel = totalUsers && totalUsers > 0 ? totalUsers.toLocaleString() : '500';
+	const usersLabel = totalUsers && totalUsers > 0 ? (totalUsers + 100).toLocaleString() : '500';
 
 	const names = subjectNames && subjectNames.length > 0 ? subjectNames : FALLBACK_SUBJECTS;
 	const [nameIndex, setNameIndex] = useState(0);
