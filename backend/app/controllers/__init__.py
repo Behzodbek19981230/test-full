@@ -1,10 +1,11 @@
 from fastapi import APIRouter
-from app.controllers import auth, admins, subjects, topics, payments, variants, stats, users, audit, uploads, quiz, user_auth, materials, ai, attempts, chat
+from app.controllers import auth, admins, subjects, topics, payments, variants, stats, users, audit, uploads, quiz, user_auth, materials, ai, attempts, chat, announcements
 
 api_router = APIRouter(prefix="/api")
 
 api_router.include_router(auth.router)
 api_router.include_router(admins.router)
+api_router.include_router(announcements.router)
 api_router.include_router(subjects.router)
 api_router.include_router(topics.router)
 api_router.include_router(payments.router)

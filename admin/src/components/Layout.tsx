@@ -17,6 +17,7 @@ import {
 	IconX,
 	IconSettings,
 	IconMessageCircle,
+	IconSpeakerphone,
 } from '@tabler/icons-react';
 
 export default function Layout() {
@@ -108,6 +109,7 @@ export default function Layout() {
 					badgeColor: 'danger',
 				},
 				{ to: '/chats', icon: IconMessageCircle, label: 'Chat xabarlar', badge: unreadChats || undefined, badgeColor: 'danger' as const },
+				{ to: '/announcements', icon: IconSpeakerphone, label: "E'lonlar" },
 				{ to: '/audit', icon: IconFileText, label: 'Audit Log' },
 				{ to: '/settings', icon: IconSettings, label: 'Sozlamalar' },
 			],

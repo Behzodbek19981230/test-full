@@ -21,9 +21,14 @@ interface RichEditorProps {
   onChange: (html: string) => void
   placeholder?: string
   minHeight?: number
+  showImageButton?: boolean
+  insertRef?: React.MutableRefObject<((text: string) => void) | null>
 }
 
-export default memo(function RichEditor({ label, value, onChange, placeholder = 'Matn kiriting...', minHeight = 120 }: RichEditorProps) {
+export default memo(function RichEditor({
+  label, value, onChange, placeholder = 'Matn kiriting...', minHeight = 120,
+  showImageButton = true, insertRef,
+}: RichEditorProps) {
   const [showFormula, setShowFormula] = useState(false)
   const [editingLatex, setEditingLatex] = useState('')
   const editingPos = useRef<number | null>(null)
@@ -73,6 +78,12 @@ export default memo(function RichEditor({ label, value, onChange, placeholder = 
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (!insertRef) return
+    insertRef.current = (text: string) => editor?.chain().focus().insertContent(text).run()
+    return () => { insertRef.current = null }
+  }, [insertRef, editor])
 
   const handleImageUpload = useCallback(async (file: File) => {
     if (!editor) return
@@ -232,9 +243,11 @@ export default memo(function RichEditor({ label, value, onChange, placeholder = 
           <ToolBtn title="Formula qo'shish" onClick={() => { editingPos.current = null; setEditingLatex(''); setShowFormula(true) }}>
             <IconMath size={16} />
           </ToolBtn>
-          <ToolBtn title="Rasm qo'shish" onClick={() => fileRef.current?.click()}>
-            <IconPhoto size={16} />
-          </ToolBtn>
+          {showImageButton && (
+            <ToolBtn title="Rasm qo'shish" onClick={() => fileRef.current?.click()}>
+              <IconPhoto size={16} />
+            </ToolBtn>
+          )}
 
           <Divider />
 

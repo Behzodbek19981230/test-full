@@ -15,6 +15,7 @@ import Notifications from './pages/Notifications'
 import Materials from './pages/Materials'
 import Settings from './pages/Settings'
 import Chats from './pages/Chats'
+import Announcements from './pages/Announcements'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth()
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="materials/:subjectId" element={<Materials />} />
         <Route path="settings" element={<AdminOnly><Settings /></AdminOnly>} />
         <Route path="chats" element={<AdminOnly><Chats /></AdminOnly>} />
+        <Route path="announcements" element={<AdminOnly><Announcements /></AdminOnly>} />
       </Route>
     </Routes>
   )

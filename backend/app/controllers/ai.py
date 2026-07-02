@@ -22,6 +22,17 @@ PROMPTS = {
     "generate_question": "Sen DTM test savoli yaratuvchisisan. Quyidagi fan va mavzu bo'yicha 1 ta yangi test savoli yarat. Faqat SAVOL matnini va 4 ta variantni ber. TESTNI YECHMA, yechimini ko'rsatma, tushuntirma berma.\n\nFan va mavzu: {context}\n\nFormat:\nSavol: ...\nA) ...\nB) ...\nC) ...\nD) ...\nTo'g'ri javob: A/B/C/D",
     "generate_options": "Sen test savoli muharriri yordamchisisan. Quyidagi test savoli uchun 4 ta javob varianti yarat. Bittasi to'g'ri, qolganlari noto'g'ri lekin ishonchli bo'lsin. TESTNI YECHMA, yechim jarayonini ko'rsatma. Faqat variantlarni ber:\n\nSavol: {text}\n\nFormat:\nA) ...\nB) ...\nC) ...\nD) ...\nTo'g'ri javob: A/B/C/D",
     "improve": "Sen test savoli muharriri yordamchisisan. Quyidagi test savolini yaxshilab ber — aniqroq, tushunarli va DTM standartiga mos qil. TESTNI YECHMA, javob berma, yechimini ko'rsatma. Faqat yaxshilangan savol matnini ber:\n\n{text}",
+    "announcement_improve": "Sen Telegram bot va kanal uchun e'lon matnlari yozuvchi muharrirsan. Quyidagi e'lon/xabar matnini yaxshilab ber — imlosini tuzat, aniqroq va o'quvchiga yoqimli, professional ohangda qil. Matn mazmunini saqla. Faqat yaxshilangan matnni ber, boshqa hech narsa qo'shma:\n\n{text}",
+    "announcement_generate": (
+        "Sen Test Market platformasining Telegram bot va kanali uchun e'lon yozuvchisisan. "
+        "Test Market — DTM va attestatsiyaga tayyorlanishga yordam beruvchi test platformasi, "
+        "unda turli fanlar bo'yicha testlar mavjud va foydalanuvchilar Telegram bot orqali test ishlaydi.\n\n"
+        "Quyida admin bergan ko'rsatma asosida, FAQAT o'sha ko'rsatmada so'ralgan mavzuda, qisqa va chiroyli "
+        "Telegram e'loni yoz. Ko'rsatmada aytilmagan boshqa mavzularga chalg'ima, platformani umumiy tanishtirib "
+        "o'tirma va ortiqcha kirish so'zlar yozma — to'g'ridan-to'g'ri tayyor e'lon matnini ber. "
+        "O'rinli bo'lsa bir nechta emoji ishlatishing mumkin, ko'p bo'lmasin:\n\n"
+        "Ko'rsatma: {context}"
+    ),
     "latex": (
         "Quyidagi matnda oddiy yozilgan matematik ifodalar, formulalar, sonlar, "
         "amallar va belgilarni topib, ularni LaTeX formatiga o'girib bering. "
